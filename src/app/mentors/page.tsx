@@ -14,6 +14,16 @@ const activityLabels: Record<string, string> = {
   PROFESSIONAL_ATHLETE: "Professional Athlete",
 };
 
+type SortOption = "match" | "price_low" | "price_high" | "highest_rated" | "most_reviews";
+
+const SORT_OPTIONS: { value: SortOption; label: string }[] = [
+  { value: "match", label: "Best Match" },
+  { value: "price_low", label: "Price: Low to High" },
+  { value: "price_high", label: "Price: High to Low" },
+  { value: "highest_rated", label: "Highest Rated" },
+  { value: "most_reviews", label: "Most Reviews" },
+];
+
 interface Contributor {
   id: string;
   name: string;
@@ -77,7 +87,6 @@ function MentorCard({ contributor }: { contributor: Contributor }) {
     <Link href={`/contributors/${contributor.id}`} className="block group">
       <div className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg hover:border-cyan-200 transition-all h-full">
         <div className="flex items-start gap-4 mb-4">
-          {/* Profile Photo */}
           <div className="w-16 h-16 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
             <span className="text-white font-bold text-xl">
               {contributor.name?.[0]?.toUpperCase() || "?"}
@@ -111,14 +120,12 @@ function MentorCard({ contributor }: { contributor: Contributor }) {
           )}
         </div>
 
-        {/* Bio Preview */}
         {contributor.bio && (
           <p className="text-sm text-gray-600 mb-3 line-clamp-2 italic">
             &ldquo;{contributor.bio}&rdquo;
           </p>
         )}
 
-        {/* Tags */}
         <div className="flex flex-wrap gap-1.5 mb-4">
           {profile.ageRange && (
             <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{profile.ageRange}</span>
@@ -135,7 +142,6 @@ function MentorCard({ contributor }: { contributor: Contributor }) {
           )}
         </div>
 
-        {/* Recovery Goals */}
         {profile.recoveryGoals && profile.recoveryGoals.length > 0 && (
           <p className="text-sm text-gray-600 mb-4 line-clamp-2">
             Goals: {profile.recoveryGoals.slice(0, 2).join(", ")}
@@ -143,7 +149,6 @@ function MentorCard({ contributor }: { contributor: Contributor }) {
           </p>
         )}
 
-        {/* Footer */}
         <div className="flex items-center justify-between pt-4 border-t border-gray-100">
           <div className="flex items-center gap-2 text-sm text-gray-500">
             {averageRating !== undefined && reviewCount > 0 && (
@@ -162,7 +167,6 @@ function MentorCard({ contributor }: { contributor: Contributor }) {
           )}
         </div>
 
-        {/* CTA Button */}
         {profile.isAvailableForCalls && (
           <button className="mt-4 w-full py-2.5 bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-lg font-medium hover:from-cyan-700 hover:to-blue-700 transition-all flex items-center justify-center gap-2">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -180,23 +184,22 @@ function MentorsContent() {
   const searchParams = useSearchParams();
 
   const [filters, setFilters] = useState({
-    procedure: searchParams.get("procedure") || "",
-    ageRange: searchParams.get("ageRange") || "",
-    activityLevel: searchParams.get("activityLevel") || "",
-    category: "", // Not used for mentors but needed for FilterSidebar
+    procedures: [] as string[],
+    ageRanges: [] as string[],
+    activityLevels: [] as string[],
+    categories: [] as string[],
   });
+  const [sortBy, setSortBy] = useState<SortOption>("match");
   const [searchQuery, setSearchQuery] = useState("");
   const [contributors, setContributors] = useState<Contributor[]>([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams();
-    if (filters.procedure) params.set("procedure", filters.procedure);
-    if (filters.ageRange) params.set("ageRange", filters.ageRange);
-    if (filters.activityLevel) params.set("activityLevel", filters.activityLevel);
-    params.set("availableForCalls", "true"); // Only show mentors available for calls
+    params.set("availableForCalls", "true");
     params.set("page", pagination.page.toString());
 
     try {
@@ -209,25 +212,79 @@ function MentorsContent() {
     } finally {
       setLoading(false);
     }
-  }, [filters, pagination.page]);
+  }, [pagination.page]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
-  function handleFilterChange(key: string, value: string) {
-    setFilters((prev) => ({ ...prev, [key]: value }));
+  function handleFilterChange(key: string, values: string[]) {
+    setFilters((prev) => ({ ...prev, [key]: values }));
     setPagination((prev) => ({ ...prev, page: 1 }));
   }
+
+  // Filter contributors client-side
+  const filteredContributors = contributors.filter((c) => {
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      if (!c.name?.toLowerCase().includes(query)) return false;
+    }
+
+    // Procedure filter
+    if (filters.procedures.length > 0 && !filters.procedures.includes(c.profile?.procedureType || "")) {
+      return false;
+    }
+
+    // Age range filter
+    if (filters.ageRanges.length > 0 && !filters.ageRanges.includes(c.profile?.ageRange || "")) {
+      return false;
+    }
+
+    // Activity level filter
+    if (filters.activityLevels.length > 0 && !filters.activityLevels.includes(c.profile?.activityLevel || "")) {
+      return false;
+    }
+
+    return true;
+  });
+
+  // Sort contributors
+  const sortedContributors = [...filteredContributors].sort((a, b) => {
+    switch (sortBy) {
+      case "match":
+        return (b.matchScore || 0) - (a.matchScore || 0);
+      case "price_low":
+        return (a.profile?.hourlyRate || 0) - (b.profile?.hourlyRate || 0);
+      case "price_high":
+        return (b.profile?.hourlyRate || 0) - (a.profile?.hourlyRate || 0);
+      case "highest_rated":
+        const aRating = a.reviewsReceived?.length
+          ? a.reviewsReceived.reduce((sum, r) => sum + r.rating, 0) / a.reviewsReceived.length
+          : 0;
+        const bRating = b.reviewsReceived?.length
+          ? b.reviewsReceived.reduce((sum, r) => sum + r.rating, 0) / b.reviewsReceived.length
+          : 0;
+        return bRating - aRating;
+      case "most_reviews":
+        return (b.reviewsReceived?.length || 0) - (a.reviewsReceived?.length || 0);
+      default:
+        return 0;
+    }
+  });
+
+  const totalActiveFilters =
+    filters.procedures.length +
+    filters.ageRanges.length +
+    filters.activityLevels.length;
 
   return (
     <ContentAcknowledgmentModal>
       <div className="min-h-screen bg-gray-50">
-        {/* Hero Section - Blue/Cyan Gradient */}
+        {/* Hero Section */}
         <div className="bg-gradient-to-br from-cyan-600 to-blue-700 text-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
             <div className="flex items-center gap-4 mb-4">
-              {/* Video Camera Icon */}
               <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
                 <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -262,7 +319,6 @@ function MentorsContent() {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Disclaimer Banner */}
           <DisclaimerBanner dismissible />
 
           {/* Looking for recordings CTA */}
@@ -284,25 +340,55 @@ function MentorsContent() {
             </div>
           </div>
 
-          {/* Search Bar */}
-          <div className="mb-6">
-            <div className="relative">
+          {/* Search and Sort Bar */}
+          <div className="flex flex-col sm:flex-row gap-4 mb-6">
+            <div className="relative flex-1">
               <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
               <input
                 type="text"
-                placeholder="Search mentors by name..."
+                placeholder="Search mentors..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 bg-white"
               />
             </div>
+
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600 whitespace-nowrap">Sort by:</label>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as SortOption)}
+                className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-white focus:ring-2 focus:ring-cyan-500"
+              >
+                {SORT_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <button
+              onClick={() => setShowMobileFilters(true)}
+              className="lg:hidden flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg bg-white text-sm"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+              </svg>
+              Filters
+              {totalActiveFilters > 0 && (
+                <span className="bg-cyan-600 text-white text-xs px-2 py-0.5 rounded-full">
+                  {totalActiveFilters}
+                </span>
+              )}
+            </button>
           </div>
 
           <div className="flex flex-col lg:flex-row gap-8">
-            {/* Sidebar */}
-            <aside className="lg:w-64 flex-shrink-0">
+            {/* Desktop Sidebar */}
+            <aside className="hidden lg:block lg:w-64 flex-shrink-0">
               <div className="bg-white rounded-xl border border-gray-200 p-5 sticky top-24">
                 <h2 className="font-semibold text-gray-900 mb-4">Find Your Mentor</h2>
                 <FilterSidebar
@@ -313,15 +399,39 @@ function MentorsContent() {
               </div>
             </aside>
 
+            {/* Mobile Filters Modal */}
+            {showMobileFilters && (
+              <div className="fixed inset-0 z-50 lg:hidden">
+                <div className="absolute inset-0 bg-black/50" onClick={() => setShowMobileFilters(false)} />
+                <div className="absolute right-0 top-0 bottom-0 w-full max-w-sm bg-white p-6 overflow-y-auto">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-lg font-semibold">Filters</h2>
+                    <button onClick={() => setShowMobileFilters(false)} className="p-2">
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                  <FilterSidebar
+                    filters={filters}
+                    onFilterChange={handleFilterChange}
+                    showCategory={false}
+                  />
+                  <button
+                    onClick={() => setShowMobileFilters(false)}
+                    className="w-full mt-6 py-3 bg-cyan-600 text-white rounded-lg font-medium"
+                  >
+                    Show {sortedContributors.length} results
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Content */}
             <div className="flex-1">
-              {/* Results count */}
               {!loading && (
                 <p className="text-sm text-gray-500 mb-4">
-                  {searchQuery
-                    ? `${contributors.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase())).length} mentor${contributors.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase())).length !== 1 ? "s" : ""} found`
-                    : `${pagination.total} mentor${pagination.total !== 1 ? "s" : ""} available`
-                  }
+                  {sortedContributors.length} mentor{sortedContributors.length !== 1 ? "s" : ""} available
                 </p>
               )}
 
@@ -331,7 +441,7 @@ function MentorsContent() {
                     <div key={i} className="bg-white rounded-xl border border-gray-200 h-64 animate-pulse" />
                   ))}
                 </div>
-              ) : contributors.filter(c => !searchQuery || c.name.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 ? (
+              ) : sortedContributors.length === 0 ? (
                 <div className="text-center py-16 bg-white rounded-xl border border-gray-200">
                   <svg className="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -341,15 +451,12 @@ function MentorsContent() {
                 </div>
               ) : (
                 <div className="grid sm:grid-cols-2 gap-6">
-                  {contributors
-                    .filter(c => !searchQuery || c.name.toLowerCase().includes(searchQuery.toLowerCase()))
-                    .map((c) => (
-                      <MentorCard key={c.id} contributor={c} />
-                    ))}
+                  {sortedContributors.map((c) => (
+                    <MentorCard key={c.id} contributor={c} />
+                  ))}
                 </div>
               )}
 
-              {/* Pagination */}
               {pagination.totalPages > 1 && (
                 <div className="flex justify-center gap-2 mt-8">
                   <button

@@ -8,27 +8,36 @@ import FilterSidebar from "@/components/FilterSidebar";
 import ContentAcknowledgmentModal from "@/components/ContentAcknowledgmentModal";
 import DisclaimerBanner from "@/components/DisclaimerBanner";
 
+type SortOption = "match" | "price_low" | "price_high" | "newest" | "most_viewed" | "highest_rated";
+
+const SORT_OPTIONS: { value: SortOption; label: string }[] = [
+  { value: "match", label: "Best Match" },
+  { value: "price_low", label: "Price: Low to High" },
+  { value: "price_high", label: "Price: High to Low" },
+  { value: "newest", label: "Newest First" },
+  { value: "most_viewed", label: "Most Viewed" },
+  { value: "highest_rated", label: "Highest Rated" },
+];
+
 function WatchContent() {
   const searchParams = useSearchParams();
 
   const [filters, setFilters] = useState({
-    procedure: searchParams.get("procedure") || "",
-    ageRange: searchParams.get("ageRange") || "",
-    activityLevel: searchParams.get("activityLevel") || "",
-    category: searchParams.get("category") || "",
+    procedures: [] as string[],
+    ageRanges: [] as string[],
+    activityLevels: [] as string[],
+    categories: [] as string[],
   });
+  const [sortBy, setSortBy] = useState<SortOption>("match");
   const [searchQuery, setSearchQuery] = useState("");
   const [recordings, setRecordings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams();
-    if (filters.procedure) params.set("procedure", filters.procedure);
-    if (filters.ageRange) params.set("ageRange", filters.ageRange);
-    if (filters.activityLevel) params.set("activityLevel", filters.activityLevel);
-    if (filters.category) params.set("category", filters.category);
     params.set("page", pagination.page.toString());
 
     try {
@@ -41,16 +50,83 @@ function WatchContent() {
     } finally {
       setLoading(false);
     }
-  }, [filters, pagination.page]);
+  }, [pagination.page]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
-  function handleFilterChange(key: string, value: string) {
-    setFilters((prev) => ({ ...prev, [key]: value }));
+  function handleFilterChange(key: string, values: string[]) {
+    setFilters((prev) => ({ ...prev, [key]: values }));
     setPagination((prev) => ({ ...prev, page: 1 }));
   }
+
+  // Filter recordings client-side for multi-select
+  const filteredRecordings = recordings.filter((rec) => {
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const matchesSearch =
+        rec.title?.toLowerCase().includes(query) ||
+        rec.contributor?.name?.toLowerCase().includes(query) ||
+        rec.description?.toLowerCase().includes(query);
+      if (!matchesSearch) return false;
+    }
+
+    // Procedure filter (match any selected)
+    if (filters.procedures.length > 0 && !filters.procedures.includes(rec.procedureType)) {
+      return false;
+    }
+
+    // Age range filter
+    if (filters.ageRanges.length > 0 && !filters.ageRanges.includes(rec.ageRange)) {
+      return false;
+    }
+
+    // Activity level filter
+    if (filters.activityLevels.length > 0 && !filters.activityLevels.includes(rec.activityLevel)) {
+      return false;
+    }
+
+    // Category filter
+    if (filters.categories.length > 0 && !filters.categories.includes(rec.category)) {
+      return false;
+    }
+
+    return true;
+  });
+
+  // Sort recordings
+  const sortedRecordings = [...filteredRecordings].sort((a, b) => {
+    switch (sortBy) {
+      case "match":
+        return (b.matchScore || 0) - (a.matchScore || 0);
+      case "price_low":
+        return (a.price || 0) - (b.price || 0);
+      case "price_high":
+        return (b.price || 0) - (a.price || 0);
+      case "newest":
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      case "most_viewed":
+        return (b.viewCount || 0) - (a.viewCount || 0);
+      case "highest_rated":
+        const aRating = a.reviews?.length
+          ? a.reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / a.reviews.length
+          : 0;
+        const bRating = b.reviews?.length
+          ? b.reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / b.reviews.length
+          : 0;
+        return bRating - aRating;
+      default:
+        return 0;
+    }
+  });
+
+  const totalActiveFilters =
+    filters.procedures.length +
+    filters.ageRanges.length +
+    filters.activityLevels.length +
+    filters.categories.length;
 
   return (
     <ContentAcknowledgmentModal>
@@ -59,7 +135,6 @@ function WatchContent() {
         <div className="bg-gradient-to-br from-teal-600 to-teal-700 text-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
             <div className="flex items-center gap-4 mb-4">
-              {/* Play Button Icon */}
               <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
                 <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M8 5v14l11-7z" />
@@ -94,7 +169,6 @@ function WatchContent() {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Disclaimer Banner */}
           <DisclaimerBanner dismissible />
 
           {/* Looking for mentors CTA */}
@@ -116,25 +190,58 @@ function WatchContent() {
             </div>
           </div>
 
-          {/* Search Bar */}
-          <div className="mb-6">
-            <div className="relative">
+          {/* Search and Sort Bar */}
+          <div className="flex flex-col sm:flex-row gap-4 mb-6">
+            {/* Search */}
+            <div className="relative flex-1">
               <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
               <input
                 type="text"
-                placeholder="Search recordings by title or contributor..."
+                placeholder="Search recordings..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white"
               />
             </div>
+
+            {/* Sort */}
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600 whitespace-nowrap">Sort by:</label>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as SortOption)}
+                className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-white focus:ring-2 focus:ring-teal-500"
+              >
+                {SORT_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Mobile filter button */}
+            <button
+              onClick={() => setShowMobileFilters(true)}
+              className="lg:hidden flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg bg-white text-sm"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+              </svg>
+              Filters
+              {totalActiveFilters > 0 && (
+                <span className="bg-teal-600 text-white text-xs px-2 py-0.5 rounded-full">
+                  {totalActiveFilters}
+                </span>
+              )}
+            </button>
           </div>
 
           <div className="flex flex-col lg:flex-row gap-8">
-            {/* Sidebar */}
-            <aside className="lg:w-64 flex-shrink-0">
+            {/* Desktop Sidebar */}
+            <aside className="hidden lg:block lg:w-64 flex-shrink-0">
               <div className="bg-white rounded-xl border border-gray-200 p-5 sticky top-24">
                 <h2 className="font-semibold text-gray-900 mb-4">Filter Recordings</h2>
                 <FilterSidebar
@@ -145,21 +252,40 @@ function WatchContent() {
               </div>
             </aside>
 
+            {/* Mobile Filters Modal */}
+            {showMobileFilters && (
+              <div className="fixed inset-0 z-50 lg:hidden">
+                <div className="absolute inset-0 bg-black/50" onClick={() => setShowMobileFilters(false)} />
+                <div className="absolute right-0 top-0 bottom-0 w-full max-w-sm bg-white p-6 overflow-y-auto">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-lg font-semibold">Filters</h2>
+                    <button onClick={() => setShowMobileFilters(false)} className="p-2">
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                  <FilterSidebar
+                    filters={filters}
+                    onFilterChange={handleFilterChange}
+                    showCategory={true}
+                  />
+                  <button
+                    onClick={() => setShowMobileFilters(false)}
+                    className="w-full mt-6 py-3 bg-teal-600 text-white rounded-lg font-medium"
+                  >
+                    Show {sortedRecordings.length} results
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Content */}
             <div className="flex-1">
               {/* Results count */}
               {!loading && (
                 <p className="text-sm text-gray-500 mb-4">
-                  {searchQuery
-                    ? `${recordings.filter(r =>
-                        r.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                        r.contributor?.name?.toLowerCase().includes(searchQuery.toLowerCase())
-                      ).length} recording${recordings.filter(r =>
-                        r.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                        r.contributor?.name?.toLowerCase().includes(searchQuery.toLowerCase())
-                      ).length !== 1 ? "s" : ""} found`
-                    : `${pagination.total} recording${pagination.total !== 1 ? "s" : ""} found`
-                  }
+                  {sortedRecordings.length} recording{sortedRecordings.length !== 1 ? "s" : ""} found
                 </p>
               )}
 
@@ -169,11 +295,7 @@ function WatchContent() {
                     <div key={i} className="bg-white rounded-xl border border-gray-200 h-72 animate-pulse" />
                   ))}
                 </div>
-              ) : recordings.filter(r =>
-                  !searchQuery ||
-                  r.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                  r.contributor?.name?.toLowerCase().includes(searchQuery.toLowerCase())
-                ).length === 0 ? (
+              ) : sortedRecordings.length === 0 ? (
                 <div className="text-center py-16 bg-white rounded-xl border border-gray-200">
                   <svg className="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -183,35 +305,29 @@ function WatchContent() {
                 </div>
               ) : (
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {recordings
-                    .filter(r =>
-                      !searchQuery ||
-                      r.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                      r.contributor?.name?.toLowerCase().includes(searchQuery.toLowerCase())
-                    )
-                    .map((rec: any) => (
-                      <RecordingCard
-                        key={rec.id}
-                        id={rec.id}
-                        title={rec.title}
-                        contributorName={rec.contributor?.name || "Anonymous"}
-                        procedureType={rec.procedureType}
-                        ageRange={rec.ageRange}
-                        activityLevel={rec.activityLevel}
-                        category={rec.category}
-                        durationSeconds={rec.durationSeconds}
-                        isVideo={rec.isVideo}
-                        price={rec.price}
-                        viewCount={rec.viewCount}
-                        averageRating={
-                          rec.reviews?.length
-                            ? rec.reviews.reduce((a: number, r: any) => a + r.rating, 0) / rec.reviews.length
-                            : undefined
-                        }
-                        matchScore={rec.matchScore}
-                        matchBreakdown={rec.matchBreakdown}
-                      />
-                    ))}
+                  {sortedRecordings.map((rec: any) => (
+                    <RecordingCard
+                      key={rec.id}
+                      id={rec.id}
+                      title={rec.title}
+                      contributorName={rec.contributor?.name || "Anonymous"}
+                      procedureType={rec.procedureType}
+                      ageRange={rec.ageRange}
+                      activityLevel={rec.activityLevel}
+                      category={rec.category}
+                      durationSeconds={rec.durationSeconds}
+                      isVideo={rec.isVideo}
+                      price={rec.price}
+                      viewCount={rec.viewCount}
+                      averageRating={
+                        rec.reviews?.length
+                          ? rec.reviews.reduce((a: number, r: any) => a + r.rating, 0) / rec.reviews.length
+                          : undefined
+                      }
+                      matchScore={rec.matchScore}
+                      matchBreakdown={rec.matchBreakdown}
+                    />
+                  ))}
                 </div>
               )}
 
