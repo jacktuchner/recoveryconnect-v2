@@ -2,7 +2,9 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const FROM_EMAIL = "RecoveryConnect <noreply@recoveryconnect.com>";
+// Use Resend's test domain until recoveryconnect.com is verified
+// Change to "RecoveryConnect <noreply@recoveryconnect.com>" after domain verification
+const FROM_EMAIL = process.env.EMAIL_FROM || "RecoveryConnect <onboarding@resend.dev>";
 
 // Email templates
 function baseTemplate(content: string) {
@@ -32,6 +34,7 @@ function baseTemplate(content: string) {
 
 // Welcome email for new users
 export async function sendWelcomeEmail(to: string, name: string, role: string) {
+  console.log("[EMAIL] Sending welcome email to:", to, "with API key:", process.env.RESEND_API_KEY ? "SET" : "MISSING");
   const isContributor = role === "CONTRIBUTOR";
 
   const content = `
@@ -69,15 +72,17 @@ export async function sendWelcomeEmail(to: string, name: string, role: string) {
   `;
 
   try {
-    await resend.emails.send({
+    console.log("[EMAIL] Attempting to send from:", FROM_EMAIL);
+    const result = await resend.emails.send({
       from: FROM_EMAIL,
       to,
       subject: `Welcome to RecoveryConnect, ${name}!`,
       html: baseTemplate(content),
     });
+    console.log("[EMAIL] Send result:", result);
     return { success: true };
   } catch (error) {
-    console.error("Failed to send welcome email:", error);
+    console.error("[EMAIL] Failed to send welcome email:", error);
     return { success: false, error };
   }
 }
