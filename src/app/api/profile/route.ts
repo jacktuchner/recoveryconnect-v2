@@ -4,6 +4,14 @@ import { authOptions } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { v4 as uuidv4 } from "uuid";
 
+// Type for per-procedure profile data
+interface ProcedureProfileData {
+  procedureDetails?: string;
+  timeSinceSurgery?: string;
+  recoveryGoals?: string[];
+  complicatingFactors?: string[];
+}
+
 // GET /api/profile - Get current user's profile
 export async function GET() {
   try {
@@ -46,10 +54,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Profile already exists. Use PUT to update." }, { status: 409 });
     }
 
-    // Handle procedureTypes array - use first one as primary procedureType
+    // Handle procedureTypes array
     const procedureTypes = body.procedureTypes || (body.procedureType ? [body.procedureType] : []);
     const primaryProcedure = body.procedureType || procedureTypes[0] || "";
     const activeProcedure = body.activeProcedureType || primaryProcedure;
+
+    // Build procedureProfiles if not provided
+    let procedureProfiles = body.procedureProfiles || {};
+    if (primaryProcedure && !procedureProfiles[primaryProcedure]) {
+      procedureProfiles[primaryProcedure] = {
+        procedureDetails: body.procedureDetails || "",
+        timeSinceSurgery: body.timeSinceSurgery || "",
+        recoveryGoals: body.recoveryGoals || [],
+        complicatingFactors: body.complicatingFactors || [],
+      };
+    }
 
     const { data: profile, error } = await supabase
       .from("Profile")
@@ -59,12 +78,15 @@ export async function POST(req: NextRequest) {
         procedureType: primaryProcedure,
         procedureTypes: procedureTypes,
         activeProcedureType: activeProcedure,
+        procedureProfiles: procedureProfiles,
+        // Keep legacy fields for backwards compatibility
         procedureDetails: body.procedureDetails || null,
+        timeSinceSurgery: body.timeSinceSurgery || null,
+        recoveryGoals: body.recoveryGoals || [],
+        complicatingFactors: body.complicatingFactors || [],
+        // Profile-wide fields
         ageRange: body.ageRange,
         activityLevel: body.activityLevel || "RECREATIONAL",
-        recoveryGoals: body.recoveryGoals || [],
-        timeSinceSurgery: body.timeSinceSurgery || null,
-        complicatingFactors: body.complicatingFactors || [],
         lifestyleContext: body.lifestyleContext || [],
         hourlyRate: body.hourlyRate || null,
         isAvailableForCalls: body.isAvailableForCalls || false,
@@ -94,7 +116,7 @@ export async function PUT(req: NextRequest) {
     const userId = (session.user as any).id;
     const body = await req.json();
 
-    // Handle procedureTypes array - use first one as primary procedureType
+    // Handle procedureTypes array
     const procedureTypes = body.procedureTypes || (body.procedureType ? [body.procedureType] : []);
     const primaryProcedure = body.procedureType || procedureTypes[0] || "";
 
@@ -102,19 +124,35 @@ export async function PUT(req: NextRequest) {
     const updateData: Record<string, any> = {
       procedureType: primaryProcedure,
       procedureTypes: procedureTypes,
-      procedureDetails: body.procedureDetails || null,
+      // Profile-wide fields
       ageRange: body.ageRange,
       activityLevel: body.activityLevel || "RECREATIONAL",
-      recoveryGoals: body.recoveryGoals || [],
-      timeSinceSurgery: body.timeSinceSurgery || null,
-      complicatingFactors: body.complicatingFactors || [],
       lifestyleContext: body.lifestyleContext || [],
       hourlyRate: body.hourlyRate || null,
       isAvailableForCalls: body.isAvailableForCalls || false,
       updatedAt: new Date().toISOString(),
     };
 
-    // Only update activeProcedureType if provided
+    // Handle procedureProfiles
+    if (body.procedureProfiles !== undefined) {
+      updateData.procedureProfiles = body.procedureProfiles;
+    }
+
+    // Keep legacy fields updated for backwards compatibility
+    if (body.procedureDetails !== undefined) {
+      updateData.procedureDetails = body.procedureDetails || null;
+    }
+    if (body.timeSinceSurgery !== undefined) {
+      updateData.timeSinceSurgery = body.timeSinceSurgery || null;
+    }
+    if (body.recoveryGoals !== undefined) {
+      updateData.recoveryGoals = body.recoveryGoals || [];
+    }
+    if (body.complicatingFactors !== undefined) {
+      updateData.complicatingFactors = body.complicatingFactors || [];
+    }
+
+    // Update activeProcedureType if provided
     if (body.activeProcedureType !== undefined) {
       updateData.activeProcedureType = body.activeProcedureType;
     }

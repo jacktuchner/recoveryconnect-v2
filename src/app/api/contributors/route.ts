@@ -56,6 +56,14 @@ export async function GET(req: NextRequest) {
         // Use activeProcedureType for matching, fallback to procedureType
         const activeProc = userProfile.activeProcedureType || userProfile.procedureType;
 
+        // Get per-procedure attributes from procedureProfiles, fallback to legacy fields
+        const procProfiles = userProfile.procedureProfiles || {};
+        const activeProcProfile = procProfiles[activeProc] || {};
+
+        const seekerGoals = activeProcProfile.recoveryGoals || userProfile.recoveryGoals || [];
+        const seekerFactors = activeProcProfile.complicatingFactors || userProfile.complicatingFactors || [];
+        const seekerDetails = activeProcProfile.procedureDetails || userProfile.procedureDetails;
+
         results = paginatedContributors
           .map((c: any) => {
             if (!c.profile)
@@ -63,11 +71,11 @@ export async function GET(req: NextRequest) {
             const score = calculateMatchScore(
               {
                 procedureType: activeProc,
-                procedureDetails: userProfile.procedureDetails,
+                procedureDetails: seekerDetails,
                 ageRange: userProfile.ageRange,
                 activityLevel: userProfile.activityLevel,
-                recoveryGoals: userProfile.recoveryGoals,
-                complicatingFactors: userProfile.complicatingFactors,
+                recoveryGoals: seekerGoals,
+                complicatingFactors: seekerFactors,
                 lifestyleContext: userProfile.lifestyleContext,
               },
               {
