@@ -11,7 +11,7 @@ export default function HomePage() {
           <div className="max-w-3xl">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6">
               Recovery guidance from people who've
-              <span className="text-teal-200"> actually been through it</span>
+              <span className="text-teal-200"> actually experienced it</span>
             </h1>
             <p className="text-lg sm:text-xl text-teal-100 mb-8 leading-relaxed">
               Your doctor tells you what to expect medically. We connect you with
