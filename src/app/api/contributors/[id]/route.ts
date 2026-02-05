@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { getPublicDisplayName } from "@/lib/displayName";
 
 export async function GET(
   req: NextRequest,
@@ -10,7 +11,7 @@ export async function GET(
 
     const { data: contributor, error } = await supabase
       .from("User")
-      .select("*, profile:Profile(*), recordings:Recording(*, reviews:Review(*, author:User!Review_authorId_fkey(name)))")
+      .select("*, profile:Profile(*), recordings:Recording(*, reviews:Review(*, author:User!Review_authorId_fkey(name, displayName, showRealName)))")
       .eq("id", id)
       .single();
 
@@ -48,13 +49,27 @@ export async function GET(
       });
     }
 
-    // Sort and limit reviews
+    // Sort and limit reviews, and transform author names
     contributor.reviewsReceived = allReviews
       .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, 10);
+      .slice(0, 10)
+      .map((review: any) => ({
+        ...review,
+        author: review.author
+          ? {
+              name: getPublicDisplayName(review.author),
+            }
+          : null,
+      }));
 
-    const { passwordHash, ...safe } = contributor as Record<string, unknown>;
-    return NextResponse.json(safe);
+    // Transform contributor name to public display name
+    const publicName = getPublicDisplayName(contributor);
+
+    const { passwordHash, displayName, showRealName, ...safe } = contributor as Record<string, unknown>;
+    return NextResponse.json({
+      ...safe,
+      name: publicName,
+    });
   } catch (error) {
     console.error("Error fetching contributor:", error);
     return NextResponse.json(

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { calculateMatchScore } from "@/lib/matching";
+import { getPublicDisplayName } from "@/lib/displayName";
 
 export async function GET(req: NextRequest) {
   try {
@@ -13,7 +14,7 @@ export async function GET(req: NextRequest) {
 
     let query = supabase
       .from("User")
-      .select("id, name, bio, role, profile:Profile(*), recordings:Recording(*), reviewsReceived:Review(*)", { count: "exact" })
+      .select("id, name, displayName, showRealName, bio, role, profile:Profile(*), recordings:Recording(*), reviewsReceived:Review(*)", { count: "exact" })
       .in("role", ["CONTRIBUTOR", "BOTH"])
       .not("profile", "is", null);
 
@@ -88,8 +89,17 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // Transform names to public display names
+    const transformedResults = (results as any[]).map((c) => ({
+      ...c,
+      name: getPublicDisplayName(c),
+      // Remove private fields from response
+      displayName: undefined,
+      showRealName: undefined,
+    }));
+
     return NextResponse.json({
-      contributors: results,
+      contributors: transformedResults,
       pagination: {
         page,
         limit,

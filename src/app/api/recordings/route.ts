@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { calculateMatchScore } from "@/lib/matching";
+import { getPublicDisplayName } from "@/lib/displayName";
 import { v4 as uuidv4 } from "uuid";
 
 export async function GET(req: NextRequest) {
@@ -17,7 +18,7 @@ export async function GET(req: NextRequest) {
 
     let query = supabase
       .from("Recording")
-      .select("*, contributor:User!Recording_contributorId_fkey(*, profile:Profile(*)), reviews:Review(*)", { count: "exact" })
+      .select("*, contributor:User!Recording_contributorId_fkey(id, name, displayName, showRealName, bio, profile:Profile(*)), reviews:Review(*)", { count: "exact" })
       .eq("status", "PUBLISHED");
 
     if (procedure) query = query.eq("procedureType", procedure);
@@ -75,8 +76,21 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // Transform contributor names to public display names
+    const transformedRecordings = (enrichedRecordings as any[]).map((rec) => ({
+      ...rec,
+      contributor: rec.contributor
+        ? {
+            ...rec.contributor,
+            name: getPublicDisplayName(rec.contributor),
+            displayName: undefined,
+            showRealName: undefined,
+          }
+        : null,
+    }));
+
     return NextResponse.json({
-      recordings: enrichedRecordings,
+      recordings: transformedRecordings,
       pagination: {
         page,
         limit,
