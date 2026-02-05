@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import RecordingCard from "@/components/RecordingCard";
 
@@ -16,8 +17,12 @@ const activityLabels: Record<string, string> = {
 
 export default function ContributorDetailPage() {
   const { id } = useParams();
+  const { data: session } = useSession();
   const [contributor, setContributor] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+
+  // Check if viewing own profile
+  const isOwnProfile = session?.user && (session.user as any).id === id;
 
 
   useEffect(() => {
@@ -67,7 +72,7 @@ export default function ContributorDetailPage() {
               </p>
             )}
           </div>
-          {contributor.profile?.isAvailableForCalls && (
+          {contributor.profile?.isAvailableForCalls && !isOwnProfile && (
             <Link
               href={`/book/${contributor.id}`}
               className="bg-teal-600 text-white px-5 py-2.5 rounded-lg hover:bg-teal-700 font-medium text-sm flex-shrink-0"
