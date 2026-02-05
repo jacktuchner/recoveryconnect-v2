@@ -49,6 +49,7 @@ export async function POST(req: NextRequest) {
     // Handle procedureTypes array - use first one as primary procedureType
     const procedureTypes = body.procedureTypes || (body.procedureType ? [body.procedureType] : []);
     const primaryProcedure = body.procedureType || procedureTypes[0] || "";
+    const activeProcedure = body.activeProcedureType || primaryProcedure;
 
     const { data: profile, error } = await supabase
       .from("Profile")
@@ -57,6 +58,7 @@ export async function POST(req: NextRequest) {
         userId,
         procedureType: primaryProcedure,
         procedureTypes: procedureTypes,
+        activeProcedureType: activeProcedure,
         procedureDetails: body.procedureDetails || null,
         ageRange: body.ageRange,
         activityLevel: body.activityLevel || "RECREATIONAL",
@@ -96,22 +98,30 @@ export async function PUT(req: NextRequest) {
     const procedureTypes = body.procedureTypes || (body.procedureType ? [body.procedureType] : []);
     const primaryProcedure = body.procedureType || procedureTypes[0] || "";
 
+    // Build update object
+    const updateData: Record<string, any> = {
+      procedureType: primaryProcedure,
+      procedureTypes: procedureTypes,
+      procedureDetails: body.procedureDetails || null,
+      ageRange: body.ageRange,
+      activityLevel: body.activityLevel || "RECREATIONAL",
+      recoveryGoals: body.recoveryGoals || [],
+      timeSinceSurgery: body.timeSinceSurgery || null,
+      complicatingFactors: body.complicatingFactors || [],
+      lifestyleContext: body.lifestyleContext || [],
+      hourlyRate: body.hourlyRate || null,
+      isAvailableForCalls: body.isAvailableForCalls || false,
+      updatedAt: new Date().toISOString(),
+    };
+
+    // Only update activeProcedureType if provided
+    if (body.activeProcedureType !== undefined) {
+      updateData.activeProcedureType = body.activeProcedureType;
+    }
+
     const { data: profile, error } = await supabase
       .from("Profile")
-      .update({
-        procedureType: primaryProcedure,
-        procedureTypes: procedureTypes,
-        procedureDetails: body.procedureDetails || null,
-        ageRange: body.ageRange,
-        activityLevel: body.activityLevel || "RECREATIONAL",
-        recoveryGoals: body.recoveryGoals || [],
-        timeSinceSurgery: body.timeSinceSurgery || null,
-        complicatingFactors: body.complicatingFactors || [],
-        lifestyleContext: body.lifestyleContext || [],
-        hourlyRate: body.hourlyRate || null,
-        isAvailableForCalls: body.isAvailableForCalls || false,
-        updatedAt: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq("userId", userId)
       .select()
       .single();

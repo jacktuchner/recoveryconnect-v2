@@ -45,11 +45,14 @@ export async function GET(req: NextRequest) {
         .single();
 
       if (userProfile && recordings) {
+        // Use activeProcedureType for matching, fallback to procedureType
+        const activeProc = userProfile.activeProcedureType || userProfile.procedureType;
+
         enrichedRecordings = recordings
           .map((rec: any) => {
             const score = calculateMatchScore(
               {
-                procedureType: userProfile.procedureType,
+                procedureType: activeProc,
                 procedureDetails: userProfile.procedureDetails,
                 ageRange: userProfile.ageRange,
                 activityLevel: userProfile.activityLevel,

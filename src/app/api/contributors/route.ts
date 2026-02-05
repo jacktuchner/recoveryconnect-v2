@@ -53,13 +53,16 @@ export async function GET(req: NextRequest) {
         .single();
 
       if (userProfile) {
+        // Use activeProcedureType for matching, fallback to procedureType
+        const activeProc = userProfile.activeProcedureType || userProfile.procedureType;
+
         results = paginatedContributors
           .map((c: any) => {
             if (!c.profile)
               return { ...c, matchScore: 0, matchBreakdown: [] };
             const score = calculateMatchScore(
               {
-                procedureType: userProfile.procedureType,
+                procedureType: activeProc,
                 procedureDetails: userProfile.procedureDetails,
                 ageRange: userProfile.ageRange,
                 activityLevel: userProfile.activityLevel,
