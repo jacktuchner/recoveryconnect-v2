@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { PROCEDURE_TYPES, AGE_RANGES, ACTIVITY_LEVELS, RECOVERY_GOALS, COMPLICATING_FACTORS, LIFESTYLE_CONTEXTS } from "@/lib/constants";
+import { getTimeSinceSurgery, getTimeSinceSurgeryLabel } from "@/lib/surgeryDate";
 
 interface ProfileWizardProps {
   initialData?: {
     procedureType?: string;
     procedureDetails?: string;
+    surgeryDate?: string;
     ageRange?: string;
     activityLevel?: string;
     recoveryGoals?: string[];
@@ -26,6 +28,7 @@ export default function ProfileWizard({ initialData, onComplete, onCancel }: Pro
   const [form, setForm] = useState({
     procedureType: initialData?.procedureType || "",
     procedureDetails: initialData?.procedureDetails || "",
+    surgeryDate: initialData?.surgeryDate || "",
     ageRange: initialData?.ageRange || "",
     activityLevel: initialData?.activityLevel || "RECREATIONAL",
     recoveryGoals: initialData?.recoveryGoals || [],
@@ -49,7 +52,12 @@ export default function ProfileWizard({ initialData, onComplete, onCancel }: Pro
   async function handleComplete() {
     setSaving(true);
     try {
-      await onComplete(form);
+      // Compute timeSinceSurgery from surgeryDate
+      const dataToSave = {
+        ...form,
+        timeSinceSurgery: form.surgeryDate ? getTimeSinceSurgery(form.surgeryDate) : null,
+      };
+      await onComplete(dataToSave);
     } finally {
       setSaving(false);
     }
@@ -151,6 +159,26 @@ export default function ProfileWizard({ initialData, onComplete, onCancel }: Pro
                 className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                 placeholder="e.g., Patellar tendon graft, Anterior approach"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Surgery Date <span className="text-gray-400">(optional)</span>
+              </label>
+              <input
+                type="date"
+                value={form.surgeryDate}
+                onChange={(e) => setForm((f) => ({ ...f, surgeryDate: e.target.value }))}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+              />
+              {form.surgeryDate && (
+                <p className="mt-1 text-sm text-teal-600 font-medium">
+                  {getTimeSinceSurgeryLabel(form.surgeryDate)}
+                </p>
+              )}
+              <p className="text-xs text-gray-500 mt-1">
+                We&apos;ll use this to match you with people at a similar recovery stage.
+              </p>
             </div>
 
             <div>

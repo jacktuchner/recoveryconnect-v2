@@ -144,6 +144,9 @@ export async function PUT(req: NextRequest) {
     if (body.procedureDetails !== undefined) {
       updateData.procedureDetails = body.procedureDetails || null;
     }
+    if (body.surgeryDate !== undefined) {
+      updateData.surgeryDate = body.surgeryDate || null;
+    }
     if (body.timeSinceSurgery !== undefined) {
       updateData.timeSinceSurgery = body.timeSinceSurgery || null;
     }

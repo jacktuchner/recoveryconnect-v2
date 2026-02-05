@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from "react";
 import VoiceRecorder from "./VoiceRecorder";
 import FaqPromptSelector from "./FaqPromptSelector";
+import { getTimeSinceSurgery, getTimeSinceSurgeryLabel } from "@/lib/surgeryDate";
 
 interface FaqPrompt {
   id: string;
@@ -30,7 +31,9 @@ export default function RecordingForm({ onSuccess, onCancel }: RecordingFormProp
   // For contributors with multiple procedures
   const [procedureTypes, setProcedureTypes] = useState<string[]>([]);
   const [selectedProcedure, setSelectedProcedure] = useState<string>("");
+  const [procedureProfiles, setProcedureProfiles] = useState<Record<string, any>>({});
   const [timeSinceSurgery, setTimeSinceSurgery] = useState<string>("");
+  const [surgeryDate, setSurgeryDate] = useState<string>("");
 
   const TIME_SINCE_OPTIONS = [
     "Less than 1 month",
@@ -63,8 +66,21 @@ export default function RecordingForm({ onSuccess, onCancel }: RecordingFormProp
               ? [profile.procedureType]
               : [];
           setProcedureTypes(procedures);
+          setProcedureProfiles(profile?.procedureProfiles || {});
+
           if (procedures.length > 0) {
-            setSelectedProcedure(procedures[0]);
+            const firstProc = procedures[0];
+            setSelectedProcedure(firstProc);
+
+            // Auto-set surgery date from profile
+            const procProfile = profile?.procedureProfiles?.[firstProc];
+            if (procProfile?.surgeryDate) {
+              setSurgeryDate(procProfile.surgeryDate);
+              setTimeSinceSurgery(getTimeSinceSurgery(procProfile.surgeryDate) || "");
+            } else if (profile?.surgeryDate) {
+              setSurgeryDate(profile.surgeryDate);
+              setTimeSinceSurgery(getTimeSinceSurgery(profile.surgeryDate) || "");
+            }
           }
         }
       } catch (err) {
@@ -300,7 +316,19 @@ export default function RecordingForm({ onSuccess, onCancel }: RecordingFormProp
               </label>
               <select
                 value={selectedProcedure}
-                onChange={(e) => setSelectedProcedure(e.target.value)}
+                onChange={(e) => {
+                  const newProc = e.target.value;
+                  setSelectedProcedure(newProc);
+                  // Update surgery date from procedure profile
+                  const procProfile = procedureProfiles[newProc];
+                  if (procProfile?.surgeryDate) {
+                    setSurgeryDate(procProfile.surgeryDate);
+                    setTimeSinceSurgery(getTimeSinceSurgery(procProfile.surgeryDate) || "");
+                  } else {
+                    setSurgeryDate("");
+                    setTimeSinceSurgery("");
+                  }
+                }}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               >
                 {procedureTypes.map((proc) => (
@@ -313,21 +341,34 @@ export default function RecordingForm({ onSuccess, onCancel }: RecordingFormProp
           {/* Time since surgery for this recording */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              How long since this surgery/procedure?
+              Recovery stage when recording
             </label>
-            <select
-              value={timeSinceSurgery}
-              onChange={(e) => setTimeSinceSurgery(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-            >
-              <option value="">Select timeframe</option>
-              {TIME_SINCE_OPTIONS.map((option) => (
-                <option key={option} value={option}>{option}</option>
-              ))}
-            </select>
-            <p className="text-xs text-gray-500 mt-1">
-              This helps patients find recordings from people at a similar stage.
-            </p>
+            {surgeryDate ? (
+              <div className="bg-teal-50 border border-teal-200 rounded-lg px-3 py-2">
+                <p className="text-sm font-medium text-teal-700">
+                  {getTimeSinceSurgeryLabel(surgeryDate)}
+                </p>
+                <p className="text-xs text-teal-600">
+                  Based on your surgery date. This recording will be tagged as &quot;{timeSinceSurgery}&quot;.
+                </p>
+              </div>
+            ) : (
+              <>
+                <select
+                  value={timeSinceSurgery}
+                  onChange={(e) => setTimeSinceSurgery(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                >
+                  <option value="">Select timeframe</option>
+                  {TIME_SINCE_OPTIONS.map((option) => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Set your surgery date in your profile to auto-calculate this.
+                </p>
+              </>
+            )}
           </div>
 
           <div>

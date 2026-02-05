@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import RecordingCard from "@/components/RecordingCard";
+import { getTimeSinceSurgeryLabel } from "@/lib/surgeryDate";
 
 
 const activityLabels: Record<string, string> = {
@@ -113,9 +114,11 @@ export default function ContributorDetailPage() {
           <span className="text-sm bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
             {activityLabels[contributor.profile?.activityLevel] || contributor.profile?.activityLevel}
           </span>
-          {contributor.profile?.timeSinceSurgery && (
+          {(contributor.profile?.surgeryDate || contributor.profile?.timeSinceSurgery) && (
             <span className="text-sm bg-blue-50 text-blue-600 px-3 py-1 rounded-full">
-              {contributor.profile.timeSinceSurgery} post-op
+              {contributor.profile.surgeryDate
+                ? getTimeSinceSurgeryLabel(contributor.profile.surgeryDate)
+                : `${contributor.profile.timeSinceSurgery} post-op`}
             </span>
           )}
           {contributor.profile?.isAvailableForCalls && (

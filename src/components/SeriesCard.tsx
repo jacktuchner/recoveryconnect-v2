@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 
 interface SeriesCardProps {
   id: string;
@@ -12,6 +13,42 @@ interface SeriesCardProps {
   discountedPrice: number;
   discountPercent: number;
   totalDuration?: number;
+  matchScore?: number;
+  matchBreakdown?: { attribute: string; matched: boolean; weight: number }[];
+}
+
+function MatchScoreTooltip({ breakdown }: { breakdown: { attribute: string; matched: boolean; weight: number }[] }) {
+  const [show, setShow] = useState(false);
+
+  return (
+    <div className="relative inline-block">
+      <button
+        onMouseEnter={() => setShow(true)}
+        onMouseLeave={() => setShow(false)}
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShow(!show); }}
+        className="ml-1 text-gray-400 hover:text-gray-600"
+      >
+        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </button>
+      {show && (
+        <div className="absolute right-0 top-5 z-50 w-48 bg-white rounded-lg shadow-lg border border-gray-200 p-2.5 text-left">
+          <p className="text-xs font-medium text-gray-700 mb-1.5">Match breakdown:</p>
+          <div className="space-y-0.5">
+            {breakdown.map((item) => (
+              <div key={item.attribute} className="flex items-center justify-between text-xs">
+                <span className="text-gray-600">{item.attribute}</span>
+                <span className={item.matched ? "text-green-600" : "text-gray-400"}>
+                  {item.matched ? "✓" : "—"}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 function formatDuration(seconds: number): string {
@@ -33,6 +70,8 @@ export default function SeriesCard({
   discountedPrice,
   discountPercent,
   totalDuration,
+  matchScore,
+  matchBreakdown,
 }: SeriesCardProps) {
   const savings = totalValue - discountedPrice;
 
@@ -41,12 +80,26 @@ export default function SeriesCard({
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-purple-200 transition-all">
         <div className="bg-gradient-to-br from-purple-50 to-indigo-50 p-4 relative">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
-              Series
-            </span>
-            <span className="text-xs font-bold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-              Save {discountPercent}%
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+                Series
+              </span>
+              <span className="text-xs font-bold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                Save {discountPercent}%
+              </span>
+            </div>
+            {matchScore !== undefined && (
+              <div className="flex items-center">
+                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                  matchScore >= 80 ? "bg-green-100 text-green-700" :
+                  matchScore >= 60 ? "bg-yellow-100 text-yellow-700" :
+                  "bg-gray-100 text-gray-600"
+                }`}>
+                  {matchScore}% match
+                </span>
+                {matchBreakdown && <MatchScoreTooltip breakdown={matchBreakdown} />}
+              </div>
+            )}
           </div>
           <div className="flex items-center justify-center h-16">
             <div className="flex -space-x-2">

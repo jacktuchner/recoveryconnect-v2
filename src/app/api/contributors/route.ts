@@ -9,25 +9,31 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const procedure = searchParams.get("procedure");
+    const availableForCalls = searchParams.get("availableForCalls") === "true";
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "12");
 
     let query = supabase
       .from("User")
-      .select("id, name, displayName, showRealName, bio, role, profile:Profile(*), recordings:Recording(*), reviewsReceived:Review(*)", { count: "exact" })
-      .in("role", ["CONTRIBUTOR", "BOTH"])
-      .not("profile", "is", null);
-
-    if (procedure) {
-      // We'll filter in memory since Supabase doesn't support filtering on joined tables directly
-    }
+      .select("id, name, displayName, showRealName, bio, role, profile:Profile(*), recordings:Recording(*), reviewsReceived:Review!Review_subjectId_fkey(*)", { count: "exact" })
+      .in("role", ["CONTRIBUTOR", "BOTH"]);
 
     const { data: allContributors, count, error } = await query;
 
     if (error) throw error;
 
+    // Filter contributors - must have a profile
+    let filteredContributors = (allContributors || []).filter((c: any) => c.profile !== null);
+
+    // Filter by availableForCalls (for mentors page)
+    if (availableForCalls) {
+      filteredContributors = filteredContributors.filter((c: any) => {
+        const profile = c.profile;
+        return profile?.isAvailableForCalls === true && profile?.hourlyRate > 0;
+      });
+    }
+
     // Filter by procedure if specified
-    let filteredContributors = allContributors || [];
     if (procedure) {
       filteredContributors = filteredContributors.filter(
         (c: any) => c.profile?.procedureType === procedure

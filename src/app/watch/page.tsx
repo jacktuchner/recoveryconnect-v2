@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import RecordingCard from "@/components/RecordingCard";
+import SeriesCard from "@/components/SeriesCard";
 import FilterSidebar from "@/components/FilterSidebar";
 import ContentAcknowledgmentModal from "@/components/ContentAcknowledgmentModal";
 import DisclaimerBanner from "@/components/DisclaimerBanner";
@@ -31,6 +32,7 @@ function WatchContent() {
   const [sortBy, setSortBy] = useState<SortOption>("match");
   const [searchQuery, setSearchQuery] = useState("");
   const [recordings, setRecordings] = useState<any[]>([]);
+  const [series, setSeries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
   const [showMobileFilters, setShowMobileFilters] = useState(false);
@@ -41,12 +43,22 @@ function WatchContent() {
     params.set("page", pagination.page.toString());
 
     try {
-      const res = await fetch(`/api/recordings?${params}`);
-      const data = await res.json();
-      setRecordings(data.recordings || []);
-      setPagination(data.pagination || { page: 1, totalPages: 1, total: 0 });
+      // Fetch both recordings and series in parallel
+      const [recordingsRes, seriesRes] = await Promise.all([
+        fetch(`/api/recordings?${params}`),
+        fetch(`/api/series?status=PUBLISHED`),
+      ]);
+
+      const recordingsData = await recordingsRes.json();
+      setRecordings(recordingsData.recordings || []);
+      setPagination(recordingsData.pagination || { page: 1, totalPages: 1, total: 0 });
+
+      if (seriesRes.ok) {
+        const seriesData = await seriesRes.json();
+        setSeries(seriesData.series || []);
+      }
     } catch (err) {
-      console.error("Error fetching recordings:", err);
+      console.error("Error fetching data:", err);
     } finally {
       setLoading(false);
     }
@@ -90,6 +102,26 @@ function WatchContent() {
 
     // Category filter
     if (filters.categories.length > 0 && !filters.categories.includes(rec.category)) {
+      return false;
+    }
+
+    return true;
+  });
+
+  // Filter series client-side
+  const filteredSeries = series.filter((s) => {
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const matchesSearch =
+        s.title?.toLowerCase().includes(query) ||
+        s.contributor?.name?.toLowerCase().includes(query) ||
+        s.description?.toLowerCase().includes(query);
+      if (!matchesSearch) return false;
+    }
+
+    // Procedure filter
+    if (filters.procedures.length > 0 && !filters.procedures.includes(s.procedureType)) {
       return false;
     }
 
@@ -282,6 +314,37 @@ function WatchContent() {
 
             {/* Content */}
             <div className="flex-1">
+              {/* Series Section */}
+              {!loading && filteredSeries.length > 0 && (
+                <div className="mb-8">
+                  <div className="flex items-center gap-2 mb-4">
+                    <h2 className="text-lg font-semibold text-gray-900">Recovery Series</h2>
+                    <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+                      Bundle & Save
+                    </span>
+                  </div>
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                    {filteredSeries.map((s: any) => (
+                      <SeriesCard
+                        key={s.id}
+                        id={s.id}
+                        title={s.title}
+                        contributorName={s.contributor?.name || "Anonymous"}
+                        procedureType={s.procedureType}
+                        recordingCount={s.recordingCount}
+                        totalValue={s.totalValue}
+                        discountedPrice={s.discountedPrice}
+                        discountPercent={s.discountPercent}
+                        totalDuration={s.totalDuration}
+                        matchScore={s.matchScore}
+                        matchBreakdown={s.matchBreakdown}
+                      />
+                    ))}
+                  </div>
+                  <hr className="border-gray-200" />
+                </div>
+              )}
+
               {/* Results count */}
               {!loading && (
                 <p className="text-sm text-gray-500 mb-4">

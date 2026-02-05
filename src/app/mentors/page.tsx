@@ -6,6 +6,7 @@ import Link from "next/link";
 import FilterSidebar from "@/components/FilterSidebar";
 import ContentAcknowledgmentModal from "@/components/ContentAcknowledgmentModal";
 import DisclaimerBanner from "@/components/DisclaimerBanner";
+import { getTimeSinceSurgeryLabel } from "@/lib/surgeryDate";
 
 const activityLabels: Record<string, string> = {
   SEDENTARY: "Sedentary",
@@ -33,6 +34,7 @@ interface Contributor {
     ageRange?: string;
     activityLevel?: string;
     recoveryGoals?: string[];
+    surgeryDate?: string;
     timeSinceSurgery?: string;
     hourlyRate?: number;
     isAvailableForCalls?: boolean;
@@ -135,9 +137,11 @@ function MentorCard({ contributor }: { contributor: Contributor }) {
               {activityLabels[profile.activityLevel] || profile.activityLevel}
             </span>
           )}
-          {profile.timeSinceSurgery && (
+          {(profile.surgeryDate || profile.timeSinceSurgery) && (
             <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">
-              {profile.timeSinceSurgery} post-op
+              {profile.surgeryDate
+                ? getTimeSinceSurgeryLabel(profile.surgeryDate)
+                : `${profile.timeSinceSurgery} post-op`}
             </span>
           )}
         </div>

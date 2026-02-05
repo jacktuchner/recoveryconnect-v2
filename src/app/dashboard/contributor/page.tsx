@@ -5,8 +5,9 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   PROCEDURE_TYPES, AGE_RANGES, ACTIVITY_LEVELS, RECOVERY_GOALS,
-  TIME_SINCE_SURGERY, MIN_CALL_RATE, MAX_CALL_RATE, COMPLICATING_FACTORS,
+  MIN_CALL_RATE, MAX_CALL_RATE, COMPLICATING_FACTORS,
 } from "@/lib/constants";
+import { getTimeSinceSurgery, getTimeSinceSurgeryLabel, formatSurgeryDate } from "@/lib/surgeryDate";
 import RecordingForm from "@/components/RecordingForm";
 import ContributorGuidelines from "@/components/ContributorGuidelines";
 import StripeConnectSetup from "@/components/StripeConnectSetup";
@@ -17,7 +18,8 @@ import Link from "next/link";
 
 interface ProcedureProfile {
   procedureDetails?: string;
-  timeSinceSurgery?: string;
+  surgeryDate?: string;
+  timeSinceSurgery?: string; // Computed from surgeryDate, kept for backwards compatibility
   recoveryGoals?: string[];
   complicatingFactors?: string[];
 }
@@ -50,6 +52,7 @@ export default function ContributorDashboard() {
   const [editingProcedure, setEditingProcedure] = useState<string | null>(null);
   const [procForm, setProcForm] = useState<ProcedureProfile>({
     procedureDetails: "",
+    surgeryDate: "",
     timeSinceSurgery: "",
     recoveryGoals: [],
     complicatingFactors: [],
@@ -149,8 +152,19 @@ export default function ContributorDashboard() {
 
   // Helper to get procedure-specific data
   function getProcedureData(proc: string): ProcedureProfile {
-    return procedureProfiles[proc] || {
+    const procProfile = procedureProfiles[proc];
+    if (procProfile) {
+      return {
+        ...procProfile,
+        // Compute timeSinceSurgery from surgeryDate if available
+        timeSinceSurgery: procProfile.surgeryDate
+          ? getTimeSinceSurgery(procProfile.surgeryDate) || procProfile.timeSinceSurgery
+          : procProfile.timeSinceSurgery,
+      };
+    }
+    return {
       procedureDetails: proc === profile?.procedureType ? profile?.procedureDetails : "",
+      surgeryDate: proc === profile?.procedureType ? profile?.surgeryDate : "",
       timeSinceSurgery: proc === profile?.procedureType ? profile?.timeSinceSurgery : "",
       recoveryGoals: proc === profile?.procedureType ? profile?.recoveryGoals : [],
       complicatingFactors: proc === profile?.procedureType ? profile?.complicatingFactors : [],
@@ -161,6 +175,7 @@ export default function ContributorDashboard() {
     const data = getProcedureData(proc);
     setProcForm({
       procedureDetails: data.procedureDetails || "",
+      surgeryDate: data.surgeryDate || "",
       timeSinceSurgery: data.timeSinceSurgery || "",
       recoveryGoals: data.recoveryGoals || [],
       complicatingFactors: data.complicatingFactors || [],
@@ -171,9 +186,19 @@ export default function ContributorDashboard() {
   async function saveProcedureData(proc: string) {
     setSaving(true);
     try {
+      // Compute timeSinceSurgery from surgeryDate
+      const computedTimeSince = procForm.surgeryDate
+        ? getTimeSinceSurgery(procForm.surgeryDate)
+        : procForm.timeSinceSurgery;
+
+      const procData = {
+        ...procForm,
+        timeSinceSurgery: computedTimeSince,
+      };
+
       const updatedProfiles = {
         ...procedureProfiles,
-        [proc]: procForm,
+        [proc]: procData,
       };
 
       const res = await fetch("/api/profile", {
@@ -185,10 +210,11 @@ export default function ContributorDashboard() {
           procedureProfiles: updatedProfiles,
           // Also update legacy fields if this is the primary procedure
           ...(proc === profile?.procedureType && {
-            procedureDetails: procForm.procedureDetails,
-            timeSinceSurgery: procForm.timeSinceSurgery,
-            recoveryGoals: procForm.recoveryGoals,
-            complicatingFactors: procForm.complicatingFactors,
+            procedureDetails: procData.procedureDetails,
+            surgeryDate: procData.surgeryDate,
+            timeSinceSurgery: computedTimeSince,
+            recoveryGoals: procData.recoveryGoals,
+            complicatingFactors: procData.complicatingFactors,
           }),
         }),
       });
@@ -213,6 +239,7 @@ export default function ContributorDashboard() {
         ...procedureProfiles,
         [newProcedure]: {
           procedureDetails: "",
+          surgeryDate: "",
           timeSinceSurgery: "",
           recoveryGoals: [],
           complicatingFactors: [],
@@ -706,7 +733,9 @@ export default function ContributorDashboard() {
                     <div>
                       <h3 className="font-semibold text-gray-900">{proc}</h3>
                       <p className="text-sm text-gray-500">
-                        {procData.timeSinceSurgery || "Time not set"}
+                        {procData.surgeryDate
+                          ? getTimeSinceSurgeryLabel(procData.surgeryDate)
+                          : (procData.timeSinceSurgery || "Surgery date not set")}
                         {procData.recoveryGoals?.length ? ` • ${procData.recoveryGoals.length} goals` : ""}
                       </p>
                     </div>
@@ -749,17 +778,19 @@ export default function ContributorDashboard() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Time Since Surgery</label>
-                        <select
-                          value={procForm.timeSinceSurgery || ""}
-                          onChange={(e) => setProcForm((f) => ({ ...f, timeSinceSurgery: e.target.value }))}
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Surgery Date</label>
+                        <input
+                          type="date"
+                          value={procForm.surgeryDate || ""}
+                          onChange={(e) => setProcForm((f) => ({ ...f, surgeryDate: e.target.value }))}
+                          max={new Date().toISOString().split("T")[0]}
                           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                        >
-                          <option value="">Select...</option>
-                          {TIME_SINCE_SURGERY.map((t) => (
-                            <option key={t} value={t}>{t}</option>
-                          ))}
-                        </select>
+                        />
+                        {procForm.surgeryDate && (
+                          <p className="mt-1 text-sm text-teal-600 font-medium">
+                            {getTimeSinceSurgeryLabel(procForm.surgeryDate)}
+                          </p>
+                        )}
                       </div>
                     </div>
 
@@ -935,33 +966,49 @@ export default function ContributorDashboard() {
               </div>
             </div>
 
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div>
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                  <input
-                    type="checkbox"
-                    checked={sharedForm.isAvailableForCalls}
-                    onChange={(e) => setSharedForm((f) => ({ ...f, isAvailableForCalls: e.target.checked }))}
-                    className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
-                  />
-                  Available for live calls
-                </label>
-              </div>
-              {sharedForm.isAvailableForCalls && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Hourly Rate (${MIN_CALL_RATE}-${MAX_CALL_RATE})
-                  </label>
-                  <input
-                    type="number"
-                    min={MIN_CALL_RATE}
-                    max={MAX_CALL_RATE}
-                    value={sharedForm.hourlyRate}
-                    onChange={(e) => setSharedForm((f) => ({ ...f, hourlyRate: parseInt(e.target.value) || 50 }))}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                  />
+            {/* Mentoring Section */}
+            <div className="border border-cyan-200 rounded-lg p-4 bg-cyan-50">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 bg-cyan-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
                 </div>
-              )}
+                <div className="flex-1">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={sharedForm.isAvailableForCalls}
+                      onChange={(e) => setSharedForm((f) => ({ ...f, isAvailableForCalls: e.target.checked }))}
+                      className="rounded border-gray-300 text-cyan-600 focus:ring-cyan-500 w-5 h-5"
+                    />
+                    <span className="font-semibold text-gray-900">Become a Mentor</span>
+                  </label>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Offer 1-on-1 video calls with patients. You&apos;ll appear on the Mentors page and can set your availability.
+                  </p>
+                  {sharedForm.isAvailableForCalls && (
+                    <div className="mt-3">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Your Hourly Rate
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-500">$</span>
+                        <input
+                          type="number"
+                          min={MIN_CALL_RATE}
+                          max={MAX_CALL_RATE}
+                          value={sharedForm.hourlyRate}
+                          onChange={(e) => setSharedForm((f) => ({ ...f, hourlyRate: parseInt(e.target.value) || 50 }))}
+                          className="w-24 border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                        />
+                        <span className="text-gray-500">/ hour</span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">Range: ${MIN_CALL_RATE} - ${MAX_CALL_RATE}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
             <div className="flex gap-3 pt-2">
@@ -1002,10 +1049,15 @@ export default function ContributorDashboard() {
                 </p>
               </div>
               <div>
-                <p className="text-xs text-gray-500">Calls</p>
-                <p className="font-medium">
-                  {profile.isAvailableForCalls ? `Available ($${profile.hourlyRate}/hr)` : "Not available"}
-                </p>
+                <p className="text-xs text-gray-500">Mentoring</p>
+                {profile.isAvailableForCalls ? (
+                  <p className="font-medium text-cyan-700 flex items-center gap-1">
+                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                    Active (${profile.hourlyRate}/hr)
+                  </p>
+                ) : (
+                  <p className="font-medium text-gray-400">Not enabled</p>
+                )}
               </div>
             </div>
           </div>

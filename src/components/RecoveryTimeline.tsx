@@ -132,7 +132,6 @@ export default function RecoveryTimeline({ procedureType, currentWeek }: Recover
                     flex flex-col items-center px-3 py-2 rounded-lg transition-all
                     ${isSelected ? "bg-teal-100 ring-2 ring-teal-500" : ""}
                     ${hasContent ? "cursor-pointer hover:bg-gray-100" : "cursor-default opacity-50"}
-                    ${isCurrentWeek ? "ring-2 ring-cyan-400" : ""}
                   `}
                 >
                   <div
@@ -169,11 +168,11 @@ export default function RecoveryTimeline({ procedureType, currentWeek }: Recover
           {/* 12+ weeks indicator */}
           <div className="flex items-center">
             <div className="w-6 h-0.5 bg-gray-200" />
-            <div className="flex flex-col items-center px-2">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-gray-100 text-gray-500">
+            <div className="flex flex-col items-center px-3 py-2 opacity-50">
+              <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-gray-200 text-gray-600">
                 12+
               </div>
-              <span className="text-xs text-gray-400 mt-1">Beyond</span>
+              <span className="text-xs text-gray-500 mt-1">Beyond</span>
             </div>
           </div>
         </div>

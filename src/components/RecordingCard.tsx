@@ -86,8 +86,8 @@ export default function RecordingCard({
   category, durationSeconds, isVideo, price, viewCount, averageRating, matchScore, matchBreakdown,
 }: RecordingCardProps) {
   return (
-    <Link href={`/recordings/${id}`} className="block group">
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-teal-200 transition-all">
+    <Link href={`/recordings/${id}`} className="block group h-full">
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-teal-200 transition-all h-full flex flex-col">
         <div className="bg-gradient-to-br from-teal-50 to-cyan-50 p-4 relative">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-medium bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full">
@@ -118,20 +118,20 @@ export default function RecordingCard({
           )}
         </div>
 
-        <div className="p-4">
-          <h3 className="font-semibold text-gray-900 group-hover:text-teal-700 transition-colors line-clamp-2 mb-1">
+        <div className="p-4 flex flex-col flex-1">
+          <h3 className="font-semibold text-gray-900 group-hover:text-teal-700 transition-colors line-clamp-2 mb-1 min-h-[2.75rem]">
             {title}
           </h3>
           <p className="text-sm text-gray-500 mb-3">{contributorName}</p>
 
-          <div className="flex flex-wrap gap-1.5 mb-3">
-            <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{procedureType}</span>
-            <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{ageRange}</span>
-            <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{activityLabels[activityLevel] || activityLevel}</span>
-            <span className="text-xs bg-purple-50 text-purple-600 px-2 py-0.5 rounded-full">{categoryLabels[category] || category}</span>
+          <div className="flex flex-wrap gap-1.5 mb-3 min-h-[3.25rem]">
+            <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full h-fit">{procedureType}</span>
+            <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full h-fit">{ageRange}</span>
+            <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full h-fit">{activityLabels[activityLevel] || activityLevel}</span>
+            <span className="text-xs bg-purple-50 text-purple-600 px-2 py-0.5 rounded-full h-fit">{categoryLabels[category] || category}</span>
           </div>
 
-          <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center justify-between text-sm mt-auto">
             <span className="font-semibold text-teal-700">${price.toFixed(2)}</span>
             <div className="flex items-center gap-3 text-gray-400">
               {averageRating !== undefined && (

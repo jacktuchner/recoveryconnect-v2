@@ -136,6 +136,20 @@ export async function PUT(
       updateData.discountPercent = Math.min(30, Math.max(5, discountPercent));
     }
     if (status !== undefined && ["DRAFT", "PUBLISHED", "ARCHIVED"].includes(status)) {
+      // If publishing, verify there are at least 2 recordings
+      if (status === "PUBLISHED") {
+        const { count: recordingCount } = await supabase
+          .from("SeriesRecording")
+          .select("*", { count: "exact", head: true })
+          .eq("seriesId", id);
+
+        if (!recordingCount || recordingCount < 2) {
+          return NextResponse.json(
+            { error: "Series must have at least 2 recordings to publish" },
+            { status: 400 }
+          );
+        }
+      }
       updateData.status = status;
     }
 

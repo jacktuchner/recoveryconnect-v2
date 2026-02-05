@@ -98,10 +98,8 @@ export default function SeriesForm({ initialData, onSuccess, onCancel }: SeriesF
       return;
     }
 
-    if (selectedRecordingIds.length < 2) {
-      setError("Please select at least 2 recordings for a series");
-      return;
-    }
+    // Allow creating with 0 recordings - can add later
+    // Note: Need 2+ recordings to publish
 
     setError(null);
     setSaving(true);
@@ -331,7 +329,7 @@ export default function SeriesForm({ initialData, onSuccess, onCancel }: SeriesF
         )}
 
         {/* Pricing Preview */}
-        {selectedRecordingIds.length >= 2 && (
+        {selectedRecordingIds.length >= 1 && (
           <div className="bg-purple-50 rounded-lg p-4">
             <h4 className="text-sm font-medium text-purple-900 mb-2">Pricing Preview</h4>
             <div className="space-y-1 text-sm">
@@ -352,6 +350,13 @@ export default function SeriesForm({ initialData, onSuccess, onCancel }: SeriesF
         )}
 
         {/* Actions */}
+        {/* Note about publishing */}
+        {selectedRecordingIds.length < 2 && (
+          <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg p-3">
+            Note: You need at least 2 recordings to publish a series. You can create the series now and add recordings later.
+          </p>
+        )}
+
         <div className="flex justify-between pt-4">
           <button
             onClick={onCancel}
@@ -361,7 +366,7 @@ export default function SeriesForm({ initialData, onSuccess, onCancel }: SeriesF
           </button>
           <button
             onClick={handleSubmit}
-            disabled={saving || selectedRecordingIds.length < 2}
+            disabled={saving}
             className="px-5 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {saving ? "Saving..." : isEditing ? "Save Changes" : "Create Series"}

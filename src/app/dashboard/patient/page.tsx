@@ -4,13 +4,15 @@ import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { PROCEDURE_TYPES, AGE_RANGES, ACTIVITY_LEVELS, RECOVERY_GOALS, COMPLICATING_FACTORS, LIFESTYLE_CONTEXTS, TIME_SINCE_SURGERY } from "@/lib/constants";
+import { PROCEDURE_TYPES, AGE_RANGES, ACTIVITY_LEVELS, RECOVERY_GOALS, COMPLICATING_FACTORS, LIFESTYLE_CONTEXTS } from "@/lib/constants";
+import { getTimeSinceSurgery, getTimeSinceSurgeryLabel, getCurrentRecoveryWeek } from "@/lib/surgeryDate";
 import RecoveryTimeline from "@/components/RecoveryTimeline";
 import ProfileWizard from "@/components/ProfileWizard";
 import VideoCall from "@/components/VideoCall";
 
 interface ProcedureProfile {
   procedureDetails?: string;
+  surgeryDate?: string;
   timeSinceSurgery?: string;
   recoveryGoals?: string[];
   complicatingFactors?: string[];
@@ -39,6 +41,7 @@ export default function PatientDashboard() {
   // Per-procedure form
   const [procForm, setProcForm] = useState<ProcedureProfile>({
     procedureDetails: "",
+    surgeryDate: "",
     timeSinceSurgery: "",
     recoveryGoals: [],
     complicatingFactors: [],
@@ -108,8 +111,19 @@ export default function PatientDashboard() {
 
   // Helper to get procedure-specific data
   function getProcedureData(proc: string): ProcedureProfile {
-    return procedureProfiles[proc] || {
+    const procProfile = procedureProfiles[proc];
+    if (procProfile) {
+      return {
+        ...procProfile,
+        // Compute timeSinceSurgery from surgeryDate if available
+        timeSinceSurgery: procProfile.surgeryDate
+          ? getTimeSinceSurgery(procProfile.surgeryDate) || procProfile.timeSinceSurgery
+          : procProfile.timeSinceSurgery,
+      };
+    }
+    return {
       procedureDetails: proc === profile?.procedureType ? profile?.procedureDetails : "",
+      surgeryDate: proc === profile?.procedureType ? profile?.surgeryDate : "",
       timeSinceSurgery: proc === profile?.procedureType ? profile?.timeSinceSurgery : "",
       recoveryGoals: proc === profile?.procedureType ? profile?.recoveryGoals : [],
       complicatingFactors: proc === profile?.procedureType ? profile?.complicatingFactors : [],
@@ -145,6 +159,7 @@ export default function PatientDashboard() {
         ...procedureProfiles,
         [newProcedure]: {
           procedureDetails: "",
+          surgeryDate: "",
           timeSinceSurgery: "",
           recoveryGoals: [],
           complicatingFactors: [],
@@ -170,6 +185,7 @@ export default function PatientDashboard() {
         setEditingProcedure(newProcedure);
         setProcForm({
           procedureDetails: "",
+          surgeryDate: "",
           timeSinceSurgery: "",
           recoveryGoals: [],
           complicatingFactors: [],
@@ -219,6 +235,7 @@ export default function PatientDashboard() {
     const data = getProcedureData(proc);
     setProcForm({
       procedureDetails: data.procedureDetails || "",
+      surgeryDate: data.surgeryDate || "",
       timeSinceSurgery: data.timeSinceSurgery || "",
       recoveryGoals: data.recoveryGoals || [],
       complicatingFactors: data.complicatingFactors || [],
@@ -229,9 +246,19 @@ export default function PatientDashboard() {
   async function saveProcedureData(proc: string) {
     setSaving(true);
     try {
+      // Compute timeSinceSurgery from surgeryDate
+      const computedTimeSince = procForm.surgeryDate
+        ? getTimeSinceSurgery(procForm.surgeryDate)
+        : procForm.timeSinceSurgery;
+
+      const procData = {
+        ...procForm,
+        timeSinceSurgery: computedTimeSince,
+      };
+
       const updatedProfiles = {
         ...procedureProfiles,
-        [proc]: procForm,
+        [proc]: procData,
       };
 
       const res = await fetch("/api/profile", {
@@ -243,9 +270,10 @@ export default function PatientDashboard() {
           procedureProfiles: updatedProfiles,
           // Also update legacy fields if this is the primary procedure
           ...(proc === profile?.procedureType && {
-            procedureDetails: procForm.procedureDetails,
-            timeSinceSurgery: procForm.timeSinceSurgery,
-            recoveryGoals: procForm.recoveryGoals,
+            procedureDetails: procData.procedureDetails,
+            surgeryDate: procData.surgeryDate,
+            timeSinceSurgery: computedTimeSince,
+            recoveryGoals: procData.recoveryGoals,
             complicatingFactors: procForm.complicatingFactors,
           }),
         }),
@@ -489,7 +517,9 @@ export default function PatientDashboard() {
                         )}
                       </div>
                       <p className="text-sm text-gray-500">
-                        {procData.timeSinceSurgery || "Time not set"}
+                        {procData.surgeryDate
+                          ? getTimeSinceSurgeryLabel(procData.surgeryDate)
+                          : (procData.timeSinceSurgery || "Surgery date not set")}
                         {procData.recoveryGoals?.length ? ` • ${procData.recoveryGoals.length} goals` : ""}
                       </p>
                     </div>
@@ -538,17 +568,18 @@ export default function PatientDashboard() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Time Since Surgery</label>
-                        <select
-                          value={procForm.timeSinceSurgery || ""}
-                          onChange={(e) => setProcForm((f) => ({ ...f, timeSinceSurgery: e.target.value }))}
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Surgery Date</label>
+                        <input
+                          type="date"
+                          value={procForm.surgeryDate || ""}
+                          onChange={(e) => setProcForm((f) => ({ ...f, surgeryDate: e.target.value }))}
                           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                        >
-                          <option value="">Select...</option>
-                          {TIME_SINCE_SURGERY.map((t) => (
-                            <option key={t} value={t}>{t}</option>
-                          ))}
-                        </select>
+                        />
+                        {procForm.surgeryDate && (
+                          <p className="mt-1 text-sm text-teal-600 font-medium">
+                            {getTimeSinceSurgeryLabel(procForm.surgeryDate)}
+                          </p>
+                        )}
                       </div>
                     </div>
 
@@ -843,7 +874,10 @@ export default function PatientDashboard() {
       {/* Recovery Timeline */}
       {activeProcedure && (
         <section className="mb-8">
-          <RecoveryTimeline procedureType={activeProcedure} />
+          <RecoveryTimeline
+            procedureType={activeProcedure}
+            currentWeek={getCurrentRecoveryWeek(getProcedureData(activeProcedure).surgeryDate) ?? undefined}
+          />
         </section>
       )}
 

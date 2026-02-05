@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { getPublicDisplayName } from "@/lib/displayName";
+import { calculateMatchScore } from "@/lib/matching";
 import { v4 as uuidv4 } from "uuid";
 
 // GET /api/series - List series with optional filtering
@@ -24,10 +25,10 @@ export async function GET(req: NextRequest) {
       .from("RecordingSeries")
       .select(
         `*,
-        contributor:User!RecordingSeries_contributorId_fkey(id, name, displayName, showRealName),
+        contributor:User!RecordingSeries_contributorId_fkey(id, name, displayName, showRealName, profile:Profile(*)),
         recordings:SeriesRecording(
           id, sequenceNumber,
-          recording:Recording(id, title, price, durationSeconds, isVideo, status)
+          recording:Recording(id, title, price, durationSeconds, isVideo, status, ageRange, activityLevel, recoveryGoals)
         )`,
         { count: "exact" }
       );
@@ -52,8 +53,19 @@ export async function GET(req: NextRequest) {
 
     const total = count || 0;
 
+    // Get user profile for match scoring
+    let userProfile: any = null;
+    if (session?.user) {
+      const { data: profile } = await supabase
+        .from("Profile")
+        .select("*")
+        .eq("userId", userId)
+        .single();
+      userProfile = profile;
+    }
+
     // Transform series data
-    const transformedSeries = (series || []).map((s: any) => {
+    let transformedSeries = (series || []).map((s: any) => {
       // Sort recordings by sequence number
       const sortedRecordings = (s.recordings || [])
         .sort((a: any, b: any) => a.sequenceNumber - b.sequenceNumber)
@@ -64,6 +76,43 @@ export async function GET(req: NextRequest) {
       const totalValue = sortedRecordings.reduce((sum: number, r: any) => sum + (r?.price || 0), 0);
       const discountedPrice = totalValue * (1 - s.discountPercent / 100);
       const totalDuration = sortedRecordings.reduce((sum: number, r: any) => sum + (r?.durationSeconds || 0), 0);
+
+      // Calculate match score if user is logged in
+      let matchScore: number | undefined;
+      let matchBreakdown: { attribute: string; matched: boolean; weight: number }[] | undefined;
+      if (userProfile) {
+        const activeProc = userProfile.activeProcedureType || userProfile.procedureType;
+        const procProfiles = userProfile.procedureProfiles || {};
+        const activeProcProfile = procProfiles[activeProc] || {};
+
+        const seekerGoals = activeProcProfile.recoveryGoals || userProfile.recoveryGoals || [];
+        const seekerFactors = activeProcProfile.complicatingFactors || userProfile.complicatingFactors || [];
+
+        // Use the first recording's attributes as representative, or fall back to contributor profile
+        const firstRec = sortedRecordings[0];
+        const contributorProfile = s.contributor?.profile;
+
+        const score = calculateMatchScore(
+          {
+            procedureType: activeProc,
+            ageRange: userProfile.ageRange,
+            activityLevel: userProfile.activityLevel,
+            recoveryGoals: seekerGoals,
+            complicatingFactors: seekerFactors,
+            lifestyleContext: userProfile.lifestyleContext || [],
+          },
+          {
+            procedureType: s.procedureType,
+            ageRange: firstRec?.ageRange || contributorProfile?.ageRange || "",
+            activityLevel: firstRec?.activityLevel || contributorProfile?.activityLevel || "",
+            recoveryGoals: firstRec?.recoveryGoals || contributorProfile?.recoveryGoals || [],
+            complicatingFactors: contributorProfile?.complicatingFactors || [],
+            lifestyleContext: contributorProfile?.lifestyleContext || [],
+          }
+        );
+        matchScore = score.score;
+        matchBreakdown = score.breakdown;
+      }
 
       return {
         ...s,
@@ -79,8 +128,15 @@ export async function GET(req: NextRequest) {
         discountedPrice,
         savings: totalValue - discountedPrice,
         totalDuration,
+        matchScore,
+        matchBreakdown,
       };
     });
+
+    // Sort by match score if user is logged in
+    if (userProfile) {
+      transformedSeries = transformedSeries.sort((a: any, b: any) => (b.matchScore || 0) - (a.matchScore || 0));
+    }
 
     return NextResponse.json({
       series: transformedSeries,
@@ -193,10 +249,10 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json(series, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error creating series:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: error?.message || "Internal server error" },
       { status: 500 }
     );
   }
