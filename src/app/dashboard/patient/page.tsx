@@ -876,7 +876,7 @@ export default function PatientDashboard() {
         <section className="mb-8">
           <RecoveryTimeline
             procedureType={activeProcedure}
-            currentWeek={getCurrentRecoveryWeek(getProcedureData(activeProcedure).surgeryDate) ?? undefined}
+            currentWeek={getCurrentRecoveryWeek(getProcedureData(activeProcedure).surgeryDate || null) ?? undefined}
           />
         </section>
       )}
