@@ -10,8 +10,8 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
           <div className="max-w-3xl">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6">
-              Recovery guidance from people who
-              <span className="text-teal-200"> actually had it</span>
+              Recovery guidance from people who've
+              <span className="text-teal-200"> actually been through it</span>
             </h1>
             <p className="text-lg sm:text-xl text-teal-100 mb-8 leading-relaxed">
               Your doctor tells you what to expect medically. We connect you with
