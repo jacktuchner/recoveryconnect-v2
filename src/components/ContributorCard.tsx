@@ -18,9 +18,14 @@ interface ContributorCardProps {
 
 const activityLabels: Record<string, string> = {
   SEDENTARY: "Sedentary",
-  RECREATIONAL: "Recreational",
-  COMPETITIVE_ATHLETE: "Competitive Athlete",
-  PROFESSIONAL_ATHLETE: "Professional Athlete",
+  LIGHTLY_ACTIVE: "Lightly Active",
+  MODERATELY_ACTIVE: "Moderately Active",
+  ACTIVE: "Active",
+  ATHLETE: "Athlete",
+  // Legacy values for backwards compatibility
+  RECREATIONAL: "Moderately Active",
+  COMPETITIVE_ATHLETE: "Athlete",
+  PROFESSIONAL_ATHLETE: "Athlete",
 };
 
 export default function ContributorCard({

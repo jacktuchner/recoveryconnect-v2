@@ -31,9 +31,14 @@ const categoryLabels: Record<string, string> = {
 
 const activityLabels: Record<string, string> = {
   SEDENTARY: "Sedentary",
-  RECREATIONAL: "Recreational",
-  COMPETITIVE_ATHLETE: "Competitive",
-  PROFESSIONAL_ATHLETE: "Professional",
+  LIGHTLY_ACTIVE: "Lightly Active",
+  MODERATELY_ACTIVE: "Moderately Active",
+  ACTIVE: "Active",
+  ATHLETE: "Athlete",
+  // Legacy values for backwards compatibility
+  RECREATIONAL: "Moderately Active",
+  COMPETITIVE_ATHLETE: "Athlete",
+  PROFESSIONAL_ATHLETE: "Athlete",
 };
 
 function formatDuration(seconds: number): string {

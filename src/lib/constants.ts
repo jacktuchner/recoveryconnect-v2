@@ -2,13 +2,17 @@ export const PROCEDURE_TYPES = [
   "ACL Reconstruction",
   "Total Hip Replacement",
   "Total Knee Replacement",
+  "Total Shoulder Replacement",
   "Spinal Fusion",
+  "Laminectomy",
   "Rotator Cuff Repair",
   "Meniscus Repair",
   "Shoulder Labrum Repair",
   "Ankle Reconstruction",
   "Carpal Tunnel Release",
   "Hernia Repair",
+  "Gallbladder Removal",
+  "Hysterectomy",
 ] as const;
 
 export const PROCEDURE_DETAILS: Record<string, string[]> = {
@@ -30,6 +34,26 @@ export const PROCEDURE_DETAILS: Record<string, string[]> = {
     "Cervical",
     "Multi-level",
   ],
+  "Laminectomy": [
+    "Lumbar (lower back)",
+    "Cervical (neck)",
+    "Thoracic (mid-back)",
+  ],
+  "Total Shoulder Replacement": [
+    "Total shoulder replacement",
+    "Reverse shoulder replacement",
+    "Partial shoulder replacement",
+  ],
+  "Gallbladder Removal": [
+    "Laparoscopic",
+    "Open surgery",
+  ],
+  "Hysterectomy": [
+    "Laparoscopic",
+    "Abdominal",
+    "Vaginal",
+    "Robotic-assisted",
+  ],
 };
 
 export const AGE_RANGES = [
@@ -43,10 +67,11 @@ export const AGE_RANGES = [
 ] as const;
 
 export const ACTIVITY_LEVELS = [
-  { value: "SEDENTARY", label: "Sedentary" },
-  { value: "RECREATIONAL", label: "Recreational" },
-  { value: "COMPETITIVE_ATHLETE", label: "Competitive Athlete" },
-  { value: "PROFESSIONAL_ATHLETE", label: "Professional Athlete" },
+  { value: "SEDENTARY", label: "Sedentary", description: "Mostly desk work, minimal exercise" },
+  { value: "LIGHTLY_ACTIVE", label: "Lightly Active", description: "Light walking, gentle yoga, basic daily activities" },
+  { value: "MODERATELY_ACTIVE", label: "Moderately Active", description: "Exercise 2-3x/week (gym, swimming, hiking)" },
+  { value: "ACTIVE", label: "Active", description: "Regular exercise 4-5x/week" },
+  { value: "ATHLETE", label: "Athlete", description: "Training/competition is a major life focus" },
 ] as const;
 
 export const RECOVERY_GOALS = [
