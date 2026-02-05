@@ -13,7 +13,7 @@ export async function GET() {
 
     const { data: user, error } = await supabase
       .from("User")
-      .select("id, name, displayName, showRealName")
+      .select("id, name, displayName, showRealName, bio")
       .eq("id", (session.user as any).id)
       .single();
 
@@ -23,6 +23,7 @@ export async function GET() {
       name: user.name,
       displayName: user.displayName,
       showRealName: user.showRealName ?? true,
+      bio: user.bio || "",
     });
   } catch (error) {
     console.error("Error fetching user settings:", error);
@@ -30,7 +31,7 @@ export async function GET() {
   }
 }
 
-// PATCH /api/user/settings - Update user's privacy settings
+// PATCH /api/user/settings - Update user's privacy settings and bio
 export async function PATCH(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -39,7 +40,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { displayName, showRealName } = body;
+    const { displayName, showRealName, bio } = body;
 
     const updateData: Record<string, any> = {
       updatedAt: new Date().toISOString(),
@@ -67,11 +68,22 @@ export async function PATCH(req: NextRequest) {
       updateData.showRealName = showRealName;
     }
 
+    if (typeof bio === "string") {
+      // Validate bio length
+      if (bio.length > 500) {
+        return NextResponse.json(
+          { error: "Bio must be 500 characters or less" },
+          { status: 400 }
+        );
+      }
+      updateData.bio = bio || null;
+    }
+
     const { data: user, error } = await supabase
       .from("User")
       .update(updateData)
       .eq("id", (session.user as any).id)
-      .select("id, name, displayName, showRealName")
+      .select("id, name, displayName, showRealName, bio")
       .single();
 
     if (error) throw error;
@@ -80,6 +92,7 @@ export async function PATCH(req: NextRequest) {
       name: user.name,
       displayName: user.displayName,
       showRealName: user.showRealName ?? true,
+      bio: user.bio || "",
     });
   } catch (error) {
     console.error("Error updating user settings:", error);

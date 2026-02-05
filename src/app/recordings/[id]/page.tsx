@@ -216,10 +216,23 @@ export default function RecordingDetailPage() {
           <div className="p-6 sm:p-8">
             <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
               <div>
-                <span className="text-xs bg-purple-50 text-purple-600 px-2 py-0.5 rounded-full">
-                  {categoryLabels[recording.category] || recording.category}
-                </span>
-                <h1 className="text-2xl font-bold mt-2">{recording.title}</h1>
+                <div className="flex flex-wrap items-center gap-2 mb-2">
+                  <span className="text-xs bg-purple-50 text-purple-600 px-2 py-0.5 rounded-full">
+                    {categoryLabels[recording.category] || recording.category}
+                  </span>
+                  {recording.series && (
+                    <Link
+                      href={`/series/${recording.series.id}`}
+                      className="text-xs bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full hover:bg-indigo-100 transition-colors flex items-center gap-1"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                      </svg>
+                      Part of: {recording.series.title}
+                    </Link>
+                  )}
+                </div>
+                <h1 className="text-2xl font-bold">{recording.title}</h1>
               </div>
               <div className="text-right">
                 {canViewContent ? (

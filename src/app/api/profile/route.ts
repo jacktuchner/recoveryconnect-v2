@@ -90,6 +90,8 @@ export async function POST(req: NextRequest) {
         lifestyleContext: body.lifestyleContext || [],
         hourlyRate: body.hourlyRate || null,
         isAvailableForCalls: body.isAvailableForCalls || false,
+        introVideoUrl: body.introVideoUrl || null,
+        introVideoDuration: body.introVideoDuration || null,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       })
@@ -155,6 +157,14 @@ export async function PUT(req: NextRequest) {
     // Update activeProcedureType if provided
     if (body.activeProcedureType !== undefined) {
       updateData.activeProcedureType = body.activeProcedureType;
+    }
+
+    // Update intro video fields if provided
+    if (body.introVideoUrl !== undefined) {
+      updateData.introVideoUrl = body.introVideoUrl || null;
+    }
+    if (body.introVideoDuration !== undefined) {
+      updateData.introVideoDuration = body.introVideoDuration || null;
     }
 
     const { data: profile, error } = await supabase

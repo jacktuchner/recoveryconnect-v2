@@ -55,6 +55,30 @@ export default function ContributorDetailPage() {
         &larr; Back to Contributors
       </Link>
 
+      {/* Intro Video */}
+      {contributor.profile?.introVideoUrl && (
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6">
+          <video
+            src={contributor.profile.introVideoUrl}
+            controls
+            autoPlay
+            muted
+            playsInline
+            className="w-full max-h-96 bg-black"
+          />
+          <div className="px-4 py-2 bg-gray-50 border-t border-gray-100">
+            <p className="text-sm text-gray-600">
+              Meet {contributor.name?.split(" ")[0] || "this contributor"}
+              {contributor.profile.introVideoDuration && (
+                <span className="text-gray-400 ml-2">
+                  ({Math.floor(contributor.profile.introVideoDuration / 60)}:{(contributor.profile.introVideoDuration % 60).toString().padStart(2, "0")})
+                </span>
+              )}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Profile Header */}
       <div className="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 mb-8">
         <div className="flex items-start gap-4 mb-6">

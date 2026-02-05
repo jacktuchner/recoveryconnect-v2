@@ -12,6 +12,8 @@ import ContributorGuidelines from "@/components/ContributorGuidelines";
 import StripeConnectSetup from "@/components/StripeConnectSetup";
 import AvailabilityManager from "@/components/AvailabilityManager";
 import VideoCall from "@/components/VideoCall";
+import SeriesForm from "@/components/SeriesForm";
+import Link from "next/link";
 
 interface ProcedureProfile {
   procedureDetails?: string;
@@ -26,7 +28,14 @@ export default function ContributorDashboard() {
   const [profile, setProfile] = useState<any>(null);
   const [recordings, setRecordings] = useState<any[]>([]);
   const [calls, setCalls] = useState<any[]>([]);
+  const [series, setSeries] = useState<any[]>([]);
   const [showRecordingForm, setShowRecordingForm] = useState(false);
+  const [showSeriesForm, setShowSeriesForm] = useState(false);
+  const [editingSeries, setEditingSeries] = useState<any>(null);
+  const [deletingSeries, setDeletingSeries] = useState<string | null>(null);
+  const [editingRecording, setEditingRecording] = useState<any>(null);
+  const [deletingRecording, setDeletingRecording] = useState<string | null>(null);
+  const [savingRecording, setSavingRecording] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [upgradingRole, setUpgradingRole] = useState(false);
@@ -62,6 +71,15 @@ export default function ContributorDashboard() {
   const [savingPrivacy, setSavingPrivacy] = useState(false);
   const [privacySaved, setPrivacySaved] = useState(false);
 
+  // Bio and intro video state
+  const [bio, setBio] = useState("");
+  const [introVideoUrl, setIntroVideoUrl] = useState<string | null>(null);
+  const [introVideoDuration, setIntroVideoDuration] = useState<number | null>(null);
+  const [savingBio, setSavingBio] = useState(false);
+  const [bioSaved, setBioSaved] = useState(false);
+  const [uploadingIntroVideo, setUploadingIntroVideo] = useState(false);
+  const [introVideoError, setIntroVideoError] = useState<string | null>(null);
+
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/auth/signin");
@@ -69,6 +87,7 @@ export default function ContributorDashboard() {
 
   useEffect(() => {
     if (!session?.user) return;
+    const userId = (session.user as any).id;
     async function load() {
       try {
         const [profileRes, callsRes, settingsRes] = await Promise.all([
@@ -86,8 +105,17 @@ export default function ContributorDashboard() {
               hourlyRate: p.hourlyRate || 50,
               isAvailableForCalls: p.isAvailableForCalls || false,
             });
-            const recRes = await fetch("/api/recordings/mine");
+            setIntroVideoUrl(p.introVideoUrl || null);
+            setIntroVideoDuration(p.introVideoDuration || null);
+            const [recRes, seriesRes] = await Promise.all([
+              fetch("/api/recordings/mine"),
+              fetch(`/api/series?contributorId=${userId}`),
+            ]);
             if (recRes.ok) setRecordings(await recRes.json());
+            if (seriesRes.ok) {
+              const seriesData = await seriesRes.json();
+              setSeries(seriesData.series || []);
+            }
           } else {
             // New contributor - show add procedure flow
             setShowAddProcedure(true);
@@ -100,6 +128,7 @@ export default function ContributorDashboard() {
             showRealName: settings.showRealName ?? true,
             displayName: settings.displayName || "",
           });
+          setBio(settings.bio || "");
         }
       } catch (err) {
         console.error(err);
@@ -310,6 +339,273 @@ export default function ContributorDashboard() {
       console.error(err);
     } finally {
       setSavingPrivacy(false);
+    }
+  }
+
+  async function saveBio() {
+    setSavingBio(true);
+    setBioSaved(false);
+    try {
+      const res = await fetch("/api/user/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bio }),
+      });
+      if (res.ok) {
+        setBioSaved(true);
+        setTimeout(() => setBioSaved(false), 3000);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSavingBio(false);
+    }
+  }
+
+  async function handleIntroVideoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ["video/mp4", "video/webm"];
+    if (!allowedTypes.includes(file.type)) {
+      setIntroVideoError("Please upload an MP4 or WebM video file");
+      return;
+    }
+
+    // Validate file size (max 50MB)
+    if (file.size > 50 * 1024 * 1024) {
+      setIntroVideoError("Video must be under 50MB");
+      return;
+    }
+
+    setUploadingIntroVideo(true);
+    setIntroVideoError(null);
+
+    try {
+      // Get video duration
+      const duration = await new Promise<number>((resolve) => {
+        const video = document.createElement("video");
+        video.preload = "metadata";
+        video.onloadedmetadata = () => {
+          resolve(Math.round(video.duration));
+        };
+        video.src = URL.createObjectURL(file);
+      });
+
+      // Get presigned URL
+      const presignedRes = await fetch("/api/upload/presigned", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          filename: `intro-video-${Date.now()}.${file.type.split("/")[1]}`,
+          contentType: file.type,
+        }),
+      });
+
+      if (!presignedRes.ok) {
+        const err = await presignedRes.json();
+        throw new Error(err.error || "Failed to get upload URL");
+      }
+
+      const { uploadUrl, fileUrl } = await presignedRes.json();
+
+      // Upload to S3
+      const uploadRes = await fetch(uploadUrl, {
+        method: "PUT",
+        body: file,
+        headers: { "Content-Type": file.type },
+      });
+
+      if (!uploadRes.ok) {
+        throw new Error("Failed to upload video");
+      }
+
+      // Save to profile
+      const profileRes = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...sharedForm,
+          procedureTypes: procedures,
+          procedureProfiles: procedureProfiles,
+          introVideoUrl: fileUrl,
+          introVideoDuration: duration,
+        }),
+      });
+
+      if (profileRes.ok) {
+        const updated = await profileRes.json();
+        setProfile(updated);
+        setIntroVideoUrl(fileUrl);
+        setIntroVideoDuration(duration);
+      }
+    } catch (err) {
+      console.error("Error uploading intro video:", err);
+      setIntroVideoError(err instanceof Error ? err.message : "Failed to upload video");
+    } finally {
+      setUploadingIntroVideo(false);
+    }
+  }
+
+  async function removeIntroVideo() {
+    if (!confirm("Remove your intro video?")) return;
+
+    try {
+      const res = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...sharedForm,
+          procedureTypes: procedures,
+          procedureProfiles: procedureProfiles,
+          introVideoUrl: null,
+          introVideoDuration: null,
+        }),
+      });
+
+      if (res.ok) {
+        const updated = await res.json();
+        setProfile(updated);
+        setIntroVideoUrl(null);
+        setIntroVideoDuration(null);
+      }
+    } catch (err) {
+      console.error("Error removing intro video:", err);
+    }
+  }
+
+  async function startEditingSeries(seriesId: string) {
+    try {
+      const res = await fetch(`/api/series/${seriesId}`);
+      if (res.ok) {
+        const seriesData = await res.json();
+        setEditingSeries({
+          id: seriesData.id,
+          title: seriesData.title,
+          description: seriesData.description || "",
+          procedureType: seriesData.procedureType,
+          discountPercent: seriesData.discountPercent,
+          recordingIds: seriesData.recordings?.map((r: any) => r.id) || [],
+          status: seriesData.status,
+        });
+        setShowSeriesForm(true);
+      }
+    } catch (err) {
+      console.error("Error loading series for edit:", err);
+    }
+  }
+
+  async function handleSeriesUpdate(updatedSeries: any) {
+    // Refetch the series to get full data
+    try {
+      const res = await fetch(`/api/series/${updatedSeries.id}`);
+      if (res.ok) {
+        const fullSeries = await res.json();
+        setSeries((prev) => prev.map((s) => (s.id === updatedSeries.id ? fullSeries : s)));
+      }
+    } catch (err) {
+      // Fallback to using what we have
+      setSeries((prev) => prev.map((s) => (s.id === updatedSeries.id ? updatedSeries : s)));
+    }
+    setEditingSeries(null);
+    setShowSeriesForm(false);
+  }
+
+  async function deleteSeries(seriesId: string) {
+    if (!confirm("Are you sure you want to delete this series? This cannot be undone.")) {
+      return;
+    }
+
+    setDeletingSeries(seriesId);
+    try {
+      const res = await fetch(`/api/series/${seriesId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setSeries((prev) => prev.filter((s) => s.id !== seriesId));
+      } else {
+        const data = await res.json();
+        alert(data.error || "Failed to delete series");
+      }
+    } catch (err) {
+      console.error("Error deleting series:", err);
+      alert("Failed to delete series");
+    } finally {
+      setDeletingSeries(null);
+    }
+  }
+
+  async function updateSeriesStatus(seriesId: string, newStatus: string) {
+    try {
+      const res = await fetch(`/api/series/${seriesId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (res.ok) {
+        setSeries((prev) =>
+          prev.map((s) => (s.id === seriesId ? { ...s, status: newStatus } : s))
+        );
+      }
+    } catch (err) {
+      console.error("Error updating series status:", err);
+    }
+  }
+
+  async function saveRecordingEdit() {
+    if (!editingRecording) return;
+    setSavingRecording(true);
+    try {
+      const res = await fetch(`/api/recordings/${editingRecording.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: editingRecording.title,
+          description: editingRecording.description,
+          price: editingRecording.price,
+          category: editingRecording.category,
+        }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setRecordings((prev) =>
+          prev.map((r) => (r.id === updated.id ? { ...r, ...updated } : r))
+        );
+        setEditingRecording(null);
+      } else {
+        const data = await res.json();
+        alert(data.error || "Failed to save recording");
+      }
+    } catch (err) {
+      console.error("Error saving recording:", err);
+      alert("Failed to save recording");
+    } finally {
+      setSavingRecording(false);
+    }
+  }
+
+  async function deleteRecording(recordingId: string) {
+    if (!confirm("Are you sure you want to delete this recording? This cannot be undone.")) {
+      return;
+    }
+
+    setDeletingRecording(recordingId);
+    try {
+      const res = await fetch(`/api/recordings/${recordingId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setRecordings((prev) => prev.filter((r) => r.id !== recordingId));
+      } else {
+        const data = await res.json();
+        alert(data.error || "Failed to delete recording");
+      }
+    } catch (err) {
+      console.error("Error deleting recording:", err);
+      alert("Failed to delete recording");
+    } finally {
+      setDeletingRecording(null);
     }
   }
 
@@ -718,6 +1014,110 @@ export default function ContributorDashboard() {
         )}
       </section>
 
+      {/* Bio & Intro Video Section */}
+      <section className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
+        <h2 className="text-xl font-bold mb-4">Your Bio & Intro Video</h2>
+        <p className="text-sm text-gray-600 mb-6">
+          Help patients get to know you before purchasing your content or booking a call.
+        </p>
+
+        <div className="space-y-6">
+          {/* Bio */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Your Bio
+            </label>
+            <textarea
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              maxLength={500}
+              rows={4}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              placeholder="Share your recovery story, what motivates you to help others, and what patients can expect from your content..."
+            />
+            <div className="flex items-center justify-between mt-2">
+              <p className="text-xs text-gray-500">{bio.length}/500 characters</p>
+              <div className="flex items-center gap-3">
+                {bioSaved && (
+                  <span className="text-sm text-green-600 font-medium">Saved!</span>
+                )}
+                <button
+                  onClick={saveBio}
+                  disabled={savingBio}
+                  className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 disabled:opacity-50 text-sm font-medium"
+                >
+                  {savingBio ? "Saving..." : "Save Bio"}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Intro Video */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Intro Video
+            </label>
+            <p className="text-xs text-gray-500 mb-3">
+              Record a short (1-3 minute) video introducing yourself. This appears at the top of your public profile.
+            </p>
+
+            {introVideoUrl ? (
+              <div className="space-y-3">
+                <div className="rounded-lg overflow-hidden bg-black">
+                  <video
+                    src={introVideoUrl}
+                    controls
+                    className="w-full max-h-64"
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-500">
+                    {introVideoDuration ? `${Math.floor(introVideoDuration / 60)}:${(introVideoDuration % 60).toString().padStart(2, "0")}` : "Video uploaded"}
+                  </span>
+                  <button
+                    onClick={removeIntroVideo}
+                    className="text-sm text-red-600 hover:text-red-700 font-medium"
+                  >
+                    Remove Video
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <label className="block cursor-pointer">
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-teal-400 hover:bg-teal-50/50 transition-colors">
+                    {uploadingIntroVideo ? (
+                      <div className="py-4">
+                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-teal-600 border-t-transparent mb-2" />
+                        <p className="text-sm text-gray-600">Uploading video...</p>
+                      </div>
+                    ) : (
+                      <>
+                        <svg className="mx-auto h-10 w-10 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        <p className="text-sm text-gray-600 mb-1">Click to upload an intro video</p>
+                        <p className="text-xs text-gray-400">MP4 or WebM, max 50MB</p>
+                      </>
+                    )}
+                  </div>
+                  <input
+                    type="file"
+                    accept="video/mp4,video/webm"
+                    onChange={handleIntroVideoUpload}
+                    disabled={uploadingIntroVideo}
+                    className="hidden"
+                  />
+                </label>
+                {introVideoError && (
+                  <p className="text-sm text-red-600 mt-2">{introVideoError}</p>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
       {/* Privacy Settings */}
       <section className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
         <h2 className="text-xl font-bold mb-4">Privacy Settings</h2>
@@ -798,31 +1198,243 @@ export default function ContributorDashboard() {
           <p className="text-gray-500 text-center py-8">No recordings yet. Create your first one!</p>
         ) : (
           <div className="space-y-3">
-            {recordings.map((rec: any) => (
-              <div key={rec.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div>
-                  <p className="font-medium">{rec.title}</p>
-                  <p className="text-sm text-gray-500">
-                    {rec.category.replace(/_/g, " ")} &middot; ${rec.price} &middot; {rec.viewCount} views
-                    {rec.transcriptionStatus && rec.transcriptionStatus !== "NONE" && (
-                      <span className={`ml-2 ${
-                        rec.transcriptionStatus === "COMPLETED" ? "text-green-600" :
-                        rec.transcriptionStatus === "PENDING" ? "text-yellow-600" :
-                        "text-red-600"
-                      }`}>
-                        &middot; Transcription: {rec.transcriptionStatus.toLowerCase()}
-                      </span>
-                    )}
-                  </p>
+            {recordings.map((rec: any) => {
+              const isEditing = editingRecording?.id === rec.id;
+              const isDeleting = deletingRecording === rec.id;
+
+              if (isEditing) {
+                return (
+                  <div key={rec.id} className="p-4 bg-teal-50 rounded-lg border border-teal-200">
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Title</label>
+                        <input
+                          type="text"
+                          value={editingRecording.title}
+                          onChange={(e) => setEditingRecording({ ...editingRecording, title: e.target.value })}
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
+                        <textarea
+                          value={editingRecording.description || ""}
+                          onChange={(e) => setEditingRecording({ ...editingRecording, description: e.target.value })}
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                          rows={2}
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Price ($)</label>
+                          <input
+                            type="number"
+                            min={1}
+                            max={50}
+                            step={0.01}
+                            value={editingRecording.price}
+                            onChange={(e) => setEditingRecording({ ...editingRecording, price: parseFloat(e.target.value) || 9.99 })}
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Category</label>
+                          <select
+                            value={editingRecording.category}
+                            onChange={(e) => setEditingRecording({ ...editingRecording, category: e.target.value })}
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                          >
+                            <option value="WEEKLY_TIMELINE">Timeline</option>
+                            <option value="WISH_I_KNEW">Wish I Knew</option>
+                            <option value="PRACTICAL_TIPS">Practical Tips</option>
+                            <option value="MENTAL_HEALTH">Mental Health</option>
+                            <option value="RETURN_TO_ACTIVITY">Return to Activity</option>
+                            <option value="MISTAKES_AND_LESSONS">Mistakes & Lessons</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 pt-2">
+                        <button
+                          onClick={saveRecordingEdit}
+                          disabled={savingRecording}
+                          className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 disabled:opacity-50 text-sm font-medium"
+                        >
+                          {savingRecording ? "Saving..." : "Save"}
+                        </button>
+                        <button
+                          onClick={() => setEditingRecording(null)}
+                          className="text-gray-500 hover:text-gray-700 px-3 py-2 text-sm"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <div key={rec.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">{rec.title}</p>
+                    <p className="text-sm text-gray-500">
+                      {rec.category.replace(/_/g, " ")} &middot; ${rec.price} &middot; {rec.viewCount} views
+                      {rec.transcriptionStatus && rec.transcriptionStatus !== "NONE" && (
+                        <span className={`ml-2 ${
+                          rec.transcriptionStatus === "COMPLETED" ? "text-green-600" :
+                          rec.transcriptionStatus === "PENDING" ? "text-yellow-600" :
+                          "text-red-600"
+                        }`}>
+                          &middot; Transcription: {rec.transcriptionStatus.toLowerCase()}
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 ml-4">
+                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+                      rec.status === "PUBLISHED" ? "bg-green-100 text-green-700" :
+                      rec.status === "PENDING_REVIEW" ? "bg-yellow-100 text-yellow-700" :
+                      rec.status === "REJECTED" ? "bg-red-100 text-red-700" :
+                      "bg-gray-100 text-gray-600"
+                    }`}>{rec.status.replace(/_/g, " ")}</span>
+                    <button
+                      onClick={() => setEditingRecording({ ...rec })}
+                      className="text-xs text-teal-600 hover:text-teal-700 font-medium px-2 py-1"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => deleteRecording(rec.id)}
+                      disabled={isDeleting}
+                      className="text-xs text-red-500 hover:text-red-600 font-medium px-2 py-1 disabled:opacity-50"
+                    >
+                      {isDeleting ? "..." : "Delete"}
+                    </button>
+                  </div>
                 </div>
-                <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                  rec.status === "PUBLISHED" ? "bg-green-100 text-green-700" :
-                  rec.status === "PENDING_REVIEW" ? "bg-yellow-100 text-yellow-700" :
-                  rec.status === "REJECTED" ? "bg-red-100 text-red-700" :
-                  "bg-gray-100 text-gray-600"
-                }`}>{rec.status.replace(/_/g, " ")}</span>
-              </div>
-            ))}
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      {/* Recording Series */}
+      <section className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-xl font-bold">Your Series</h2>
+            <p className="text-sm text-gray-500 mt-1">
+              Bundle recordings together with a discount
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              setEditingSeries(null);
+              setShowSeriesForm(!showSeriesForm);
+            }}
+            className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 text-sm font-medium"
+          >
+            + New Series
+          </button>
+        </div>
+
+        {showSeriesForm && (
+          <div className="mb-6">
+            <SeriesForm
+              initialData={editingSeries}
+              onSuccess={(updatedSeries) => {
+                if (editingSeries) {
+                  handleSeriesUpdate(updatedSeries);
+                } else {
+                  setSeries((prev) => [updatedSeries, ...prev]);
+                  setShowSeriesForm(false);
+                }
+              }}
+              onCancel={() => {
+                setEditingSeries(null);
+                setShowSeriesForm(false);
+              }}
+            />
+          </div>
+        )}
+
+        {series.length === 0 && !showSeriesForm ? (
+          <div className="text-center py-8">
+            <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+            </div>
+            <p className="text-gray-500 mb-2">No series yet</p>
+            <p className="text-sm text-gray-400">
+              Create a series to bundle related recordings and offer a discount
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {series.map((s: any) => {
+              const recordingCount = s.recordings?.length || s.recordingCount || 0;
+              const isDeleting = deletingSeries === s.id;
+              return (
+                <div key={s.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                      <span className="text-sm font-bold text-purple-700">{recordingCount}</span>
+                    </div>
+                    <div>
+                      <Link href={`/series/${s.id}`} className="font-medium hover:text-purple-700">
+                        {s.title}
+                      </Link>
+                      <p className="text-sm text-gray-500">
+                        {s.procedureType} &middot; {s.discountPercent}% discount
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+                      s.status === "PUBLISHED" ? "bg-green-100 text-green-700" :
+                      s.status === "ARCHIVED" ? "bg-gray-100 text-gray-600" :
+                      "bg-yellow-100 text-yellow-700"
+                    }`}>{s.status}</span>
+
+                    {/* Publish/Unpublish button */}
+                    {s.status === "DRAFT" && recordingCount >= 2 && (
+                      <button
+                        onClick={() => updateSeriesStatus(s.id, "PUBLISHED")}
+                        className="text-xs bg-green-100 text-green-700 px-2.5 py-1 rounded-lg hover:bg-green-200 font-medium"
+                      >
+                        Publish
+                      </button>
+                    )}
+                    {s.status === "PUBLISHED" && (
+                      <button
+                        onClick={() => updateSeriesStatus(s.id, "DRAFT")}
+                        className="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-lg hover:bg-gray-200 font-medium"
+                      >
+                        Unpublish
+                      </button>
+                    )}
+
+                    {/* Edit button */}
+                    <button
+                      onClick={() => startEditingSeries(s.id)}
+                      className="text-xs text-purple-600 hover:text-purple-700 font-medium px-2 py-1"
+                    >
+                      Edit
+                    </button>
+
+                    {/* Delete button */}
+                    <button
+                      onClick={() => deleteSeries(s.id)}
+                      disabled={isDeleting}
+                      className="text-xs text-red-500 hover:text-red-600 font-medium px-2 py-1 disabled:opacity-50"
+                    >
+                      {isDeleting ? "..." : "Delete"}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </section>

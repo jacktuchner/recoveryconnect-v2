@@ -91,6 +91,8 @@ model User {
   recordingAccess RecordingAccess[]
   reportsSubmitted Report[] @relation("ReportsSubmitted")
   reportsReceived  Report[] @relation("ReportsReceived")
+  series         RecordingSeries[] @relation("UserSeries")
+  seriesAccess   SeriesAccess[]
 }
 
 model Profile {
@@ -113,6 +115,10 @@ model Profile {
   // Contributor-specific
   hourlyRate        Float?        // For live calls (in dollars)
   isAvailableForCalls Boolean     @default(false)
+
+  // Intro video
+  introVideoUrl     String?       // S3 URL for uploaded intro video
+  introVideoDuration Int?         // Duration in seconds
 
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
@@ -187,6 +193,7 @@ model Recording {
   reviews         Review[]
   purchases       RecordingAccess[]
   reports         Report[]
+  seriesMemberships SeriesRecording[]
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
 
@@ -300,6 +307,7 @@ model Payment {
   metadata        Json?
 
   recordingAccess RecordingAccess?
+  seriesAccess    SeriesAccess?
   createdAt       DateTime      @default(now())
 }
 
@@ -316,6 +324,65 @@ model RecordingAccess {
   grantedAt   DateTime  @default(now())
 
   @@unique([userId, recordingId])
+}
+
+// ─── Recording Series ───
+
+enum SeriesStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model RecordingSeries {
+  id              String            @id @default(cuid())
+  contributorId   String
+  contributor     User              @relation("UserSeries", fields: [contributorId], references: [id])
+
+  title           String
+  description     String?           @db.Text
+
+  // Pricing: discount off sum of individual prices
+  discountPercent Float             @default(15)  // e.g., 15% off
+
+  // Denormalized for search/display
+  procedureType   String
+
+  status          SeriesStatus      @default(DRAFT)
+
+  recordings      SeriesRecording[]
+  access          SeriesAccess[]
+
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([contributorId, status])
+}
+
+model SeriesRecording {
+  id              String            @id @default(cuid())
+  seriesId        String
+  series          RecordingSeries   @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  recordingId     String
+  recording       Recording         @relation(fields: [recordingId], references: [id])
+
+  sequenceNumber  Int               // Order: 1, 2, 3...
+
+  @@unique([seriesId, recordingId])
+  @@unique([seriesId, sequenceNumber])
+}
+
+model SeriesAccess {
+  id              String            @id @default(cuid())
+  userId          String
+  user            User              @relation(fields: [userId], references: [id])
+  seriesId        String
+  series          RecordingSeries   @relation(fields: [seriesId], references: [id])
+  paymentId       String?           @unique
+  payment         Payment?          @relation(fields: [paymentId], references: [id])
+  grantedAt       DateTime          @default(now())
+
+  @@unique([userId, seriesId])
 }
 
 // ─── Reports ───
