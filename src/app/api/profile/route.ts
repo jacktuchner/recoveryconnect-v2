@@ -20,16 +20,22 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { data: profile } = await supabase
+    const { data: profile, error } = await supabase
       .from("Profile")
       .select("*")
       .eq("userId", (session.user as any).id)
       .single();
 
+    // PGRST116 means no rows found, which is fine for new users
+    if (error && error.code !== "PGRST116") {
+      console.error("Supabase error fetching profile:", error);
+      return NextResponse.json({ error: error.message || "Failed to fetch profile" }, { status: 500 });
+    }
+
     return NextResponse.json(profile);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching profile:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 });
   }
 }
 
@@ -81,6 +87,7 @@ export async function POST(req: NextRequest) {
         procedureProfiles: procedureProfiles,
         // Keep legacy fields for backwards compatibility
         procedureDetails: body.procedureDetails || null,
+        surgeryDate: body.surgeryDate || null,
         timeSinceSurgery: body.timeSinceSurgery || null,
         recoveryGoals: body.recoveryGoals || [],
         complicatingFactors: body.complicatingFactors || [],
@@ -98,12 +105,15 @@ export async function POST(req: NextRequest) {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error("Supabase error creating profile:", error);
+      return NextResponse.json({ error: error.message || "Failed to create profile" }, { status: 500 });
+    }
 
     return NextResponse.json(profile, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error creating profile:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 });
   }
 }
 
@@ -177,11 +187,18 @@ export async function PUT(req: NextRequest) {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error("Supabase error updating profile:", error);
+      return NextResponse.json({ error: error.message || "Failed to update profile" }, { status: 500 });
+    }
+
+    if (!profile) {
+      return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+    }
 
     return NextResponse.json(profile);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error updating profile:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 });
   }
 }

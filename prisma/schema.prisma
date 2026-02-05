@@ -103,6 +103,8 @@ model Profile {
   // Matching attributes
   procedureType     String        // Primary procedure (for backwards compatibility)
   procedureTypes    String[]      // All procedures (contributors can have multiple)
+  activeProcedureType String?     // Currently active procedure for display
+  procedureProfiles Json?         // Per-procedure data: { [procedureType]: { details, goals, etc } }
   procedureDetails  String?       // e.g., "Patellar tendon graft"
   ageRange          String        // e.g., "20s", "30s", "40s"
   activityLevel     ActivityLevel
