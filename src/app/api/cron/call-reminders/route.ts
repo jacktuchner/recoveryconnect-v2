@@ -90,12 +90,14 @@ export async function GET(req: NextRequest) {
           }
 
           // Mark as sent (ignore error if column doesn't exist)
-          await supabase
-            .from("Call")
-            .update({ dayReminderSent: new Date().toISOString() })
-            .eq("id", call.id)
-            .then(() => {})
-            .catch(() => {});
+          try {
+            await supabase
+              .from("Call")
+              .update({ dayReminderSent: new Date().toISOString() })
+              .eq("id", call.id);
+          } catch {
+            // Ignore - column might not exist
+          }
 
           results.dayReminders++;
         } catch (err) {
@@ -135,12 +137,14 @@ export async function GET(req: NextRequest) {
           }
 
           // Mark as sent (ignore error if column doesn't exist)
-          await supabase
-            .from("Call")
-            .update({ hourReminderSent: new Date().toISOString() })
-            .eq("id", call.id)
-            .then(() => {})
-            .catch(() => {});
+          try {
+            await supabase
+              .from("Call")
+              .update({ hourReminderSent: new Date().toISOString() })
+              .eq("id", call.id);
+          } catch {
+            // Ignore - column might not exist
+          }
 
           results.hourReminders++;
         } catch (err) {
