@@ -15,13 +15,14 @@ interface ProfileWizardProps {
     complicatingFactors?: string[];
     lifestyleContext?: string[];
   };
-  onComplete: (data: any) => void;
+  onComplete: (data: any) => Promise<void>;
   onCancel?: () => void;
+  error?: string | null;
 }
 
 type Stage = 1 | 2 | 3;
 
-export default function ProfileWizard({ initialData, onComplete, onCancel }: ProfileWizardProps) {
+export default function ProfileWizard({ initialData, onComplete, onCancel, error }: ProfileWizardProps) {
   const [stage, setStage] = useState<Stage>(1);
   const [saving, setSaving] = useState(false);
 
@@ -58,6 +59,9 @@ export default function ProfileWizard({ initialData, onComplete, onCancel }: Pro
         timeSinceSurgery: form.surgeryDate ? getTimeSinceSurgery(form.surgeryDate) : null,
       };
       await onComplete(dataToSave);
+    } catch (err) {
+      // Error is handled by parent component via error prop
+      console.error("Profile save error:", err);
     } finally {
       setSaving(false);
     }
@@ -316,6 +320,13 @@ export default function ProfileWizard({ initialData, onComplete, onCancel }: Pro
                 Your living situation and responsibilities
               </p>
             </div>
+          </div>
+        )}
+
+        {/* Error Display */}
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-700">{error}</p>
           </div>
         )}
 

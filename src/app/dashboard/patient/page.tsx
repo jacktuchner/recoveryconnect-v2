@@ -29,6 +29,7 @@ export default function PatientDashboard() {
   const [editingShared, setEditingShared] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [wizardError, setWizardError] = useState<string | null>(null);
   const [switchingProcedure, setSwitchingProcedure] = useState(false);
 
   // Shared profile fields
@@ -315,6 +316,7 @@ export default function PatientDashboard() {
   }
 
   async function handleWizardComplete(data: any) {
+    setWizardError(null);
     try {
       const initialProfiles = {
         [data.procedureType]: {
@@ -344,10 +346,13 @@ export default function PatientDashboard() {
           lifestyleContext: data.lifestyleContext || [],
         });
         setShowWizard(false);
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        setWizardError(errorData.error || "Failed to save profile. Please try again.");
       }
     } catch (err) {
       console.error(err);
-      throw err;
+      setWizardError("Network error. Please check your connection and try again.");
     }
   }
 
@@ -438,6 +443,7 @@ export default function PatientDashboard() {
           } : undefined}
           onComplete={handleWizardComplete}
           onCancel={profile ? () => setShowWizard(false) : undefined}
+          error={wizardError}
         />
       </div>
     );
