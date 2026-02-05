@@ -3,8 +3,9 @@
 import { useState } from "react";
 
 interface ReportButtonProps {
-  contentType: "recording" | "call" | "review";
-  contentId: string;
+  recordingId?: string;
+  userId?: string;
+  callId?: string;
   contentTitle?: string;
 }
 
@@ -14,10 +15,12 @@ const REPORT_REASONS = [
   { value: "contradicts_doctors", label: "Encourages ignoring doctor's advice" },
   { value: "inappropriate", label: "Inappropriate or offensive content" },
   { value: "misinformation", label: "Factually incorrect information" },
+  { value: "spam", label: "Spam or promotional content" },
+  { value: "harassment", label: "Harassment or bullying" },
   { value: "other", label: "Other concern" },
 ];
 
-export default function ReportButton({ contentType, contentId, contentTitle }: ReportButtonProps) {
+export default function ReportButton({ recordingId, userId, callId, contentTitle }: ReportButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [details, setDetails] = useState("");
@@ -37,8 +40,9 @@ export default function ReportButton({ contentType, contentId, contentTitle }: R
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          contentType,
-          contentId,
+          recordingId,
+          reportedUserId: userId,
+          callId,
           reason,
           details,
         }),
@@ -63,6 +67,9 @@ export default function ReportButton({ contentType, contentId, contentTitle }: R
     }
   };
 
+  // Determine content type for display
+  const contentType = recordingId ? "recording" : userId ? "user" : "call";
+
   return (
     <>
       {/* Report Button */}
@@ -72,7 +79,7 @@ export default function ReportButton({ contentType, contentId, contentTitle }: R
         title="Report this content"
       >
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-          <path fillRule="evenodd" d="M3 3.5A1.5 1.5 0 014.5 2h6.879a1.5 1.5 0 011.06.44l4.122 4.12A1.5 1.5 0 0117 7.622V16.5a1.5 1.5 0 01-1.5 1.5h-11A1.5 1.5 0 013 16.5v-13zm10.857 5.691a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 00-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
+          <path fillRule="evenodd" d="M3 6a3 3 0 013-3h10a1 1 0 01.8 1.6L14.25 8l2.55 3.4A1 1 0 0116 13H6a1 1 0 00-1 1v3a1 1 0 11-2 0V6z" clipRule="evenodd" />
         </svg>
         Report
       </button>
@@ -94,7 +101,7 @@ export default function ReportButton({ contentType, contentId, contentTitle }: R
             ) : (
               <>
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Report Content</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">Report {contentType}</h3>
                   <button
                     onClick={() => setIsOpen(false)}
                     className="text-gray-400 hover:text-gray-600"
@@ -125,7 +132,7 @@ export default function ReportButton({ contentType, contentId, contentTitle }: R
                             value={r.value}
                             checked={reason === r.value}
                             onChange={(e) => setReason(e.target.value)}
-                            className="text-blue-600 focus:ring-blue-500"
+                            className="text-teal-600 focus:ring-teal-500"
                           />
                           <span className="text-sm text-gray-700">{r.label}</span>
                         </label>
@@ -141,7 +148,7 @@ export default function ReportButton({ contentType, contentId, contentTitle }: R
                       value={details}
                       onChange={(e) => setDetails(e.target.value)}
                       rows={3}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-teal-500 focus:border-teal-500"
                       placeholder="Please describe your concern..."
                     />
                   </div>

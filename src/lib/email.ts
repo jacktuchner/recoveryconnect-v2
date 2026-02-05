@@ -271,6 +271,39 @@ export async function sendCallCancelledEmail(
   }
 }
 
+// Password reset email
+export async function sendPasswordResetEmail(to: string, resetUrl: string) {
+  const content = `
+    <h1 style="color: #0d9488; font-size: 24px; margin-bottom: 20px;">Reset Your Password</h1>
+    <p>We received a request to reset your password for your RecoveryConnect account.</p>
+    <p>Click the button below to create a new password. This link will expire in 1 hour.</p>
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${resetUrl}"
+         style="display: inline-block; background: #0d9488; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600;">
+        Reset Password
+      </a>
+    </div>
+    <p style="color: #6b7280; font-size: 14px;">If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.</p>
+    <p style="color: #9ca3af; font-size: 12px; margin-top: 20px;">
+      If the button doesn't work, copy and paste this link into your browser:<br>
+      <span style="word-break: break-all;">${resetUrl}</span>
+    </p>
+  `;
+
+  try {
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to,
+      subject: "Reset your RecoveryConnect password",
+      html: baseTemplate(content),
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to send password reset email:", error);
+    return { success: false, error };
+  }
+}
+
 // Call reminder - sent to both parties (1 day before and 1 hour before)
 export async function sendCallReminderEmail(
   recipientEmail: string,

@@ -75,7 +75,23 @@ async function handleRecordingPurchase(
   const accessId = uuidv4();
   const amount = (session.amount_total || 0) / 100;
 
-  // Create payment record
+  // Fetch recording with contributor info
+  const { data: recording, error: recordingError } = await supabase
+    .from("Recording")
+    .select("*, contributor:User!Recording_contributorId_fkey(id, stripeConnectId, stripeConnectOnboarded)")
+    .eq("id", recordingId)
+    .single();
+
+  if (recordingError || !recording) {
+    console.error("Error fetching recording:", recordingError);
+    throw recordingError || new Error("Recording not found");
+  }
+
+  // Calculate payout amounts (75% to contributor, 25% platform fee)
+  const contributorPayout = amount * 0.75;
+  const platformFee = amount * 0.25;
+
+  // Create payment record with payout tracking
   const { error: paymentError } = await supabase.from("Payment").insert({
     id: paymentId,
     userId,
@@ -85,7 +101,7 @@ async function handleRecordingPurchase(
     status: "COMPLETED",
     stripePaymentId: session.payment_intent as string,
     stripeSessionId: session.id,
-    metadata: { recordingId },
+    metadata: { recordingId, contributorPayout, platformFee },
     createdAt: new Date().toISOString(),
   });
 
@@ -106,6 +122,43 @@ async function handleRecordingPurchase(
   if (accessError) {
     console.error("Error creating recording access:", accessError);
     throw accessError;
+  }
+
+  // Transfer payout to contributor if they have Stripe Connect set up
+  if (recording.contributor?.stripeConnectId && recording.contributor?.stripeConnectOnboarded) {
+    try {
+      const transfer = await stripe.transfers.create({
+        amount: Math.round(contributorPayout * 100), // Convert to cents
+        currency: "usd",
+        destination: recording.contributor.stripeConnectId,
+        transfer_group: `recording_${recording.id}`,
+        metadata: {
+          recordingId: recording.id,
+          contributorId: recording.contributor.id,
+          buyerId: userId,
+        },
+      });
+
+      // Record the payout
+      await supabase.from("Payment").insert({
+        id: uuidv4(),
+        userId: recording.contributor.id,
+        type: "CONTRIBUTOR_PAYOUT",
+        amount: contributorPayout,
+        currency: "usd",
+        status: "COMPLETED",
+        stripePaymentId: transfer.id,
+        metadata: { recordingId: recording.id, transferId: transfer.id, purchasePaymentId: paymentId },
+        createdAt: new Date().toISOString(),
+      });
+
+      console.log(`Payout created for recording ${recording.id}: $${contributorPayout.toFixed(2)}`);
+    } catch (payoutError) {
+      // Log but don't fail the purchase - the recording access was still granted
+      console.error("Error creating recording payout:", payoutError);
+    }
+  } else {
+    console.log(`Skipping payout for recording ${recording.id}: contributor not onboarded to Stripe Connect`);
   }
 
   console.log(`Recording purchase completed: user ${userId}, recording ${recordingId}`);

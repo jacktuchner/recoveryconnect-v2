@@ -89,6 +89,8 @@ model User {
   availability   Availability[]
   payments       Payment[]
   recordingAccess RecordingAccess[]
+  reportsSubmitted Report[] @relation("ReportsSubmitted")
+  reportsReceived  Report[] @relation("ReportsReceived")
 }
 
 model Profile {
@@ -184,6 +186,7 @@ model Recording {
 
   reviews         Review[]
   purchases       RecordingAccess[]
+  reports         Report[]
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
 
@@ -237,6 +240,7 @@ model Call {
   hourReminderSent DateTime?  // When hour-before reminder was sent
 
   reviews         Review[]
+  reports         Report[]
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
 
@@ -312,4 +316,42 @@ model RecordingAccess {
   grantedAt   DateTime  @default(now())
 
   @@unique([userId, recordingId])
+}
+
+// ─── Reports ───
+
+enum ReportStatus {
+  PENDING
+  REVIEWED
+  ACTION_TAKEN
+  DISMISSED
+}
+
+model Report {
+  id          String   @id @default(cuid())
+
+  reporterId  String
+  reporter    User     @relation("ReportsSubmitted", fields: [reporterId], references: [id])
+
+  // What's being reported (one of these)
+  recordingId String?
+  recording   Recording? @relation(fields: [recordingId], references: [id])
+  userId      String?
+  reportedUser User?   @relation("ReportsReceived", fields: [userId], references: [id])
+  callId      String?
+  call        Call?    @relation(fields: [callId], references: [id])
+
+  reason      String   // "inappropriate", "spam", "misleading", "harassment", "other"
+  details     String?  @db.Text // Additional context from reporter
+  status      ReportStatus @default(PENDING)
+
+  adminNotes  String?  @db.Text
+  resolvedAt  DateTime?
+  resolvedBy  String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status])
+  @@index([reporterId])
 }

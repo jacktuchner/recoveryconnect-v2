@@ -3,7 +3,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { stripe } from "@/lib/stripe";
 import { supabase } from "@/lib/supabase";
-import { PLATFORM_FEE_PERCENT } from "@/lib/constants";
 
 export async function POST(req: NextRequest) {
   try {
@@ -37,14 +36,91 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const scheduledDate = new Date(scheduledAt);
+    const duration = durationMinutes || 30;
+
+    // Validate against contributor's availability
+    const { data: availabilitySlots } = await supabase
+      .from("Availability")
+      .select("*")
+      .eq("contributorId", contributorId);
+
+    if (availabilitySlots && availabilitySlots.length > 0) {
+      // Contributor has set availability - validate the requested time
+      const dayOfWeek = scheduledDate.getDay();
+      const requestedTime = scheduledDate.toLocaleTimeString("en-US", {
+        hour12: false,
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: availabilitySlots[0]?.timezone || "America/New_York",
+      });
+
+      // Calculate end time of the call
+      const endDate = new Date(scheduledDate.getTime() + duration * 60 * 1000);
+      const requestedEndTime = endDate.toLocaleTimeString("en-US", {
+        hour12: false,
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: availabilitySlots[0]?.timezone || "America/New_York",
+      });
+
+      // Find a matching availability slot
+      const matchingSlot = availabilitySlots.find((slot) => {
+        if (slot.dayOfWeek !== dayOfWeek) return false;
+        // Check if the entire call fits within the availability window
+        return requestedTime >= slot.startTime && requestedEndTime <= slot.endTime;
+      });
+
+      if (!matchingSlot) {
+        return NextResponse.json(
+          {
+            error: "The selected time is outside the contributor's available hours. Please choose a different time.",
+          },
+          { status: 400 }
+        );
+      }
+    }
+    // If no availability slots are set, allow any time (backward compatibility)
+
+    // Check for conflicting calls
+    const callStartTime = scheduledDate.toISOString();
+    const callEndTime = new Date(scheduledDate.getTime() + duration * 60 * 1000).toISOString();
+
+    const { data: existingCalls } = await supabase
+      .from("Call")
+      .select("id, scheduledAt, durationMinutes")
+      .eq("contributorId", contributorId)
+      .in("status", ["REQUESTED", "CONFIRMED"])
+      .gte("scheduledAt", new Date(scheduledDate.getTime() - 2 * 60 * 60 * 1000).toISOString()) // 2 hours before
+      .lte("scheduledAt", new Date(scheduledDate.getTime() + 2 * 60 * 60 * 1000).toISOString()); // 2 hours after
+
+    if (existingCalls && existingCalls.length > 0) {
+      // Check for actual overlap
+      for (const call of existingCalls) {
+        const existingStart = new Date(call.scheduledAt).getTime();
+        const existingEnd = existingStart + (call.durationMinutes || 30) * 60 * 1000;
+        const requestedStart = scheduledDate.getTime();
+        const requestedEnd = requestedStart + duration * 60 * 1000;
+
+        if (
+          (requestedStart >= existingStart && requestedStart < existingEnd) ||
+          (requestedEnd > existingStart && requestedEnd <= existingEnd) ||
+          (requestedStart <= existingStart && requestedEnd >= existingEnd)
+        ) {
+          return NextResponse.json(
+            { error: "This time slot is already booked. Please choose a different time." },
+            { status: 409 }
+          );
+        }
+      }
+    }
+
     // Calculate pricing
     const rate = contributor.profile.hourlyRate || 50;
-    const duration = durationMinutes || 30;
     const price = duration === 60 ? rate : rate / 2;
 
     // Create Stripe Checkout session
     const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
-    const scheduledDate = new Date(scheduledAt);
     const formattedDate = scheduledDate.toLocaleDateString("en-US", {
       weekday: "short",
       month: "short",

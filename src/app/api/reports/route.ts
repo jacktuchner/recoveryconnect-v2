@@ -13,23 +13,38 @@ export async function POST(req: NextRequest) {
 
     const userId = (session.user as Record<string, string>).id;
     const body = await req.json();
-    const { contentType, contentId, reason, details } = body;
+    const { recordingId, reportedUserId, callId, reason, details } = body;
 
-    if (!contentType || !contentId || !reason) {
+    // Validate that at least one target is specified
+    if (!recordingId && !reportedUserId && !callId) {
       return NextResponse.json(
-        { error: "Content type, content ID, and reason are required" },
+        { error: "Must specify recordingId, reportedUserId, or callId" },
+        { status: 400 }
+      );
+    }
+
+    if (!reason) {
+      return NextResponse.json(
+        { error: "Reason is required" },
         { status: 400 }
       );
     }
 
     // Check if user already reported this content
-    const { data: existing } = await supabase
+    let existingQuery = supabase
       .from("Report")
       .select("id")
-      .eq("reporterId", userId)
-      .eq("contentType", contentType)
-      .eq("contentId", contentId)
-      .single();
+      .eq("reporterId", userId);
+
+    if (recordingId) {
+      existingQuery = existingQuery.eq("recordingId", recordingId);
+    } else if (reportedUserId) {
+      existingQuery = existingQuery.eq("userId", reportedUserId);
+    } else if (callId) {
+      existingQuery = existingQuery.eq("callId", callId);
+    }
+
+    const { data: existing } = await existingQuery.single();
 
     if (existing) {
       return NextResponse.json(
@@ -43,12 +58,14 @@ export async function POST(req: NextRequest) {
       .insert({
         id: uuidv4(),
         reporterId: userId,
-        contentType,
-        contentId,
+        recordingId: recordingId || null,
+        userId: reportedUserId || null,
+        callId: callId || null,
         reason,
         details: details || null,
         status: "PENDING",
         createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       })
       .select()
       .single();
@@ -79,17 +96,37 @@ export async function GET(req: NextRequest) {
     }
 
     const { searchParams } = new URL(req.url);
-    const status = searchParams.get("status") || "PENDING";
+    const status = searchParams.get("status");
+    const type = searchParams.get("type"); // "recording", "user", "call"
 
-    const { data: reports, error } = await supabase
+    let query = supabase
       .from("Report")
-      .select("*, reporter:User!Report_reporterId_fkey(id, name, email)")
-      .eq("status", status)
+      .select(`
+        *,
+        reporter:User!Report_reporterId_fkey(id, name, email),
+        recording:Recording(id, title, contributorId),
+        reportedUser:User!Report_userId_fkey(id, name, email),
+        call:Call(id, scheduledAt, patientId, contributorId)
+      `)
       .order("createdAt", { ascending: false });
+
+    if (status) {
+      query = query.eq("status", status);
+    }
+
+    if (type === "recording") {
+      query = query.not("recordingId", "is", null);
+    } else if (type === "user") {
+      query = query.not("userId", "is", null);
+    } else if (type === "call") {
+      query = query.not("callId", "is", null);
+    }
+
+    const { data: reports, error } = await query;
 
     if (error) throw error;
 
-    return NextResponse.json(reports);
+    return NextResponse.json({ reports: reports || [] });
   } catch (error) {
     console.error("Error fetching reports:", error);
     return NextResponse.json(

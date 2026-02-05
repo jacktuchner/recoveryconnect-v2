@@ -291,8 +291,7 @@ export default function RecordingDetailPage() {
             {/* Report Button */}
             <div className="flex justify-end mb-6">
               <ReportButton
-                contentType="recording"
-                contentId={recording.id}
+                recordingId={recording.id}
                 contentTitle={recording.title}
               />
             </div>
