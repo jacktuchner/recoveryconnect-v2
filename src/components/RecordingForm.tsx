@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import VoiceRecorder from "./VoiceRecorder";
 import FaqPromptSelector from "./FaqPromptSelector";
 
@@ -27,12 +27,52 @@ export default function RecordingForm({ onSuccess, onCancel }: RecordingFormProp
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // For contributors with multiple procedures
+  const [procedureTypes, setProcedureTypes] = useState<string[]>([]);
+  const [selectedProcedure, setSelectedProcedure] = useState<string>("");
+  const [timeSinceSurgery, setTimeSinceSurgery] = useState<string>("");
+
+  const TIME_SINCE_OPTIONS = [
+    "Less than 1 month",
+    "1-3 months",
+    "3-6 months",
+    "6-12 months",
+    "1-2 years",
+    "2-3 years",
+    "3-5 years",
+    "5+ years",
+  ];
+
   const [form, setForm] = useState({
     title: "",
     description: "",
     price: 9.99,
     isVideo: false,
   });
+
+  // Fetch contributor's procedures on mount
+  useEffect(() => {
+    async function loadProfile() {
+      try {
+        const res = await fetch("/api/profile");
+        if (res.ok) {
+          const profile = await res.json();
+          const procedures = profile?.procedureTypes?.length > 0
+            ? profile.procedureTypes
+            : profile?.procedureType
+              ? [profile.procedureType]
+              : [];
+          setProcedureTypes(procedures);
+          if (procedures.length > 0) {
+            setSelectedProcedure(procedures[0]);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load profile:", err);
+      }
+    }
+    loadProfile();
+  }, []);
 
   const handlePromptSelect = useCallback((prompt: FaqPrompt | null, category: string) => {
     setSelectedPrompt(prompt);
@@ -125,6 +165,8 @@ export default function RecordingForm({ onSuccess, onCancel }: RecordingFormProp
           faqPromptId: selectedPrompt?.id || null,
           transcription: transcript || null,
           transcriptionStatus: transcript ? "COMPLETED" : "NONE",
+          procedureType: selectedProcedure || undefined, // Override if contributor selected a specific procedure
+          timeSinceSurgery: timeSinceSurgery || undefined,
         }),
       });
 
@@ -249,6 +291,44 @@ export default function RecordingForm({ onSuccess, onCancel }: RecordingFormProp
               />
             </div>
           )}
+
+          {/* Procedure selector for contributors with multiple procedures */}
+          {procedureTypes.length > 1 && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Which procedure is this recording about? *
+              </label>
+              <select
+                value={selectedProcedure}
+                onChange={(e) => setSelectedProcedure(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              >
+                {procedureTypes.map((proc) => (
+                  <option key={proc} value={proc}>{proc}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Time since surgery for this recording */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              How long since this surgery/procedure?
+            </label>
+            <select
+              value={timeSinceSurgery}
+              onChange={(e) => setTimeSinceSurgery(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+            >
+              <option value="">Select timeframe</option>
+              {TIME_SINCE_OPTIONS.map((option) => (
+                <option key={option} value={option}>{option}</option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-500 mt-1">
+              This helps patients find recordings from people at a similar stage.
+            </p>
+          </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">

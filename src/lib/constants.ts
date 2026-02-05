@@ -58,6 +58,7 @@ export const RECOVERY_GOALS = [
   "Play with kids/grandkids",
   "Travel comfortably",
   "Independent living",
+  "Return to sexual activity",
 ] as const;
 
 export const COMPLICATING_FACTORS = [

@@ -96,7 +96,8 @@ model Profile {
   user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Matching attributes
-  procedureType     String        // e.g., "ACL Reconstruction"
+  procedureType     String        // Primary procedure (for backwards compatibility)
+  procedureTypes    String[]      // All procedures (contributors can have multiple)
   procedureDetails  String?       // e.g., "Patellar tendon graft"
   ageRange          String        // e.g., "20s", "30s", "40s"
   activityLevel     ActivityLevel
@@ -229,6 +230,10 @@ model Call {
   price           Float      // Total price paid by patient
   platformFee     Float      // Platform's cut (20-30%)
   contributorPayout Float    // What contributor receives
+
+  // Reminder tracking
+  dayReminderSent  DateTime?  // When day-before reminder was sent
+  hourReminderSent DateTime?  // When hour-before reminder was sent
 
   reviews         Review[]
   createdAt       DateTime   @default(now())

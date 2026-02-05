@@ -10,6 +10,69 @@ import ReportButton from "@/components/ReportButton";
 import ContentAcknowledgmentModal from "@/components/ContentAcknowledgmentModal";
 import PurchaseButton from "@/components/PurchaseButton";
 
+function TranscriptSection({ transcription, hasAccess }: { transcription: string; hasAccess: boolean }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const previewLength = 200;
+  const hasMoreContent = transcription.length > previewLength;
+
+  if (hasAccess) {
+    // Full transcription with collapsible UI
+    return (
+      <div className="bg-gray-50 rounded-lg p-4 mb-6">
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="flex items-center justify-between w-full text-left"
+        >
+          <h3 className="font-semibold text-sm text-gray-700">
+            Transcript
+          </h3>
+          <svg
+            className={`w-5 h-5 text-gray-500 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        {isExpanded && (
+          <p className="text-sm text-gray-600 whitespace-pre-wrap mt-3 pt-3 border-t border-gray-200">
+            {transcription}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  // Preview for non-purchasers
+  const preview = transcription.slice(0, previewLength);
+
+  return (
+    <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-4 mb-6 relative overflow-hidden">
+      <h3 className="font-semibold text-sm text-gray-700 mb-2">
+        Transcript Preview
+      </h3>
+      <div className="relative">
+        <p className="text-sm text-gray-600">
+          {preview}
+          {hasMoreContent && "..."}
+        </p>
+        {hasMoreContent && (
+          <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-gray-100 to-transparent" />
+        )}
+      </div>
+      <div className="mt-3 pt-3 border-t border-gray-200">
+        <p className="text-xs text-gray-500 flex items-center gap-1.5">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          Purchase to read the full transcript
+        </p>
+      </div>
+    </div>
+  );
+}
+
 
 const categoryLabels: Record<string, string> = {
   WEEKLY_TIMELINE: "Week-by-Week Timeline",
@@ -102,8 +165,8 @@ export default function RecordingDetailPage() {
   return (
     <ContentAcknowledgmentModal>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Link href="/browse" className="text-sm text-teal-600 hover:text-teal-700 mb-4 inline-block">
-          &larr; Back to Browse
+        <Link href="/watch" className="text-sm text-teal-600 hover:text-teal-700 mb-4 inline-block">
+          &larr; Back to Stories
         </Link>
 
         {/* Disclaimer Banner */}
@@ -176,12 +239,12 @@ export default function RecordingDetailPage() {
               <p className="text-gray-600 mb-6">{recording.description}</p>
             )}
 
-            {/* Transcription (only if user has access) */}
-            {canViewContent && recording.transcription && (
-              <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                <h3 className="font-semibold text-sm text-gray-700 mb-2">Transcription</h3>
-                <p className="text-sm text-gray-600 whitespace-pre-wrap">{recording.transcription}</p>
-              </div>
+            {/* Transcription - Full for purchasers, preview for others */}
+            {recording.transcription && (
+              <TranscriptSection
+                transcription={recording.transcription}
+                hasAccess={canViewContent}
+              />
             )}
 
             {/* Contributor Info */}

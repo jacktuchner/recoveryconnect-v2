@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
 
 interface RecordingCardProps {
   id: string;
@@ -14,6 +17,7 @@ interface RecordingCardProps {
   viewCount: number;
   averageRating?: number;
   matchScore?: number;
+  matchBreakdown?: { attribute: string; matched: boolean; weight: number }[];
 }
 
 const categoryLabels: Record<string, string> = {
@@ -38,9 +42,43 @@ function formatDuration(seconds: number): string {
   return `${mins}:${secs.toString().padStart(2, "0")}`;
 }
 
+function MatchScoreTooltip({ breakdown }: { breakdown: { attribute: string; matched: boolean; weight: number }[] }) {
+  const [show, setShow] = useState(false);
+
+  return (
+    <div className="relative inline-block">
+      <button
+        onMouseEnter={() => setShow(true)}
+        onMouseLeave={() => setShow(false)}
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShow(!show); }}
+        className="ml-1 text-gray-400 hover:text-gray-600"
+      >
+        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </button>
+      {show && (
+        <div className="absolute right-0 top-5 z-50 w-48 bg-white rounded-lg shadow-lg border border-gray-200 p-2.5 text-left">
+          <p className="text-xs font-medium text-gray-700 mb-1.5">Match breakdown:</p>
+          <div className="space-y-0.5">
+            {breakdown.map((item) => (
+              <div key={item.attribute} className="flex items-center justify-between text-xs">
+                <span className="text-gray-600">{item.attribute}</span>
+                <span className={item.matched ? "text-green-600" : "text-gray-400"}>
+                  {item.matched ? "✓" : "—"}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function RecordingCard({
   id, title, contributorName, procedureType, ageRange, activityLevel,
-  category, durationSeconds, isVideo, price, viewCount, averageRating, matchScore,
+  category, durationSeconds, isVideo, price, viewCount, averageRating, matchScore, matchBreakdown,
 }: RecordingCardProps) {
   return (
     <Link href={`/recordings/${id}`} className="block group">
@@ -51,13 +89,16 @@ export default function RecordingCard({
               {isVideo ? "Video" : "Audio"}
             </span>
             {matchScore !== undefined && (
-              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                matchScore >= 80 ? "bg-green-100 text-green-700" :
-                matchScore >= 60 ? "bg-yellow-100 text-yellow-700" :
-                "bg-gray-100 text-gray-600"
-              }`}>
-                {matchScore}% match
-              </span>
+              <div className="flex items-center">
+                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                  matchScore >= 80 ? "bg-green-100 text-green-700" :
+                  matchScore >= 60 ? "bg-yellow-100 text-yellow-700" :
+                  "bg-gray-100 text-gray-600"
+                }`}>
+                  {matchScore}% match
+                </span>
+                {matchBreakdown && <MatchScoreTooltip breakdown={matchBreakdown} />}
+              </div>
             )}
           </div>
           <div className="flex items-center justify-center h-16">

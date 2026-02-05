@@ -5,6 +5,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PROCEDURE_TYPES, AGE_RANGES, ACTIVITY_LEVELS, RECOVERY_GOALS, COMPLICATING_FACTORS, LIFESTYLE_CONTEXTS } from "@/lib/constants";
+import RecoveryTimeline from "@/components/RecoveryTimeline";
+import ProfileWizard from "@/components/ProfileWizard";
 
 export default function PatientDashboard() {
   const { data: session, status } = useSession();
@@ -12,6 +14,7 @@ export default function PatientDashboard() {
   const [profile, setProfile] = useState<any>(null);
   const [calls, setCalls] = useState<any[]>([]);
   const [editing, setEditing] = useState(false);
+  const [showWizard, setShowWizard] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -51,7 +54,8 @@ export default function PatientDashboard() {
               lifestyleContext: p.lifestyleContext || [],
             });
           } else {
-            setEditing(true);
+            // No profile yet - show wizard for new users
+            setShowWizard(true);
           }
         }
         if (callsRes.ok) setCalls(await callsRes.json());
@@ -84,6 +88,25 @@ export default function PatientDashboard() {
     }
   }
 
+  async function handleWizardComplete(data: any) {
+    try {
+      const res = await fetch("/api/profile", {
+        method: profile ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (res.ok) {
+        const savedProfile = await res.json();
+        setProfile(savedProfile);
+        setForm(data);
+        setShowWizard(false);
+      }
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+  }
+
   function toggleArrayItem(key: "recoveryGoals" | "complicatingFactors" | "lifestyleContext", value: string) {
     setForm((prev) => ({
       ...prev,
@@ -93,8 +116,51 @@ export default function PatientDashboard() {
     }));
   }
 
+  async function cancelCall(callId: string) {
+    if (!confirm("Are you sure you want to cancel this call?")) return;
+
+    try {
+      const res = await fetch(`/api/calls/${callId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "CANCELLED" }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setCalls((prev) => prev.map((c) => (c.id === callId ? updated : c)));
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   if (status === "loading" || loading) {
     return <div className="max-w-4xl mx-auto px-4 py-8">Loading...</div>;
+  }
+
+  // Show wizard for new users or when explicitly requested
+  if (showWizard) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Welcome to RecoveryConnect</h1>
+          <p className="text-gray-600 mt-1">Let&apos;s set up your profile to find the best matches.</p>
+        </div>
+        <ProfileWizard
+          initialData={profile ? {
+            procedureType: profile.procedureType,
+            procedureDetails: profile.procedureDetails,
+            ageRange: profile.ageRange,
+            activityLevel: profile.activityLevel,
+            recoveryGoals: profile.recoveryGoals,
+            complicatingFactors: profile.complicatingFactors,
+            lifestyleContext: profile.lifestyleContext,
+          } : undefined}
+          onComplete={handleWizardComplete}
+          onCancel={profile ? () => setShowWizard(false) : undefined}
+        />
+      </div>
+    );
   }
 
   return (
@@ -105,10 +171,10 @@ export default function PatientDashboard() {
           <p className="text-gray-600 mt-1">Welcome, {session?.user?.name}</p>
         </div>
         <Link
-          href="/browse"
+          href="/watch"
           className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium"
         >
-          Browse Recordings
+          Watch Stories
         </Link>
       </div>
 
@@ -117,16 +183,21 @@ export default function PatientDashboard() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold">Your Recovery Profile</h2>
           {profile && !editing && (
-            <button onClick={() => setEditing(true)} className="text-sm text-teal-600 hover:text-teal-700 font-medium">
-              Edit Profile
-            </button>
+            <div className="flex gap-2">
+              <button onClick={() => setShowWizard(true)} className="text-sm text-gray-500 hover:text-gray-700">
+                Use Wizard
+              </button>
+              <button onClick={() => setEditing(true)} className="text-sm text-teal-600 hover:text-teal-700 font-medium">
+                Quick Edit
+              </button>
+            </div>
           )}
         </div>
 
         {!profile && !editing ? (
           <div className="text-center py-8">
             <p className="text-gray-500 mb-4">Complete your profile to get matched with relevant content and contributors.</p>
-            <button onClick={() => setEditing(true)} className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700">
+            <button onClick={() => setShowWizard(true)} className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700">
               Set Up Profile
             </button>
           </div>
@@ -240,9 +311,36 @@ export default function PatientDashboard() {
                 </div>
               </div>
             )}
+            {profile.complicatingFactors?.length > 0 && (
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Complicating Factors</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {profile.complicatingFactors.map((f: string) => (
+                    <span key={f} className="text-xs bg-orange-50 text-orange-700 px-2 py-0.5 rounded-full">{f}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {profile.lifestyleContext?.length > 0 && (
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Lifestyle Context</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {profile.lifestyleContext.map((l: string) => (
+                    <span key={l} className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">{l}</span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </section>
+
+      {/* Recovery Timeline */}
+      {profile?.procedureType && (
+        <section className="mb-8">
+          <RecoveryTimeline procedureType={profile.procedureType} />
+        </section>
+      )}
 
       {/* Upcoming Calls */}
       <section className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
@@ -250,8 +348,8 @@ export default function PatientDashboard() {
         {calls.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-gray-500 mb-4">No calls booked yet.</p>
-            <Link href="/browse?tab=contributors" className="text-teal-600 hover:text-teal-700 font-medium text-sm">
-              Find a contributor to book a call
+            <Link href="/mentors" className="text-teal-600 hover:text-teal-700 font-medium text-sm">
+              Find a mentor to book a call
             </Link>
           </div>
         ) : (
@@ -266,14 +364,24 @@ export default function PatientDashboard() {
                     {" "}&middot; {call.durationMinutes} min
                   </p>
                 </div>
-                <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                  call.status === "CONFIRMED" ? "bg-green-100 text-green-700" :
-                  call.status === "REQUESTED" ? "bg-yellow-100 text-yellow-700" :
-                  call.status === "COMPLETED" ? "bg-gray-100 text-gray-600" :
-                  "bg-red-100 text-red-700"
-                }`}>
-                  {call.status}
-                </span>
+                <div className="flex items-center gap-2">
+                  {(call.status === "REQUESTED" || call.status === "CONFIRMED") && (
+                    <button
+                      onClick={() => cancelCall(call.id)}
+                      className="text-xs text-red-600 hover:text-red-700 font-medium px-2 py-1 rounded hover:bg-red-50"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                  <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+                    call.status === "CONFIRMED" ? "bg-green-100 text-green-700" :
+                    call.status === "REQUESTED" ? "bg-yellow-100 text-yellow-700" :
+                    call.status === "COMPLETED" ? "bg-gray-100 text-gray-600" :
+                    "bg-red-100 text-red-700"
+                  }`}>
+                    {call.status}
+                  </span>
+                </div>
               </div>
             ))}
           </div>

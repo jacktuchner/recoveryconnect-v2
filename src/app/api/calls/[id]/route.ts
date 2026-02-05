@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { stripe } from "@/lib/stripe";
 import { v4 as uuidv4 } from "uuid";
+import { sendCallConfirmedEmail, sendCallCancelledEmail } from "@/lib/email";
 
 export async function PATCH(
   req: NextRequest,
@@ -54,6 +55,36 @@ export async function PATCH(
       .single();
 
     if (error) throw error;
+
+    // Send email notifications based on status change
+    const isContributor = userId === call.contributorId;
+
+    if (status === "CONFIRMED" && updated.patient?.email) {
+      // Notify patient that call is confirmed
+      sendCallConfirmedEmail(
+        updated.patient.email,
+        updated.patient.name || "Patient",
+        updated.contributor?.name || "Your mentor",
+        new Date(updated.scheduledAt),
+        updated.durationMinutes
+      ).catch((err) => console.error("Failed to send call confirmed email:", err));
+    }
+
+    if (status === "CANCELLED") {
+      // Notify the other party that call was cancelled
+      const recipient = isContributor ? updated.patient : updated.contributor;
+      const cancelledBy = isContributor ? updated.contributor : updated.patient;
+
+      if (recipient?.email) {
+        sendCallCancelledEmail(
+          recipient.email,
+          recipient.name || "User",
+          cancelledBy?.name || "The other party",
+          new Date(updated.scheduledAt),
+          isContributor // wasContributorCancelling
+        ).catch((err) => console.error("Failed to send call cancelled email:", err));
+      }
+    }
 
     // If call is completed and contributor has Stripe Connect, create payout
     if (status === "COMPLETED" && call.contributor?.stripeConnectId && call.contributor?.stripeConnectOnboarded) {

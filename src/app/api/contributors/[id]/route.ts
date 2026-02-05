@@ -10,11 +10,19 @@ export async function GET(
 
     const { data: contributor, error } = await supabase
       .from("User")
-      .select("*, profile:Profile(*), recordings:Recording(*, reviews:Review(*)), reviewsReceived:Review(*, author:User!Review_authorId_fkey(*)), availability:Availability(*)")
+      .select("*, profile:Profile(*), recordings:Recording(*, reviews:Review(*, author:User!Review_authorId_fkey(name)))")
       .eq("id", id)
       .single();
 
-    if (error || !contributor) {
+    if (error) {
+      console.error("Supabase error:", error);
+      return NextResponse.json(
+        { error: "Contributor not found", details: error.message },
+        { status: 404 }
+      );
+    }
+
+    if (!contributor) {
       return NextResponse.json(
         { error: "Contributor not found" },
         { status: 404 }
@@ -28,12 +36,22 @@ export async function GET(
         .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     }
 
-    // Sort and limit reviews
-    if (contributor.reviewsReceived) {
-      contributor.reviewsReceived = contributor.reviewsReceived
-        .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-        .slice(0, 10);
+    // Collect all reviews from recordings for reviewsReceived
+    const allReviews: any[] = [];
+    if (contributor.recordings) {
+      contributor.recordings.forEach((rec: any) => {
+        if (rec.reviews) {
+          rec.reviews.forEach((review: any) => {
+            allReviews.push(review);
+          });
+        }
+      });
     }
+
+    // Sort and limit reviews
+    contributor.reviewsReceived = allReviews
+      .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 10);
 
     const { passwordHash, ...safe } = contributor as Record<string, unknown>;
     return NextResponse.json(safe);

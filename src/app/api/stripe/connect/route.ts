@@ -52,10 +52,10 @@ export async function GET() {
       payoutsEnabled: account.payouts_enabled,
       detailsSubmitted: account.details_submitted,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error getting Connect status:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: error?.message || "Internal server error", details: error?.type || error?.code },
       { status: 500 }
     );
   }
@@ -117,10 +117,10 @@ export async function POST() {
     });
 
     return NextResponse.json({ url: accountLink.url });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error creating Connect account:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: error?.message || "Internal server error", details: error?.type || error?.code },
       { status: 500 }
     );
   }

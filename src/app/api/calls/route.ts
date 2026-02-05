@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { PLATFORM_FEE_PERCENT } from "@/lib/constants";
 import { v4 as uuidv4 } from "uuid";
+import { sendCallBookedEmail } from "@/lib/email";
 
 export async function GET() {
   try {
@@ -90,6 +91,18 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) throw error;
+
+    // Send email notification to contributor
+    if (call.contributor?.email) {
+      sendCallBookedEmail(
+        call.contributor.email,
+        call.contributor.name || "Contributor",
+        call.patient?.name || "A patient",
+        new Date(call.scheduledAt),
+        call.durationMinutes,
+        call.questionsInAdvance
+      ).catch((err) => console.error("Failed to send call booked email:", err));
+    }
 
     return NextResponse.json(call, { status: 201 });
   } catch (error) {

@@ -46,12 +46,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Profile already exists. Use PUT to update." }, { status: 409 });
     }
 
+    // Handle procedureTypes array - use first one as primary procedureType
+    const procedureTypes = body.procedureTypes || (body.procedureType ? [body.procedureType] : []);
+    const primaryProcedure = body.procedureType || procedureTypes[0] || "";
+
     const { data: profile, error } = await supabase
       .from("Profile")
       .insert({
         id: uuidv4(),
         userId,
-        procedureType: body.procedureType,
+        procedureType: primaryProcedure,
+        procedureTypes: procedureTypes,
         procedureDetails: body.procedureDetails || null,
         ageRange: body.ageRange,
         activityLevel: body.activityLevel || "RECREATIONAL",
@@ -87,10 +92,15 @@ export async function PUT(req: NextRequest) {
     const userId = (session.user as any).id;
     const body = await req.json();
 
+    // Handle procedureTypes array - use first one as primary procedureType
+    const procedureTypes = body.procedureTypes || (body.procedureType ? [body.procedureType] : []);
+    const primaryProcedure = body.procedureType || procedureTypes[0] || "";
+
     const { data: profile, error } = await supabase
       .from("Profile")
       .update({
-        procedureType: body.procedureType,
+        procedureType: primaryProcedure,
+        procedureTypes: procedureTypes,
         procedureDetails: body.procedureDetails || null,
         ageRange: body.ageRange,
         activityLevel: body.activityLevel || "RECREATIONAL",

@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
 
     let query = supabase
       .from("User")
-      .select("*, profile:Profile(*), recordings:Recording(*), reviewsReceived:Review(*)", { count: "exact" })
+      .select("id, name, bio, role, profile:Profile(*), recordings:Recording(*), reviewsReceived:Review(*)", { count: "exact" })
       .in("role", ["CONTRIBUTOR", "BOTH"])
       .not("profile", "is", null);
 

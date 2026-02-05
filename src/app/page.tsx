@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { PROCEDURE_TYPES, RECORDING_CATEGORIES } from "@/lib/constants";
+import ContentPreviewSection from "@/components/ContentPreviewSection";
 
 export default function HomePage() {
   return (
@@ -25,10 +26,10 @@ export default function HomePage() {
                 Get Started Free
               </Link>
               <Link
-                href="/browse"
+                href="/watch"
                 className="inline-flex items-center justify-center border-2 border-teal-300 text-white font-semibold px-6 py-3 rounded-lg hover:bg-teal-600 transition-colors"
               >
-                Browse Recordings
+                Watch Stories
               </Link>
             </div>
           </div>
@@ -47,15 +48,14 @@ export default function HomePage() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            {/* Tier 1 */}
+            {/* Tier 1 - Recordings */}
             <div className="bg-white rounded-2xl border border-gray-200 p-8 hover:shadow-lg transition-shadow">
               <div className="w-12 h-12 bg-teal-100 rounded-xl flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg className="w-6 h-6 text-teal-600" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold mb-2">Recorded Recovery Stories</h3>
+              <h3 className="text-xl font-bold mb-2">Watch Recovery Stories</h3>
               <p className="text-gray-600 mb-4">
                 Browse structured voice and video recordings from past patients,
                 filtered to match your profile. Available anytime.
@@ -71,17 +71,25 @@ export default function HomePage() {
                   <span className="text-teal-500">&#10003;</span> Matched to your demographics and goals
                 </li>
               </ul>
-              <p className="text-sm font-semibold text-teal-700">From  per recording</p>
+              <Link
+                href="/watch"
+                className="inline-flex items-center gap-2 text-teal-700 font-semibold hover:text-teal-800"
+              >
+                Browse Recordings
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
             </div>
 
-            {/* Tier 2 */}
+            {/* Tier 2 - Calls */}
             <div className="bg-white rounded-2xl border border-gray-200 p-8 hover:shadow-lg transition-shadow">
               <div className="w-12 h-12 bg-cyan-100 rounded-xl flex items-center justify-center mb-4">
                 <svg className="w-6 h-6 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold mb-2">Live 1-on-1 Video Calls</h3>
+              <h3 className="text-xl font-bold mb-2">Book a Live Mentor Call</h3>
               <p className="text-gray-600 mb-4">
                 Book a personal video call with someone who had the same procedure.
                 Ask questions, get specific advice, feel supported.
@@ -97,11 +105,22 @@ export default function HomePage() {
                   <span className="text-cyan-500">&#10003;</span> Real-time, personal connection
                 </li>
               </ul>
-              <p className="text-sm font-semibold text-cyan-700">From 0 per call</p>
+              <Link
+                href="/mentors"
+                className="inline-flex items-center gap-2 text-cyan-700 font-semibold hover:text-cyan-800"
+              >
+                Find a Mentor
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
             </div>
           </div>
         </div>
       </section>
+
+      {/* Content Preview Section */}
+      <ContentPreviewSection />
 
       {/* Profile Matching */}
       <section className="bg-white py-20">
@@ -145,7 +164,7 @@ export default function HomePage() {
             {PROCEDURE_TYPES.map((proc) => (
               <Link
                 key={proc}
-                href={`/browse?procedure=${encodeURIComponent(proc)}`}
+                href={`/watch?procedure=${encodeURIComponent(proc)}`}
                 className="bg-white border border-gray-200 rounded-full px-5 py-2.5 text-sm font-medium text-gray-700 hover:border-teal-300 hover:text-teal-700 transition-colors"
               >
                 {proc}
@@ -231,8 +250,9 @@ export default function HomePage() {
             <div>
               <h4 className="text-white font-semibold mb-3">For Patients</h4>
               <ul className="space-y-2 text-sm">
-                <li><Link href="/browse" className="hover:text-white">Browse Recordings</Link></li>
-                <li><Link href="/browse?tab=contributors" className="hover:text-white">Find Contributors</Link></li>
+                <li><Link href="/watch" className="hover:text-white">Watch Stories</Link></li>
+                <li><Link href="/mentors" className="hover:text-white">Book a Mentor</Link></li>
+                <li><Link href="/how-it-works" className="hover:text-white">How It Works</Link></li>
                 <li><Link href="/auth/register" className="hover:text-white">Create Account</Link></li>
               </ul>
             </div>

@@ -139,6 +139,8 @@ export async function POST(req: NextRequest) {
       faqPromptId,
       transcription,
       transcriptionStatus,
+      procedureType: overrideProcedure, // Optional override for contributors with multiple procedures
+      timeSinceSurgery, // Time since this specific surgery
     } = body;
 
     if (!title || !category || !mediaUrl) {
@@ -147,6 +149,9 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Use override procedure if provided (for contributors with multiple procedures)
+    const recordingProcedure = overrideProcedure || user.profile.procedureType;
 
     const { data: recording, error } = await supabase
       .from("Recording")
@@ -161,7 +166,8 @@ export async function POST(req: NextRequest) {
         durationSeconds,
         isVideo: isVideo || false,
         price: price || 9.99,
-        procedureType: user.profile.procedureType,
+        procedureType: recordingProcedure,
+        timeSinceSurgery: timeSinceSurgery || null,
         ageRange: user.profile.ageRange,
         activityLevel: user.profile.activityLevel,
         recoveryGoals: user.profile.recoveryGoals,

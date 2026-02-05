@@ -1,15 +1,6 @@
-import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { supabase } from "./supabase";
 
-const s3Client = new S3Client({
-  region: process.env.S3_REGION || "us-east-1",
-  credentials: {
-    accessKeyId: process.env.S3_ACCESS_KEY || "",
-    secretAccessKey: process.env.S3_SECRET_KEY || "",
-  },
-});
-
-const BUCKET_NAME = process.env.S3_BUCKET || "recovery-connect-media";
+const BUCKET_NAME = "recordings";
 
 export interface PresignedUrlResult {
   uploadUrl: string;
@@ -24,27 +15,39 @@ export async function generatePresignedUploadUrl(
 ): Promise<PresignedUrlResult> {
   const timestamp = Date.now();
   const sanitizedFilename = filename.replace(/[^a-zA-Z0-9.-]/g, "_");
-  const key = `recordings/${userId}/${timestamp}-${sanitizedFilename}`;
+  const key = `${userId}/${timestamp}-${sanitizedFilename}`;
 
-  const command = new PutObjectCommand({
-    Bucket: BUCKET_NAME,
-    Key: key,
-    ContentType: contentType,
-  });
+  // Generate a signed upload URL using Supabase Storage
+  const { data, error } = await supabase.storage
+    .from(BUCKET_NAME)
+    .createSignedUploadUrl(key);
 
-  const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
-  const fileUrl = `https://${BUCKET_NAME}.s3.${process.env.S3_REGION || "us-east-1"}.amazonaws.com/${key}`;
+  if (error || !data) {
+    throw new Error(error?.message || "Failed to create upload URL");
+  }
 
-  return { uploadUrl, fileUrl, key };
+  // Get the public URL for the file
+  const { data: publicUrlData } = supabase.storage
+    .from(BUCKET_NAME)
+    .getPublicUrl(key);
+
+  return {
+    uploadUrl: data.signedUrl,
+    fileUrl: publicUrlData.publicUrl,
+    key,
+  };
 }
 
 export async function generatePresignedDownloadUrl(key: string): Promise<string> {
-  const command = new GetObjectCommand({
-    Bucket: BUCKET_NAME,
-    Key: key,
-  });
+  const { data, error } = await supabase.storage
+    .from(BUCKET_NAME)
+    .createSignedUrl(key, 3600);
 
-  return getSignedUrl(s3Client, command, { expiresIn: 3600 });
+  if (error || !data) {
+    throw new Error(error?.message || "Failed to create download URL");
+  }
+
+  return data.signedUrl;
 }
 
-export { s3Client, BUCKET_NAME };
+export { BUCKET_NAME };

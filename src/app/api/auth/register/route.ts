@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { supabase } from "@/lib/supabase";
 import { v4 as uuidv4 } from "uuid";
+import { sendWelcomeEmail } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
   try {
@@ -48,6 +49,11 @@ export async function POST(req: NextRequest) {
       console.error("Supabase error:", error);
       throw error;
     }
+
+    // Send welcome email (don't block on this)
+    sendWelcomeEmail(user.email, user.name, user.role).catch((err) =>
+      console.error("Failed to send welcome email:", err)
+    );
 
     return NextResponse.json(
       { id: user.id, name: user.name, email: user.email, role: user.role },

@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -21,9 +21,13 @@ export default function ContributorDashboard() {
   const [showRecordingForm, setShowRecordingForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [upgradingRole, setUpgradingRole] = useState(false);
+  const [upgradeSuccess, setUpgradeSuccess] = useState(false);
+  const [upgradeError, setUpgradeError] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     procedureType: "",
+    procedureTypes: [] as string[],
     procedureDetails: "",
     ageRange: "",
     activityLevel: "RECREATIONAL",
@@ -54,6 +58,7 @@ export default function ContributorDashboard() {
             setProfile(p);
             setForm({
               procedureType: p.procedureType || "",
+              procedureTypes: p.procedureTypes || (p.procedureType ? [p.procedureType] : []),
               procedureDetails: p.procedureDetails || "",
               ageRange: p.ageRange || "",
               activityLevel: p.activityLevel || "RECREATIONAL",
@@ -179,15 +184,65 @@ export default function ContributorDashboard() {
 
         {editingProfile ? (
           <div className="space-y-5">
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Procedure Type *</label>
-                <select value={form.procedureType} onChange={(e) => setForm(f => ({...f, procedureType: e.target.value}))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                  <option value="">Select procedure</option>
-                  {PROCEDURE_TYPES.map(p => <option key={p} value={p}>{p}</option>)}
-                </select>
+            {/* Multiple Procedures */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Your Procedures/Surgeries *</label>
+              <div className="space-y-2">
+                {form.procedureTypes.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {form.procedureTypes.map((proc) => (
+                      <span key={proc} className="inline-flex items-center gap-1 bg-teal-50 text-teal-700 px-3 py-1.5 rounded-full text-sm">
+                        {proc}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newTypes = form.procedureTypes.filter(p => p !== proc);
+                            setForm(f => ({
+                              ...f,
+                              procedureTypes: newTypes,
+                              procedureType: newTypes[0] || ""
+                            }));
+                          }}
+                          className="ml-1 text-teal-500 hover:text-teal-700"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <select
+                    id="add-procedure"
+                    className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    defaultValue=""
+                    onChange={(e) => {
+                      const proc = e.target.value;
+                      if (proc && !form.procedureTypes.includes(proc)) {
+                        setForm(f => ({
+                          ...f,
+                          procedureTypes: [...f.procedureTypes, proc],
+                          procedureType: f.procedureType || proc
+                        }));
+                      }
+                      e.target.value = "";
+                    }}
+                  >
+                    <option value="">Add a procedure...</option>
+                    {PROCEDURE_TYPES.filter(p => !form.procedureTypes.includes(p)).map(p => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
+                  </select>
+                </div>
+                {form.procedureTypes.length === 0 && (
+                  <p className="text-sm text-gray-500">Add at least one procedure you&apos;ve had.</p>
+                )}
               </div>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Time Since Surgery</label>
                 <select value={form.timeSinceSurgery} onChange={(e) => setForm(f => ({...f, timeSinceSurgery: e.target.value}))}
@@ -195,6 +250,16 @@ export default function ContributorDashboard() {
                   <option value="">Select</option>
                   {TIME_SINCE_SURGERY.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Procedure Details</label>
+                <input
+                  type="text"
+                  value={form.procedureDetails}
+                  onChange={(e) => setForm(f => ({...f, procedureDetails: e.target.value}))}
+                  placeholder="e.g., Patellar tendon graft"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                />
               </div>
             </div>
 
@@ -251,7 +316,7 @@ export default function ContributorDashboard() {
             </div>
 
             <div className="flex gap-3">
-              <button onClick={saveProfile} disabled={saving || !form.procedureType || !form.ageRange}
+              <button onClick={saveProfile} disabled={saving || form.procedureTypes.length === 0 || !form.ageRange}
                 className="bg-teal-600 text-white px-5 py-2 rounded-lg hover:bg-teal-700 disabled:opacity-50 text-sm font-medium">
                 {saving ? "Saving..." : "Save Profile"}
               </button>
@@ -261,10 +326,19 @@ export default function ContributorDashboard() {
             </div>
           </div>
         ) : profile ? (
-          <div className="grid sm:grid-cols-3 gap-4">
-            <div><p className="text-xs text-gray-500">Procedure</p><p className="font-medium">{profile.procedureType}</p></div>
-            <div><p className="text-xs text-gray-500">Age Range</p><p className="font-medium">{profile.ageRange}</p></div>
-            <div><p className="text-xs text-gray-500">Calls</p><p className="font-medium">{profile.isAvailableForCalls ? `Available ($${profile.hourlyRate}/hr)` : "Not available"}</p></div>
+          <div className="space-y-3">
+            <div className="grid sm:grid-cols-3 gap-4">
+              <div>
+                <p className="text-xs text-gray-500">Procedures</p>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {(profile.procedureTypes?.length > 0 ? profile.procedureTypes : [profile.procedureType]).map((proc: string) => (
+                    <span key={proc} className="text-sm bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full">{proc}</span>
+                  ))}
+                </div>
+              </div>
+              <div><p className="text-xs text-gray-500">Age Range</p><p className="font-medium">{profile.ageRange}</p></div>
+              <div><p className="text-xs text-gray-500">Calls</p><p className="font-medium">{profile.isAvailableForCalls ? `Available ($${profile.hourlyRate}/hr)` : "Not available"}</p></div>
+            </div>
           </div>
         ) : null}
       </section>
@@ -379,6 +453,60 @@ export default function ContributorDashboard() {
           </div>
         )}
       </section>
+
+      {/* Upgrade to Patient Access - Only show for CONTRIBUTOR role */}
+      {(session?.user as any)?.role === "CONTRIBUTOR" && (
+        <section className="bg-gradient-to-r from-cyan-50 to-teal-50 rounded-xl border border-teal-200 p-6 mt-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">Need guidance for a new surgery?</h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Get access to patient features like watching recovery stories and booking mentors.
+              </p>
+            </div>
+            {upgradeSuccess ? (
+              <div className="flex flex-col items-start sm:items-end gap-2">
+                <span className="text-sm text-green-700 font-medium">Role upgraded successfully!</span>
+                <button
+                  onClick={() => signOut()}
+                  className="text-sm bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 font-medium"
+                >
+                  Sign out to apply changes
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col items-start sm:items-end gap-2">
+                {upgradeError && (
+                  <span className="text-sm text-red-600">{upgradeError}</span>
+                )}
+                <button
+                  onClick={async () => {
+                    setUpgradingRole(true);
+                    setUpgradeError(null);
+                    try {
+                      const res = await fetch("/api/user/upgrade-role", { method: "POST" });
+                      if (res.ok) {
+                        setUpgradeSuccess(true);
+                      } else {
+                        const data = await res.json();
+                        setUpgradeError(data.error || "Failed to upgrade role");
+                      }
+                    } catch {
+                      setUpgradeError("Failed to upgrade role");
+                    } finally {
+                      setUpgradingRole(false);
+                    }
+                  }}
+                  disabled={upgradingRole}
+                  className="text-sm bg-white text-teal-700 border border-teal-300 px-4 py-2 rounded-lg hover:bg-teal-50 font-medium disabled:opacity-50"
+                >
+                  {upgradingRole ? "Upgrading..." : "Get Patient Access"}
+                </button>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

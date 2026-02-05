@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export default function AboutPage() {
   return (
@@ -26,7 +27,7 @@ export default function AboutPage() {
 
           <div className="prose prose-lg text-gray-600 space-y-6">
             <p>
-              I&apos;ve been living with chronic pain since I was 15 years old. What started
+              I&apos;m 26 now, and I&apos;ve been living with chronic pain since I was 15. What started
               as something I thought I could push through became a defining part of my life,
               leading me through years of rheumatology appointments and multiple surgeries.
             </p>
@@ -45,6 +46,52 @@ export default function AboutPage() {
               feeling like a burden. The loneliness of lying awake at 3 AM wondering
               if what you&apos;re feeling is normal.
             </p>
+          </div>
+
+          {/* Photo Journey */}
+          <div className="mt-12">
+            <h3 className="text-xl font-semibold text-gray-800 mb-6">My Journey</h3>
+            <div className="grid md:grid-cols-3 gap-6">
+              <div className="space-y-3">
+                <div className="relative aspect-[3/4] rounded-xl overflow-hidden shadow-md">
+                  <Image
+                    src="/images/post-op-shoulder.jpg"
+                    alt="Post-op shoulder after first SLAP repair surgery in 2021"
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <p className="text-sm text-gray-500 text-center">
+                  <span className="font-medium text-gray-700">March 2021</span> — First shoulder surgery
+                </p>
+              </div>
+              <div className="space-y-3">
+                <div className="relative aspect-[3/4] rounded-xl overflow-hidden shadow-md">
+                  <Image
+                    src="/images/surgery-day.jpg"
+                    alt="In the hospital after second shoulder surgery in April 2023"
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <p className="text-sm text-gray-500 text-center">
+                  <span className="font-medium text-gray-700">April 2023</span> — Second surgery, other shoulder
+                </p>
+              </div>
+              <div className="space-y-3">
+                <div className="relative aspect-[3/4] rounded-xl overflow-hidden shadow-md">
+                  <Image
+                    src="/images/physical-therapy.jpg"
+                    alt="Doing physical therapy and rehab exercises in 2025"
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <p className="text-sm text-gray-500 text-center">
+                  <span className="font-medium text-gray-700">2025</span> — Still putting in the work
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -194,10 +241,10 @@ export default function AboutPage() {
       <section className="py-16">
         <div className="max-w-3xl mx-auto px-4 text-center">
           <blockquote className="text-xl text-gray-600 italic">
-            &quot;The best people to guide you through recovery aren&apos;t always the ones
-            with medical degrees. Sometimes they&apos;re the ones with the same scars.&quot;
+            &quot;Sometimes the most comforting voice isn&apos;t the one with answers —
+            it&apos;s the one that says &apos;I&apos;ve been there too.&apos;&quot;
           </blockquote>
-          <p className="mt-4 text-gray-500">— Jack, Founder of Recovery Connect</p>
+          <p className="mt-4 text-gray-500">— Jack Tuchner, Founder</p>
         </div>
       </section>
     </div>
