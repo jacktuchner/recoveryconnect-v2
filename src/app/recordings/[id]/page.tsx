@@ -97,29 +97,37 @@ export default function RecordingDetailPage() {
   const { data: session } = useSession();
   const [recording, setRecording] = useState<any>(null);
   const [hasAccess, setHasAccess] = useState(false);
+  const [isSubscriber, setIsSubscriber] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [reviewError, setReviewError] = useState<string | null>(null);
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [review, setReview] = useState({ rating: 5, matchRelevance: 5, helpfulness: 5, comment: "" });
   const [submittingReview, setSubmittingReview] = useState(false);
 
   const userId = (session?.user as any)?.id;
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const res = await fetch(`/api/recordings/${id}`);
-        if (res.ok) {
-          const data = await res.json();
-          setRecording(data);
-          setHasAccess(data.hasAccess || false);
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
+  async function loadRecording() {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/recordings/${id}`);
+      if (!res.ok) throw new Error("Failed to load recording.");
+      const data = await res.json();
+      setRecording(data);
+      setHasAccess(data.hasAccess || false);
+      setIsSubscriber(data.isSubscriber || false);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load recording.");
+    } finally {
+      setLoading(false);
     }
-    load();
+  }
+
+  useEffect(() => {
+    loadRecording();
   }, [id]);
 
   // Check if user is the contributor (always has access)
@@ -128,6 +136,7 @@ export default function RecordingDetailPage() {
   async function submitReview() {
     if (!recording) return;
     setSubmittingReview(true);
+    setReviewError(null);
     try {
       const res = await fetch("/api/reviews", {
         method: "POST",
@@ -138,22 +147,32 @@ export default function RecordingDetailPage() {
           ...review,
         }),
       });
-      if (res.ok) {
-        const newReview = await res.json();
-        setRecording((prev: any) => ({
-          ...prev,
-          reviews: [newReview, ...(prev.reviews || [])],
-        }));
-        setShowReviewForm(false);
-      }
+      if (!res.ok) throw new Error("Failed to submit review.");
+      const newReview = await res.json();
+      setRecording((prev: any) => ({
+        ...prev,
+        reviews: [newReview, ...(prev.reviews || [])],
+      }));
+      setShowReviewForm(false);
+      setReviewSubmitted(true);
+      setTimeout(() => setReviewSubmitted(false), 3000);
     } catch (err) {
       console.error(err);
+      setReviewError("Failed to submit review. Please try again.");
     } finally {
       setSubmittingReview(false);
     }
   }
 
   if (loading) return <div className="max-w-4xl mx-auto px-4 py-8">Loading...</div>;
+  if (error) return (
+    <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 flex items-center justify-between">
+        <p className="text-sm text-red-700">{error}</p>
+        <button onClick={loadRecording} className="text-sm text-red-600 hover:text-red-700 font-medium">Retry</button>
+      </div>
+    </div>
+  );
   if (!recording) return <div className="max-w-4xl mx-auto px-4 py-8">Recording not found.</div>;
 
   const avgRating = recording.reviews?.length
@@ -206,8 +225,14 @@ export default function RecordingDetailPage() {
                   {recording.durationSeconds && ` · ${Math.floor(recording.durationSeconds / 60)}:${(recording.durationSeconds % 60).toString().padStart(2, "0")}`}
                 </p>
                 <p className="text-gray-600 mb-4">Purchase this recording to watch the full content.</p>
-                <div className="max-w-xs mx-auto">
+                <div className="max-w-xs mx-auto space-y-3">
                   <PurchaseButton recordingId={recording.id} price={recording.price} />
+                  <Link
+                    href="/how-it-works#pricing"
+                    className="block text-sm text-teal-600 hover:text-teal-700 font-medium"
+                  >
+                    Or subscribe for unlimited access
+                  </Link>
                 </div>
               </div>
             </div>
@@ -236,9 +261,15 @@ export default function RecordingDetailPage() {
               </div>
               <div className="text-right">
                 {canViewContent ? (
-                  <span className="text-sm bg-green-100 text-green-700 px-3 py-1 rounded-full font-medium">
-                    Purchased
-                  </span>
+                  isSubscriber ? (
+                    <span className="text-sm bg-green-100 text-green-700 px-3 py-1 rounded-full font-medium">
+                      Included in your subscription
+                    </span>
+                  ) : (
+                    <span className="text-sm bg-green-100 text-green-700 px-3 py-1 rounded-full font-medium">
+                      Purchased
+                    </span>
+                  )
                 ) : (
                   <>
                     <p className="text-2xl font-bold text-teal-700">${recording.price.toFixed(2)}</p>
@@ -323,6 +354,12 @@ export default function RecordingDetailPage() {
                 )}
               </div>
 
+              {reviewSubmitted && (
+                <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-4">
+                  <p className="text-sm text-green-700 font-medium">Review submitted successfully!</p>
+                </div>
+              )}
+
               {showReviewForm && (
                 <div className="bg-gray-50 rounded-lg p-4 mb-4 space-y-3">
                   <div className="grid grid-cols-3 gap-4">
@@ -348,6 +385,9 @@ export default function RecordingDetailPage() {
                   <textarea value={review.comment} onChange={(e) => setReview(r => ({...r, comment: e.target.value}))}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" rows={3}
                     placeholder="Share your thoughts about this recording..." />
+                  {reviewError && (
+                    <p className="text-sm text-red-600">{reviewError}</p>
+                  )}
                   <button onClick={submitReview} disabled={submittingReview}
                     className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 disabled:opacity-50 text-sm font-medium">
                     {submittingReview ? "Submitting..." : "Submit Review"}

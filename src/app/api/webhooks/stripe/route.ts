@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { PLATFORM_FEE_PERCENT } from "@/lib/constants";
 import { v4 as uuidv4 } from "uuid";
 import Stripe from "stripe";
+import { sendSubscriptionConfirmationEmail, sendSubscriptionCancelledEmail } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
@@ -40,6 +41,19 @@ export async function POST(req: NextRequest) {
 
       case "checkout.session.expired":
         console.log("Checkout session expired:", event.data.object.id);
+        break;
+
+      case "customer.subscription.created":
+      case "customer.subscription.updated":
+        await handleSubscriptionUpdated(event.data.object as Stripe.Subscription);
+        break;
+
+      case "customer.subscription.deleted":
+        await handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
+        break;
+
+      case "invoice.payment_failed":
+        await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice);
         break;
 
       default:
@@ -363,4 +377,139 @@ async function handleSeriesPurchase(
   }
 
   console.log(`Series purchase completed: user ${userId}, series ${seriesId}, recordings: ${recordingIdList.length}`);
+}
+
+async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
+  const userId = subscription.metadata?.userId;
+  if (!userId) {
+    console.error("No userId in subscription metadata:", subscription.id);
+    return;
+  }
+
+  const status = subscription.status; // "active", "trialing", "past_due", "canceled", etc.
+  const plan = subscription.metadata?.plan || null;
+  const periodEndTimestamp = subscription.items.data[0]?.current_period_end;
+  const periodEnd = periodEndTimestamp
+    ? new Date(periodEndTimestamp * 1000).toISOString()
+    : null;
+  const cancelAtPeriodEnd = subscription.cancel_at_period_end;
+
+  const { error: updateError } = await supabase
+    .from("User")
+    .update({
+      subscriptionStatus: status,
+      subscriptionPlan: plan,
+      stripeSubscriptionId: subscription.id,
+      subscriptionCurrentPeriodEnd: periodEnd,
+      subscriptionCancelAtPeriodEnd: cancelAtPeriodEnd,
+    })
+    .eq("id", userId);
+
+  if (updateError) {
+    console.error("Error updating user subscription:", updateError);
+    throw updateError;
+  }
+
+  // Create payment record for new subscriptions
+  if (status === "active" && subscription.latest_invoice) {
+    const invoiceId = typeof subscription.latest_invoice === "string"
+      ? subscription.latest_invoice
+      : subscription.latest_invoice.id;
+
+    const amount = subscription.items.data[0]?.price?.unit_amount
+      ? subscription.items.data[0].price.unit_amount / 100
+      : 0;
+
+    await supabase.from("Payment").insert({
+      id: uuidv4(),
+      userId,
+      type: "SUBSCRIPTION",
+      amount,
+      currency: "usd",
+      status: "COMPLETED",
+      stripePaymentId: invoiceId,
+      metadata: { subscriptionId: subscription.id, plan },
+      createdAt: new Date().toISOString(),
+    });
+
+    // Send confirmation email
+    const { data: user } = await supabase
+      .from("User")
+      .select("email, name")
+      .eq("id", userId)
+      .single();
+
+    if (user?.email) {
+      await sendSubscriptionConfirmationEmail(user.email, user.name || "there", plan || "monthly");
+    }
+  }
+
+  console.log(`Subscription ${status} for user ${userId}: ${subscription.id}`);
+}
+
+async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
+  const userId = subscription.metadata?.userId;
+  if (!userId) {
+    console.error("No userId in subscription metadata:", subscription.id);
+    return;
+  }
+
+  const { error: updateError } = await supabase
+    .from("User")
+    .update({
+      subscriptionStatus: "canceled",
+      subscriptionCancelAtPeriodEnd: false,
+    })
+    .eq("id", userId);
+
+  if (updateError) {
+    console.error("Error updating user subscription:", updateError);
+    throw updateError;
+  }
+
+  // Send cancellation email
+  const { data: user } = await supabase
+    .from("User")
+    .select("email, name, subscriptionCurrentPeriodEnd")
+    .eq("id", userId)
+    .single();
+
+  if (user?.email) {
+    const accessEndsDate = user.subscriptionCurrentPeriodEnd
+      ? new Date(user.subscriptionCurrentPeriodEnd).toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        })
+      : "soon";
+    await sendSubscriptionCancelledEmail(user.email, user.name || "there", accessEndsDate);
+  }
+
+  console.log(`Subscription deleted for user ${userId}: ${subscription.id}`);
+}
+
+async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
+  const customerId = typeof invoice.customer === "string"
+    ? invoice.customer
+    : invoice.customer?.id;
+
+  if (!customerId) return;
+
+  const { data: user, error } = await supabase
+    .from("User")
+    .select("id")
+    .eq("stripeCustomerId", customerId)
+    .single();
+
+  if (error || !user) {
+    console.error("Could not find user for customer:", customerId);
+    return;
+  }
+
+  await supabase
+    .from("User")
+    .update({ subscriptionStatus: "past_due" })
+    .eq("id", user.id);
+
+  console.log(`Invoice payment failed for user ${user.id}`);
 }

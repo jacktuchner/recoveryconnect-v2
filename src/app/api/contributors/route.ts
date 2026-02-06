@@ -35,9 +35,13 @@ export async function GET(req: NextRequest) {
 
     // Filter by procedure if specified
     if (procedure) {
-      filteredContributors = filteredContributors.filter(
-        (c: any) => c.profile?.procedureType === procedure
-      );
+      filteredContributors = filteredContributors.filter((c: any) => {
+        const types = c.profile?.procedureTypes;
+        if (Array.isArray(types) && types.length > 0) {
+          return types.includes(procedure);
+        }
+        return c.profile?.procedureType === procedure;
+      });
     }
 
     const total = filteredContributors.length;
@@ -86,6 +90,7 @@ export async function GET(req: NextRequest) {
               },
               {
                 procedureType: c.profile.procedureType,
+                procedureTypes: c.profile.procedureTypes,
                 procedureDetails: c.profile.procedureDetails,
                 ageRange: c.profile.ageRange,
                 activityLevel: c.profile.activityLevel,

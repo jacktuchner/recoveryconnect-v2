@@ -1,16 +1,33 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
+interface AvailabilitySlot {
+  id: string;
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+  timezone: string;
+}
+
+const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+function formatTime12(time24: string): string {
+  const [h, m] = time24.split(":").map(Number);
+  const ampm = h >= 12 ? "PM" : "AM";
+  const h12 = h % 12 || 12;
+  return `${h12}:${m.toString().padStart(2, "0")} ${ampm}`;
+}
 
 export default function BookCallPage() {
   const { contributorId } = useParams();
   const { data: session, status } = useSession();
   const router = useRouter();
   const [contributor, setContributor] = useState<any>(null);
+  const [availability, setAvailability] = useState<AvailabilitySlot[]>([]);
   const [loading, setLoading] = useState(true);
   const [booking, setBooking] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +39,6 @@ export default function BookCallPage() {
     questionsInAdvance: "",
   });
 
-
   useEffect(() => {
     if (status === "unauthenticated") router.push("/auth/signin");
   }, [status, router]);
@@ -30,8 +46,12 @@ export default function BookCallPage() {
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch(`/api/contributors/${contributorId}`);
-        if (res.ok) setContributor(await res.json());
+        const [contribRes, availRes] = await Promise.all([
+          fetch(`/api/contributors/${contributorId}`),
+          fetch(`/api/contributors/${contributorId}/availability`),
+        ]);
+        if (contribRes.ok) setContributor(await contribRes.json());
+        if (availRes.ok) setAvailability(await availRes.json());
       } catch (err) {
         console.error(err);
       } finally {
@@ -41,9 +61,39 @@ export default function BookCallPage() {
     load();
   }, [contributorId]);
 
+  // Group availability by day for display
+  const availabilityByDay = useMemo(() => {
+    const grouped: Record<number, AvailabilitySlot[]> = {};
+    availability.forEach((slot) => {
+      if (!grouped[slot.dayOfWeek]) grouped[slot.dayOfWeek] = [];
+      grouped[slot.dayOfWeek].push(slot);
+    });
+    return grouped;
+  }, [availability]);
+
+  const timezone = availability[0]?.timezone || "America/New_York";
+
+  // Check if selected time falls within an available slot
+  function isTimeAvailable(): boolean {
+    if (!form.date || !form.time || availability.length === 0) return true; // Don't block if no availability data
+    const selectedDate = new Date(`${form.date}T${form.time}`);
+    const dayOfWeek = selectedDate.getDay();
+    const selectedTime = form.time; // "HH:MM" format
+
+    const slotsForDay = availabilityByDay[dayOfWeek];
+    if (!slotsForDay || slotsForDay.length === 0) return false;
+
+    return slotsForDay.some((slot) => {
+      return selectedTime >= slot.startTime && selectedTime < slot.endTime;
+    });
+  }
+
+  const timeAvailable = isTimeAvailable();
+  const hasAvailability = availability.length > 0;
+  const canBook = form.date && form.time && timeAvailable;
 
   async function handleBook() {
-    if (!form.date || !form.time) return;
+    if (!canBook) return;
     setBooking(true);
     setError(null);
 
@@ -79,13 +129,11 @@ export default function BookCallPage() {
     }
   }
 
-
   if (loading) return <div className="max-w-2xl mx-auto px-4 py-8">Loading...</div>;
   if (!contributor) return <div className="max-w-2xl mx-auto px-4 py-8">Contributor not found.</div>;
 
   const rate = contributor.profile?.hourlyRate || 50;
   const price = form.duration === 60 ? rate : rate / 2;
-
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -111,6 +159,36 @@ export default function BookCallPage() {
             </p>
           </div>
         </div>
+
+        {/* Available Hours */}
+        {hasAvailability && (
+          <div className="bg-teal-50 border border-teal-200 rounded-xl p-4 mb-6">
+            <div className="flex items-center gap-2 mb-3">
+              <svg className="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <h3 className="text-sm font-semibold text-teal-900">Available Hours</h3>
+              <span className="text-xs text-teal-600">({timezone})</span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {Object.entries(availabilityByDay)
+                .sort(([a], [b]) => Number(a) - Number(b))
+                .map(([day, slots]) => (
+                  <div key={day} className="text-sm">
+                    <span className="font-medium text-teal-800">{DAY_NAMES[Number(day)]}</span>
+                    <div className="text-teal-600">
+                      {slots.map((slot, i) => (
+                        <span key={slot.id}>
+                          {i > 0 && ", "}
+                          {formatTime12(slot.startTime)} - {formatTime12(slot.endTime)}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
 
         <div className="space-y-5">
           <div>
@@ -149,6 +227,21 @@ export default function BookCallPage() {
             </div>
           </div>
 
+          {/* Availability warning */}
+          {form.date && form.time && !timeAvailable && hasAvailability && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
+              <svg className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+              <div>
+                <p className="text-sm font-medium text-amber-800">Selected time is outside available hours</p>
+                <p className="text-xs text-amber-600 mt-1">
+                  {contributor.name} is not available at this time. Please choose a time within the available hours shown above.
+                </p>
+              </div>
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Questions for the Contributor (optional)
@@ -167,7 +260,7 @@ export default function BookCallPage() {
             {error && (
               <p className="text-red-500 text-sm mb-3 text-center">{error}</p>
             )}
-            <button onClick={handleBook} disabled={booking || !form.date || !form.time}
+            <button onClick={handleBook} disabled={booking || !canBook}
               className="w-full bg-teal-600 text-white font-semibold py-3 rounded-lg hover:bg-teal-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2">
               {booking ? (
                 <>

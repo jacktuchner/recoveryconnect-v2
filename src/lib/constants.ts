@@ -131,3 +131,9 @@ export const PLATFORM_FEE_PERCENT = 25; // 25% platform commission on calls
 export const DEFAULT_CALL_DURATION = 30; // minutes
 export const MIN_CALL_RATE = 40;
 export const MAX_CALL_RATE = 75;
+
+// Subscription pricing
+export const SUBSCRIPTION_MONTHLY_PRICE = 19.99;
+export const SUBSCRIPTION_ANNUAL_PRICE = 149.99;
+export const STRIPE_MONTHLY_PRICE_ID = process.env.STRIPE_MONTHLY_PRICE_ID || "";
+export const STRIPE_ANNUAL_PRICE_ID = process.env.STRIPE_ANNUAL_PRICE_ID || "";

@@ -1,5 +1,6 @@
 interface ProfileAttributes {
   procedureType: string;
+  procedureTypes?: string[];
   procedureDetails?: string | null;
   ageRange: string;
   activityLevel: string;
@@ -55,10 +56,12 @@ export function calculateMatchScore(
 ): MatchResult {
   const breakdown: MatchResult["breakdown"] = [];
 
-  // Procedure type (required match)
-  const procMatch =
-    seeker.procedureType.toLowerCase() ===
-    contributor.procedureType.toLowerCase();
+  // Procedure type (required match) — check procedureTypes array if available
+  const seekerProc = seeker.procedureType.toLowerCase();
+  const contributorTypes = contributor.procedureTypes?.length
+    ? contributor.procedureTypes.map((t) => t.toLowerCase())
+    : [contributor.procedureType.toLowerCase()];
+  const procMatch = contributorTypes.includes(seekerProc);
   breakdown.push({
     attribute: "Procedure type",
     matched: procMatch,

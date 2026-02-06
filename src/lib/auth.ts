@@ -16,7 +16,7 @@ export const authOptions: NextAuthOptions = {
 
         const { data: user, error } = await supabase
           .from("User")
-          .select("id, email, name, passwordHash, role, image")
+          .select("id, email, name, passwordHash, role, image, subscriptionStatus")
           .eq("email", credentials.email)
           .single();
 
@@ -35,6 +35,7 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
           role: user.role,
           image: user.image,
+          subscriptionStatus: user.subscriptionStatus,
         };
       },
     }),
@@ -45,6 +46,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.role = (user as any).role;
         token.id = user.id;
+        token.subscriptionStatus = (user as any).subscriptionStatus;
       }
       return token;
     },
@@ -52,6 +54,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         (session.user as any).role = token.role;
         (session.user as any).id = token.id;
+        (session.user as any).subscriptionStatus = token.subscriptionStatus;
       }
       return session;
     },

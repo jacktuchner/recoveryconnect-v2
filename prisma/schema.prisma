@@ -78,6 +78,14 @@ model User {
   stripeConnectId        String?
   stripeConnectOnboarded Boolean @default(false)
 
+  // Stripe Customer (for subscription billing)
+  stripeCustomerId              String?
+  subscriptionStatus            String?    // "active", "trialing", "canceled", "past_due"
+  subscriptionPlan              String?    // "monthly", "annual"
+  subscriptionCurrentPeriodEnd  DateTime?
+  subscriptionCancelAtPeriodEnd Boolean    @default(false)
+  stripeSubscriptionId          String?    @unique
+
   accounts       Account[]
   sessions       Session[]
   profile        Profile?
@@ -93,6 +101,7 @@ model User {
   reportsReceived  Report[] @relation("ReportsReceived")
   series         RecordingSeries[] @relation("UserSeries")
   seriesAccess   SeriesAccess[]
+  subscriberViews SubscriberView[]
 }
 
 model Profile {
@@ -190,12 +199,13 @@ model Recording {
 
   status          RecordingStatus   @default(DRAFT)
   viewCount       Int               @default(0)
-  price           Float             @default(9.99) // Per-recording price
+  price           Float             @default(4.99) // Per-recording price
 
   reviews         Review[]
   purchases       RecordingAccess[]
   reports         Report[]
   seriesMemberships SeriesRecording[]
+  subscriberViews SubscriberView[]
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
 
@@ -423,4 +433,18 @@ model Report {
 
   @@index([status])
   @@index([reporterId])
+}
+
+// ─── Subscriber Views (for subscription payout tracking) ───
+
+model SubscriberView {
+  id          String   @id @default(cuid())
+  userId      String
+  recordingId String
+  viewedAt    DateTime @default(now())
+
+  user        User      @relation(fields: [userId], references: [id])
+  recording   Recording @relation(fields: [recordingId], references: [id])
+
+  @@unique([userId, recordingId])
 }

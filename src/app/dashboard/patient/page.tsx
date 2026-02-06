@@ -4,11 +4,12 @@ import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { PROCEDURE_TYPES, AGE_RANGES, ACTIVITY_LEVELS, RECOVERY_GOALS, COMPLICATING_FACTORS, LIFESTYLE_CONTEXTS } from "@/lib/constants";
+import { PROCEDURE_TYPES, AGE_RANGES, ACTIVITY_LEVELS, RECOVERY_GOALS, COMPLICATING_FACTORS, LIFESTYLE_CONTEXTS, SUBSCRIPTION_MONTHLY_PRICE, SUBSCRIPTION_ANNUAL_PRICE } from "@/lib/constants";
 import { getTimeSinceSurgery, getTimeSinceSurgeryLabel, getCurrentRecoveryWeek } from "@/lib/surgeryDate";
 import RecoveryTimeline from "@/components/RecoveryTimeline";
 import ProfileWizard from "@/components/ProfileWizard";
 import VideoCall from "@/components/VideoCall";
+import PurchaseHistory from "@/components/PurchaseHistory";
 
 interface ProcedureProfile {
   procedureDetails?: string;
@@ -18,6 +19,32 @@ interface ProcedureProfile {
   complicatingFactors?: string[];
 }
 
+// Normalize procedureProfiles value: legacy object -> array
+function getInstances(procedureProfiles: Record<string, any>, proc: string, legacyProfile?: any): ProcedureProfile[] {
+  const val = procedureProfiles[proc];
+  if (Array.isArray(val)) return val;
+  if (val && typeof val === "object" && Object.keys(val).length > 0) return [val];
+  if (legacyProfile && proc === legacyProfile.procedureType) {
+    return [{
+      procedureDetails: legacyProfile.procedureDetails || "",
+      surgeryDate: legacyProfile.surgeryDate || "",
+      timeSinceSurgery: legacyProfile.timeSinceSurgery || "",
+      recoveryGoals: legacyProfile.recoveryGoals || [],
+      complicatingFactors: legacyProfile.complicatingFactors || [],
+    }];
+  }
+  return [{ procedureDetails: "", surgeryDate: "", timeSinceSurgery: "", recoveryGoals: [], complicatingFactors: [] }];
+}
+
+function enrichInstance(inst: ProcedureProfile): ProcedureProfile {
+  return {
+    ...inst,
+    timeSinceSurgery: inst.surgeryDate
+      ? getTimeSinceSurgery(inst.surgeryDate) || inst.timeSinceSurgery
+      : inst.timeSinceSurgery,
+  };
+}
+
 export default function PatientDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -25,10 +52,12 @@ export default function PatientDashboard() {
   const [calls, setCalls] = useState<any[]>([]);
   const [showWizard, setShowWizard] = useState(false);
   const [showAddProcedure, setShowAddProcedure] = useState(false);
-  const [editingProcedure, setEditingProcedure] = useState<string | null>(null);
+  const [editing, setEditing] = useState<{ proc: string; idx: number } | null>(null);
   const [editingShared, setEditingShared] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [procSaved, setProcSaved] = useState(false);
+  const [sharedSaved, setSharedSaved] = useState(false);
   const [wizardError, setWizardError] = useState<string | null>(null);
   const [switchingProcedure, setSwitchingProcedure] = useState(false);
 
@@ -50,6 +79,14 @@ export default function PatientDashboard() {
 
   const [newProcedure, setNewProcedure] = useState("");
 
+  const [subscription, setSubscription] = useState<{
+    status: string | null;
+    plan: string | null;
+    currentPeriodEnd: string | null;
+    cancelAtPeriodEnd: boolean;
+  }>({ status: null, plan: null, currentPeriodEnd: null, cancelAtPeriodEnd: false });
+  const [subscriptionLoading, setSubscriptionLoading] = useState(false);
+
   const [privacySettings, setPrivacySettings] = useState({
     showRealName: true,
     displayName: "",
@@ -65,11 +102,15 @@ export default function PatientDashboard() {
     if (!session?.user) return;
     async function load() {
       try {
-        const [profileRes, callsRes, settingsRes] = await Promise.all([
+        const [profileRes, callsRes, settingsRes, subRes] = await Promise.all([
           fetch("/api/profile"),
           fetch("/api/calls"),
           fetch("/api/user/settings"),
+          fetch("/api/subscription"),
         ]);
+        if (subRes.ok) {
+          setSubscription(await subRes.json());
+        }
         if (profileRes.ok) {
           const p = await profileRes.json();
           if (p) {
@@ -100,45 +141,30 @@ export default function PatientDashboard() {
     load();
   }, [session]);
 
-  // Get procedures list
-  const procedures = profile?.procedureTypes?.length > 0
+  // Get procedures list (unique types)
+  const procedures: string[] = profile?.procedureTypes?.length > 0
     ? profile.procedureTypes
     : (profile?.procedureType ? [profile.procedureType] : []);
 
   const activeProcedure = profile?.activeProcedureType || profile?.procedureType || procedures[0];
 
   // Get procedure profiles
-  const procedureProfiles: Record<string, ProcedureProfile> = profile?.procedureProfiles || {};
+  const procedureProfiles: Record<string, any> = profile?.procedureProfiles || {};
 
-  // Helper to get procedure-specific data
-  function getProcedureData(proc: string): ProcedureProfile {
-    const procProfile = procedureProfiles[proc];
-    if (procProfile) {
-      return {
-        ...procProfile,
-        // Compute timeSinceSurgery from surgeryDate if available
-        timeSinceSurgery: procProfile.surgeryDate
-          ? getTimeSinceSurgery(procProfile.surgeryDate) || procProfile.timeSinceSurgery
-          : procProfile.timeSinceSurgery,
-      };
-    }
-    return {
-      procedureDetails: proc === profile?.procedureType ? profile?.procedureDetails : "",
-      surgeryDate: proc === profile?.procedureType ? profile?.surgeryDate : "",
-      timeSinceSurgery: proc === profile?.procedureType ? profile?.timeSinceSurgery : "",
-      recoveryGoals: proc === profile?.procedureType ? profile?.recoveryGoals : [],
-      complicatingFactors: proc === profile?.procedureType ? profile?.complicatingFactors : [],
-    };
+  // Helper to get procedure-specific data for a given instance
+  function getProcedureData(proc: string, index: number): ProcedureProfile {
+    const instances = getInstances(procedureProfiles, proc, profile);
+    return enrichInstance(instances[index] || instances[0] || {});
   }
 
-  async function switchActiveProcedure(procedureType: string) {
-    if (procedureType === activeProcedure) return;
+  async function switchActiveProcedure(proc: string) {
+    if (proc === activeProcedure) return;
     setSwitchingProcedure(true);
     try {
       const res = await fetch("/api/profile/active-procedure", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ procedureType }),
+        body: JSON.stringify({ procedureType: proc }),
       });
       if (res.ok) {
         const updated = await res.json();
@@ -158,13 +184,7 @@ export default function PatientDashboard() {
       const updatedProcedures = [...procedures, newProcedure];
       const updatedProfiles = {
         ...procedureProfiles,
-        [newProcedure]: {
-          procedureDetails: "",
-          surgeryDate: "",
-          timeSinceSurgery: "",
-          recoveryGoals: [],
-          complicatingFactors: [],
-        },
+        [newProcedure]: [{ procedureDetails: "", surgeryDate: "", timeSinceSurgery: "", recoveryGoals: [], complicatingFactors: [] }],
       };
 
       const res = await fetch("/api/profile", {
@@ -182,15 +202,7 @@ export default function PatientDashboard() {
         setProfile(updated);
         setNewProcedure("");
         setShowAddProcedure(false);
-        // Open edit for the new procedure
-        setEditingProcedure(newProcedure);
-        setProcForm({
-          procedureDetails: "",
-          surgeryDate: "",
-          timeSinceSurgery: "",
-          recoveryGoals: [],
-          complicatingFactors: [],
-        });
+        startEditingProcedure(newProcedure, 0);
       }
     } catch (err) {
       console.error(err);
@@ -199,16 +211,77 @@ export default function PatientDashboard() {
     }
   }
 
-  async function removeProcedure(procedureType: string) {
-    if (procedures.length <= 1) return;
-    if (!confirm(`Remove ${procedureType} from your profile?`)) return;
+  async function addInstance(proc: string) {
+    setSaving(true);
+    try {
+      const instances = [...getInstances(procedureProfiles, proc, profile)];
+      instances.push({ procedureDetails: "", surgeryDate: "", timeSinceSurgery: "", recoveryGoals: [], complicatingFactors: [] });
+      const updatedProfiles = { ...procedureProfiles, [proc]: instances };
+
+      const res = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...sharedForm,
+          procedureTypes: procedures,
+          procedureProfiles: updatedProfiles,
+        }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setProfile(updated);
+        startEditingProcedure(proc, instances.length - 1);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function removeInstance(proc: string, idx: number) {
+    const instances = getInstances(procedureProfiles, proc, profile);
+    if (instances.length <= 1) {
+      return removeProcedure(proc);
+    }
+    const label = instances[idx].procedureDetails || `surgery #${idx + 1}`;
+    if (!confirm(`Remove "${label}" from ${proc}?`)) return;
 
     setSaving(true);
     try {
-      const updatedProcedures = procedures.filter((p: string) => p !== procedureType);
+      const updated = instances.filter((_: ProcedureProfile, i: number) => i !== idx);
+      const updatedProfiles = { ...procedureProfiles, [proc]: updated };
+
+      const res = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...sharedForm,
+          procedureTypes: procedures,
+          procedureProfiles: updatedProfiles,
+        }),
+      });
+      if (res.ok) {
+        setProfile(await res.json());
+        if (editing?.proc === proc && editing.idx === idx) setEditing(null);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function removeProcedure(proc: string) {
+    if (procedures.length <= 1) return;
+    if (!confirm(`Remove ${proc} and all its entries from your profile?`)) return;
+
+    setSaving(true);
+    try {
+      const updatedProcedures = procedures.filter((p: string) => p !== proc);
       const updatedProfiles = { ...procedureProfiles };
-      delete updatedProfiles[procedureType];
-      const newActive = procedureType === activeProcedure ? updatedProcedures[0] : activeProcedure;
+      delete updatedProfiles[proc];
+      const newActive = proc === activeProcedure ? updatedProcedures[0] : activeProcedure;
 
       const res = await fetch("/api/profile", {
         method: "PUT",
@@ -224,6 +297,7 @@ export default function PatientDashboard() {
       if (res.ok) {
         const updated = await res.json();
         setProfile(updated);
+        if (editing?.proc === proc) setEditing(null);
       }
     } catch (err) {
       console.error(err);
@@ -232,8 +306,9 @@ export default function PatientDashboard() {
     }
   }
 
-  function startEditingProcedure(proc: string) {
-    const data = getProcedureData(proc);
+  function startEditingProcedure(proc: string, idx: number) {
+    const instances = getInstances(procedureProfiles, proc, profile);
+    const data = enrichInstance(instances[idx] || {});
     setProcForm({
       procedureDetails: data.procedureDetails || "",
       surgeryDate: data.surgeryDate || "",
@@ -241,25 +316,27 @@ export default function PatientDashboard() {
       recoveryGoals: data.recoveryGoals || [],
       complicatingFactors: data.complicatingFactors || [],
     });
-    setEditingProcedure(proc);
+    setEditing({ proc, idx });
   }
 
-  async function saveProcedureData(proc: string) {
+  async function saveProcedureData(proc: string, idx: number) {
     setSaving(true);
     try {
-      // Compute timeSinceSurgery from surgeryDate
       const computedTimeSince = procForm.surgeryDate
-        ? getTimeSinceSurgery(procForm.surgeryDate)
+        ? getTimeSinceSurgery(procForm.surgeryDate) || procForm.timeSinceSurgery
         : procForm.timeSinceSurgery;
 
-      const procData = {
+      const instanceData = {
         ...procForm,
         timeSinceSurgery: computedTimeSince,
       };
 
+      const instances = [...getInstances(procedureProfiles, proc, profile)];
+      instances[idx] = instanceData;
+
       const updatedProfiles = {
         ...procedureProfiles,
-        [proc]: procData,
+        [proc]: instances,
       };
 
       const res = await fetch("/api/profile", {
@@ -269,20 +346,21 @@ export default function PatientDashboard() {
           ...sharedForm,
           procedureTypes: procedures,
           procedureProfiles: updatedProfiles,
-          // Also update legacy fields if this is the primary procedure
-          ...(proc === profile?.procedureType && {
-            procedureDetails: procData.procedureDetails,
-            surgeryDate: procData.surgeryDate,
+          ...(proc === profile?.procedureType && idx === 0 && {
+            procedureDetails: instanceData.procedureDetails,
+            surgeryDate: instanceData.surgeryDate,
             timeSinceSurgery: computedTimeSince,
-            recoveryGoals: procData.recoveryGoals,
-            complicatingFactors: procForm.complicatingFactors,
+            recoveryGoals: instanceData.recoveryGoals,
+            complicatingFactors: instanceData.complicatingFactors,
           }),
         }),
       });
       if (res.ok) {
         const updated = await res.json();
         setProfile(updated);
-        setEditingProcedure(null);
+        setEditing(null);
+        setProcSaved(true);
+        setTimeout(() => setProcSaved(false), 3000);
       }
     } catch (err) {
       console.error(err);
@@ -307,6 +385,8 @@ export default function PatientDashboard() {
         const updated = await res.json();
         setProfile(updated);
         setEditingShared(false);
+        setSharedSaved(true);
+        setTimeout(() => setSharedSaved(false), 3000);
       }
     } catch (err) {
       console.error(err);
@@ -403,6 +483,40 @@ export default function PatientDashboard() {
     }
   }
 
+  async function openSubscriptionPortal() {
+    setSubscriptionLoading(true);
+    try {
+      const res = await fetch("/api/subscription/portal", { method: "POST" });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSubscriptionLoading(false);
+    }
+  }
+
+  async function handleSubscribe(plan: "monthly" | "annual") {
+    setSubscriptionLoading(true);
+    try {
+      const res = await fetch("/api/checkout/subscription", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSubscriptionLoading(false);
+    }
+  }
+
   async function cancelCall(callId: string) {
     if (!confirm("Are you sure you want to cancel this call?")) return;
     try {
@@ -464,6 +578,92 @@ export default function PatientDashboard() {
         </Link>
       </div>
 
+      {/* Subscription Status */}
+      {subscription.status === "active" && !subscription.cancelAtPeriodEnd && (
+        <section className="bg-green-50 border border-green-200 rounded-xl p-4 mb-8 flex items-center justify-between">
+          <div>
+            <p className="font-semibold text-green-800">RecoveryConnect Subscriber</p>
+            <p className="text-sm text-green-700">
+              {subscription.plan === "annual" ? "Annual" : "Monthly"} plan
+              {subscription.currentPeriodEnd && (
+                <> &middot; Next billing: {new Date(subscription.currentPeriodEnd).toLocaleDateString()}</>
+              )}
+            </p>
+          </div>
+          <button
+            onClick={openSubscriptionPortal}
+            disabled={subscriptionLoading}
+            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm font-medium disabled:opacity-50"
+          >
+            {subscriptionLoading ? "Loading..." : "Manage Subscription"}
+          </button>
+        </section>
+      )}
+
+      {subscription.status === "active" && subscription.cancelAtPeriodEnd && (
+        <section className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-8 flex items-center justify-between">
+          <div>
+            <p className="font-semibold text-yellow-800">Subscription Ending</p>
+            <p className="text-sm text-yellow-700">
+              Your subscription ends on {subscription.currentPeriodEnd ? new Date(subscription.currentPeriodEnd).toLocaleDateString() : "soon"}
+            </p>
+          </div>
+          <button
+            onClick={openSubscriptionPortal}
+            disabled={subscriptionLoading}
+            className="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 text-sm font-medium disabled:opacity-50"
+          >
+            {subscriptionLoading ? "Loading..." : "Resubscribe"}
+          </button>
+        </section>
+      )}
+
+      {subscription.status === "past_due" && (
+        <section className="bg-red-50 border border-red-200 rounded-xl p-4 mb-8 flex items-center justify-between">
+          <div>
+            <p className="font-semibold text-red-800">Payment Failed</p>
+            <p className="text-sm text-red-700">
+              Your subscription payment failed. Please update your payment method.
+            </p>
+          </div>
+          <button
+            onClick={openSubscriptionPortal}
+            disabled={subscriptionLoading}
+            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 text-sm font-medium disabled:opacity-50"
+          >
+            {subscriptionLoading ? "Loading..." : "Update Payment"}
+          </button>
+        </section>
+      )}
+
+      {(!subscription.status || subscription.status === "canceled") && (
+        <section className="bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-200 rounded-xl p-6 mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-semibold text-teal-900">Unlock Unlimited Recordings</p>
+              <p className="text-sm text-teal-700 mt-1">
+                Get access to all recovery stories for ${SUBSCRIPTION_MONTHLY_PRICE}/mo or ${SUBSCRIPTION_ANNUAL_PRICE}/yr
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleSubscribe("monthly")}
+                disabled={subscriptionLoading}
+                className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 text-sm font-medium disabled:opacity-50"
+              >
+                {subscriptionLoading ? "Loading..." : "Subscribe"}
+              </button>
+              <Link
+                href="/how-it-works#pricing"
+                className="text-teal-600 hover:text-teal-700 px-3 py-2 text-sm font-medium"
+              >
+                Learn More
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* My Procedures Section */}
       <section className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
         <div className="flex items-center justify-between mb-4">
@@ -473,23 +673,25 @@ export default function PatientDashboard() {
               Each procedure has its own recovery goals and details
             </p>
           </div>
-          <button
-            onClick={() => setShowAddProcedure(true)}
-            className="text-sm bg-teal-50 text-teal-700 px-3 py-1.5 rounded-lg hover:bg-teal-100 font-medium flex items-center gap-1"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            Add Procedure
-          </button>
+          <div className="flex items-center gap-3">
+            {procSaved && <span className="text-sm text-green-600 font-medium">Saved!</span>}
+            <button
+              onClick={() => setShowAddProcedure(true)}
+              className="text-sm bg-teal-50 text-teal-700 px-3 py-1.5 rounded-lg hover:bg-teal-100 font-medium flex items-center gap-1"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Add Procedure
+            </button>
+          </div>
         </div>
 
         {/* Procedure Cards */}
         <div className="space-y-4">
           {procedures.map((proc: string) => {
-            const procData = getProcedureData(proc);
+            const instances = getInstances(procedureProfiles, proc, profile);
             const isActive = proc === activeProcedure;
-            const isEditing = editingProcedure === proc;
 
             return (
               <div
@@ -498,10 +700,10 @@ export default function PatientDashboard() {
                   isActive ? "border-teal-500 bg-teal-50/50" : "border-gray-200 bg-white"
                 }`}
               >
-                {/* Procedure Header */}
+                {/* Procedure Type Header */}
                 <div
-                  onClick={() => !isEditing && switchActiveProcedure(proc)}
-                  className={`p-4 flex items-center justify-between ${!isEditing ? "cursor-pointer" : ""} ${switchingProcedure ? "opacity-50 pointer-events-none" : ""}`}
+                  onClick={() => switchActiveProcedure(proc)}
+                  className={`p-4 flex items-center justify-between cursor-pointer ${switchingProcedure ? "opacity-50 pointer-events-none" : ""}`}
                 >
                   <div className="flex items-center gap-3">
                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
@@ -523,26 +725,12 @@ export default function PatientDashboard() {
                         )}
                       </div>
                       <p className="text-sm text-gray-500">
-                        {procData.surgeryDate
-                          ? getTimeSinceSurgeryLabel(procData.surgeryDate)
-                          : (procData.timeSinceSurgery || "Surgery date not set")}
-                        {procData.recoveryGoals?.length ? ` • ${procData.recoveryGoals.length} goals` : ""}
+                        {instances.length} {instances.length === 1 ? "surgery" : "surgeries"}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    {!isEditing && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          startEditingProcedure(proc);
-                        }}
-                        className="text-sm text-teal-600 hover:text-teal-700 font-medium px-2 py-1"
-                      >
-                        Edit
-                      </button>
-                    )}
-                    {procedures.length > 1 && !isEditing && (
+                    {procedures.length > 1 && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -559,113 +747,163 @@ export default function PatientDashboard() {
                   </div>
                 </div>
 
-                {/* Procedure Edit Form */}
-                {isEditing && (
-                  <div className="border-t border-gray-200 p-4 space-y-4">
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Procedure Details</label>
-                        <input
-                          type="text"
-                          value={procForm.procedureDetails || ""}
-                          onChange={(e) => setProcForm((f) => ({ ...f, procedureDetails: e.target.value }))}
-                          placeholder="e.g., Patellar tendon graft"
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Surgery Date</label>
-                        <input
-                          type="date"
-                          value={procForm.surgeryDate || ""}
-                          onChange={(e) => setProcForm((f) => ({ ...f, surgeryDate: e.target.value }))}
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                        />
-                        {procForm.surgeryDate && (
-                          <p className="mt-1 text-sm text-teal-600 font-medium">
-                            {getTimeSinceSurgeryLabel(procForm.surgeryDate)}
-                          </p>
+                {/* Instances */}
+                <div className="border-t border-gray-100">
+                  {instances.map((inst, idx) => {
+                    const data = enrichInstance(inst);
+                    const isEditing = editing?.proc === proc && editing.idx === idx;
+
+                    return (
+                      <div key={idx} className={`${idx > 0 ? "border-t border-gray-100" : ""}`}>
+                        {!isEditing && (
+                          <div className="px-4 py-3 flex items-center justify-between">
+                            <div className="flex-1">
+                              <p className="text-sm text-gray-800">
+                                {data.procedureDetails || <span className="text-gray-400 italic">No details yet</span>}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {data.surgeryDate
+                                  ? getTimeSinceSurgeryLabel(data.surgeryDate)
+                                  : (data.timeSinceSurgery || "Surgery date not set")}
+                                {data.recoveryGoals?.length ? ` • ${data.recoveryGoals.length} goals` : ""}
+                              </p>
+                              {((data.recoveryGoals?.length ?? 0) > 0 || (data.complicatingFactors?.length ?? 0) > 0) && (
+                                <div className="flex flex-wrap gap-1 mt-1.5">
+                                  {data.recoveryGoals?.map((g: string) => (
+                                    <span key={g} className="text-xs bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full">{g}</span>
+                                  ))}
+                                  {data.complicatingFactors?.map((f: string) => (
+                                    <span key={f} className="text-xs bg-orange-50 text-orange-700 px-2 py-0.5 rounded-full">{f}</span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 ml-3">
+                              <button
+                                onClick={() => startEditingProcedure(proc, idx)}
+                                className="text-sm text-teal-600 hover:text-teal-700 font-medium px-2 py-1"
+                              >
+                                Edit
+                              </button>
+                              {instances.length > 1 && (
+                                <button
+                                  onClick={() => removeInstance(proc, idx)}
+                                  className="text-gray-400 hover:text-red-500 p-1"
+                                  title="Remove this surgery"
+                                >
+                                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {isEditing && (
+                          <div className="p-4 space-y-4 bg-gray-50/50">
+                            <div className="grid sm:grid-cols-2 gap-4">
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Procedure Details</label>
+                                <input
+                                  type="text"
+                                  value={procForm.procedureDetails || ""}
+                                  onChange={(e) => setProcForm((f) => ({ ...f, procedureDetails: e.target.value }))}
+                                  placeholder="e.g., Patellar tendon graft"
+                                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Surgery Date</label>
+                                <input
+                                  type="date"
+                                  value={procForm.surgeryDate || ""}
+                                  onChange={(e) => setProcForm((f) => ({ ...f, surgeryDate: e.target.value }))}
+                                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                                />
+                                {procForm.surgeryDate && (
+                                  <p className="mt-1 text-sm text-teal-600 font-medium">
+                                    {getTimeSinceSurgeryLabel(procForm.surgeryDate)}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Recovery Goals for {proc}</label>
+                              <div className="flex flex-wrap gap-2">
+                                {RECOVERY_GOALS.map((g) => (
+                                  <button
+                                    key={g}
+                                    type="button"
+                                    onClick={() => toggleProcFormGoal(g)}
+                                    className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                                      procForm.recoveryGoals?.includes(g)
+                                        ? "bg-teal-50 border-teal-300 text-teal-700"
+                                        : "border-gray-200 text-gray-600 hover:border-gray-300"
+                                    }`}
+                                  >
+                                    {g}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Complicating Factors for {proc}</label>
+                              <div className="flex flex-wrap gap-2">
+                                {COMPLICATING_FACTORS.map((f) => (
+                                  <button
+                                    key={f}
+                                    type="button"
+                                    onClick={() => toggleProcFormFactor(f)}
+                                    className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                                      procForm.complicatingFactors?.includes(f)
+                                        ? "bg-orange-50 border-orange-300 text-orange-700"
+                                        : "border-gray-200 text-gray-600 hover:border-gray-300"
+                                    }`}
+                                  >
+                                    {f}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="flex gap-3 pt-2">
+                              <button
+                                onClick={() => saveProcedureData(proc, idx)}
+                                disabled={saving}
+                                className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 disabled:opacity-50 text-sm font-medium"
+                              >
+                                {saving ? "Saving..." : "Save"}
+                              </button>
+                              <button
+                                onClick={() => setEditing(null)}
+                                className="text-gray-500 hover:text-gray-700 px-3 py-2 text-sm"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
                         )}
                       </div>
-                    </div>
+                    );
+                  })}
+                </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Recovery Goals for {proc}</label>
-                      <div className="flex flex-wrap gap-2">
-                        {RECOVERY_GOALS.map((g) => (
-                          <button
-                            key={g}
-                            type="button"
-                            onClick={() => toggleProcFormGoal(g)}
-                            className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                              procForm.recoveryGoals?.includes(g)
-                                ? "bg-teal-50 border-teal-300 text-teal-700"
-                                : "border-gray-200 text-gray-600 hover:border-gray-300"
-                            }`}
-                          >
-                            {g}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Complicating Factors for {proc}</label>
-                      <div className="flex flex-wrap gap-2">
-                        {COMPLICATING_FACTORS.map((f) => (
-                          <button
-                            key={f}
-                            type="button"
-                            onClick={() => toggleProcFormFactor(f)}
-                            className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                              procForm.complicatingFactors?.includes(f)
-                                ? "bg-orange-50 border-orange-300 text-orange-700"
-                                : "border-gray-200 text-gray-600 hover:border-gray-300"
-                            }`}
-                          >
-                            {f}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="flex gap-3 pt-2">
-                      <button
-                        onClick={() => saveProcedureData(proc)}
-                        disabled={saving}
-                        className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 disabled:opacity-50 text-sm font-medium"
-                      >
-                        {saving ? "Saving..." : "Save"}
-                      </button>
-                      <button
-                        onClick={() => setEditingProcedure(null)}
-                        className="text-gray-500 hover:text-gray-700 px-3 py-2 text-sm"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Procedure Summary (when not editing) */}
-                {!isEditing && ((procData.recoveryGoals?.length ?? 0) > 0 || (procData.complicatingFactors?.length ?? 0) > 0) && (
-                  <div className="border-t border-gray-100 px-4 py-3 space-y-2">
-                    {(procData.recoveryGoals?.length ?? 0) > 0 && (
-                      <div className="flex flex-wrap gap-1.5">
-                        {procData.recoveryGoals?.map((g: string) => (
-                          <span key={g} className="text-xs bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full">{g}</span>
-                        ))}
-                      </div>
-                    )}
-                    {(procData.complicatingFactors?.length ?? 0) > 0 && (
-                      <div className="flex flex-wrap gap-1.5">
-                        {procData.complicatingFactors?.map((f: string) => (
-                          <span key={f} className="text-xs bg-orange-50 text-orange-700 px-2 py-0.5 rounded-full">{f}</span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
+                {/* Add another instance */}
+                <div className="border-t border-gray-100 px-4 py-2">
+                  <button
+                    onClick={() => addInstance(proc)}
+                    disabled={saving}
+                    className="text-sm text-teal-600 hover:text-teal-700 font-medium flex items-center gap-1"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Add another {proc}
+                  </button>
+                </div>
               </div>
             );
           })}
@@ -714,14 +952,17 @@ export default function PatientDashboard() {
             <h2 className="text-xl font-bold">About You</h2>
             <p className="text-sm text-gray-500">These apply across all your procedures</p>
           </div>
-          {!editingShared && (
-            <button
-              onClick={() => setEditingShared(true)}
-              className="text-sm text-teal-600 hover:text-teal-700 font-medium"
-            >
-              Edit
-            </button>
-          )}
+          <div className="flex items-center gap-3">
+            {sharedSaved && <span className="text-sm text-green-600 font-medium">Saved!</span>}
+            {!editingShared && (
+              <button
+                onClick={() => setEditingShared(true)}
+                className="text-sm text-teal-600 hover:text-teal-700 font-medium"
+              >
+                Edit
+              </button>
+            )}
+          </div>
         </div>
 
         {editingShared ? (
@@ -825,6 +1066,8 @@ export default function PatientDashboard() {
         )}
       </section>
 
+      <PurchaseHistory role="patient" />
+
       {/* Privacy Settings */}
       <section className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
         <h2 className="text-xl font-bold mb-4">Privacy Settings</h2>
@@ -882,7 +1125,7 @@ export default function PatientDashboard() {
         <section className="mb-8">
           <RecoveryTimeline
             procedureType={activeProcedure}
-            currentWeek={getCurrentRecoveryWeek(getProcedureData(activeProcedure).surgeryDate || null) ?? undefined}
+            currentWeek={getCurrentRecoveryWeek(getProcedureData(activeProcedure, 0).surgeryDate || null) ?? undefined}
           />
         </section>
       )}

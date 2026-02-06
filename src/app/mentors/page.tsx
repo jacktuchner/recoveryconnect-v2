@@ -6,6 +6,7 @@ import Link from "next/link";
 import FilterSidebar from "@/components/FilterSidebar";
 import ContentAcknowledgmentModal from "@/components/ContentAcknowledgmentModal";
 import DisclaimerBanner from "@/components/DisclaimerBanner";
+import MatchScoreTooltip from "@/components/MatchScoreTooltip";
 import { getTimeSinceSurgeryLabel } from "@/lib/surgeryDate";
 
 const activityLabels: Record<string, string> = {
@@ -31,6 +32,7 @@ interface Contributor {
   bio?: string;
   profile?: {
     procedureType?: string;
+    procedureTypes?: string[];
     ageRange?: string;
     activityLevel?: string;
     recoveryGoals?: string[];
@@ -42,40 +44,6 @@ interface Contributor {
   reviewsReceived?: { rating: number }[];
   matchScore?: number;
   matchBreakdown?: { attribute: string; matched: boolean; weight: number }[];
-}
-
-function MatchScoreTooltip({ breakdown }: { breakdown: { attribute: string; matched: boolean; weight: number }[] }) {
-  const [show, setShow] = useState(false);
-
-  return (
-    <div className="relative">
-      <button
-        onMouseEnter={() => setShow(true)}
-        onMouseLeave={() => setShow(false)}
-        onClick={(e) => { e.preventDefault(); setShow(!show); }}
-        className="ml-1 text-gray-400 hover:text-gray-600"
-      >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      </button>
-      {show && (
-        <div className="absolute right-0 top-6 z-50 w-56 bg-white rounded-lg shadow-lg border border-gray-200 p-3 text-left">
-          <p className="text-xs font-medium text-gray-700 mb-2">Match breakdown:</p>
-          <div className="space-y-1">
-            {breakdown.map((item) => (
-              <div key={item.attribute} className="flex items-center justify-between text-xs">
-                <span className="text-gray-600">{item.attribute}</span>
-                <span className={item.matched ? "text-green-600" : "text-gray-400"}>
-                  {item.matched ? "✓" : "—"}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
 }
 
 function MentorCard({ contributor }: { contributor: Contributor }) {
@@ -98,7 +66,14 @@ function MentorCard({ contributor }: { contributor: Contributor }) {
             <h3 className="font-semibold text-gray-900 group-hover:text-cyan-700 transition-colors text-lg">
               {contributor.name}
             </h3>
-            <p className="text-sm text-gray-600">{profile.procedureType || "Recovery Mentor"}</p>
+            <div className="flex flex-wrap gap-1 mt-0.5">
+              {(profile.procedureTypes?.length ? profile.procedureTypes : (profile.procedureType ? [profile.procedureType] : [])).map((proc: string) => (
+                <span key={proc} className="text-xs bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full">{proc}</span>
+              ))}
+              {!profile.procedureType && !profile.procedureTypes?.length && (
+                <span className="text-sm text-gray-600">Recovery Mentor</span>
+              )}
+            </div>
             {profile.isAvailableForCalls && (
               <span className="inline-flex items-center gap-1 text-xs text-green-700 bg-green-100 px-2 py-0.5 rounded-full mt-1">
                 <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
@@ -197,22 +172,26 @@ function MentorsContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [contributors, setContributors] = useState<Contributor[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
+    setError(null);
     const params = new URLSearchParams();
     params.set("availableForCalls", "true");
     params.set("page", pagination.page.toString());
 
     try {
       const res = await fetch(`/api/contributors?${params}`);
+      if (!res.ok) throw new Error("Failed to load mentors.");
       const data = await res.json();
       setContributors(data.contributors || []);
       setPagination(data.pagination || { page: 1, totalPages: 1, total: 0 });
     } catch (err) {
       console.error("Error fetching contributors:", err);
+      setError("Failed to load mentors.");
     } finally {
       setLoading(false);
     }
@@ -236,8 +215,12 @@ function MentorsContent() {
     }
 
     // Procedure filter
-    if (filters.procedures.length > 0 && !filters.procedures.includes(c.profile?.procedureType || "")) {
-      return false;
+    if (filters.procedures.length > 0) {
+      const types = c.profile?.procedureTypes;
+      const matches = Array.isArray(types) && types.length > 0
+        ? filters.procedures.some((p) => types.includes(p))
+        : filters.procedures.includes(c.profile?.procedureType || "");
+      if (!matches) return false;
     }
 
     // Age range filter
@@ -324,6 +307,13 @@ function MentorsContent() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <DisclaimerBanner dismissible />
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 flex items-center justify-between">
+              <p className="text-sm text-red-700">{error}</p>
+              <button onClick={fetchData} className="text-sm text-red-600 hover:text-red-700 font-medium">Retry</button>
+            </div>
+          )}
 
           {/* Looking for recordings CTA */}
           <div className="mb-8 p-4 bg-teal-50 border border-teal-200 rounded-xl">

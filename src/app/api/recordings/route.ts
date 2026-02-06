@@ -190,7 +190,7 @@ export async function POST(req: NextRequest) {
         thumbnailUrl,
         durationSeconds,
         isVideo: isVideo || false,
-        price: price || 9.99,
+        price: price || 4.99,
         procedureType: recordingProcedure,
         timeSinceSurgery: timeSinceSurgery || null,
         ageRange: user.profile.ageRange,

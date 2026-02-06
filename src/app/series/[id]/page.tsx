@@ -40,26 +40,38 @@ export default function SeriesDetailPage() {
   const { data: session } = useSession();
   const [series, setSeries] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const userId = (session?.user as any)?.id;
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const res = await fetch(`/api/series/${id}`);
-        if (res.ok) {
-          setSeries(await res.json());
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
+  async function loadSeries() {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/series/${id}`);
+      if (!res.ok) throw new Error("Failed to load series.");
+      setSeries(await res.json());
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load series.");
+    } finally {
+      setLoading(false);
     }
-    load();
+  }
+
+  useEffect(() => {
+    loadSeries();
   }, [id]);
 
   if (loading) return <div className="max-w-4xl mx-auto px-4 py-8">Loading...</div>;
+  if (error) return (
+    <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 flex items-center justify-between">
+        <p className="text-sm text-red-700">{error}</p>
+        <button onClick={loadSeries} className="text-sm text-red-600 hover:text-red-700 font-medium">Retry</button>
+      </div>
+    </div>
+  );
   if (!series) return <div className="max-w-4xl mx-auto px-4 py-8">Series not found.</div>;
 
   const canViewContent = series.hasAccess || series.isContributor;

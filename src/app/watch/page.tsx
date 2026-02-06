@@ -1,13 +1,15 @@
 "use client";
 
 import { useState, useEffect, useCallback, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import RecordingCard from "@/components/RecordingCard";
 import SeriesCard from "@/components/SeriesCard";
 import FilterSidebar from "@/components/FilterSidebar";
 import ContentAcknowledgmentModal from "@/components/ContentAcknowledgmentModal";
 import DisclaimerBanner from "@/components/DisclaimerBanner";
+import { SUBSCRIPTION_MONTHLY_PRICE, SUBSCRIPTION_ANNUAL_PRICE } from "@/lib/constants";
 
 type SortOption = "match" | "price_low" | "price_high" | "newest" | "most_viewed" | "highest_rated";
 
@@ -22,6 +24,45 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
 
 function WatchContent() {
   const searchParams = useSearchParams();
+  const { data: session } = useSession();
+  const router = useRouter();
+
+  const [subscription, setSubscription] = useState<{
+    status: string | null;
+    plan: string | null;
+  }>({ status: null, plan: null });
+  const [subscriptionLoading, setSubscriptionLoading] = useState(false);
+
+  useEffect(() => {
+    if (!session?.user) return;
+    fetch("/api/subscription")
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => { if (data) setSubscription(data); })
+      .catch(() => {});
+  }, [session]);
+
+  async function handleSubscribe(plan: "monthly" | "annual") {
+    if (!session?.user) {
+      router.push("/auth/register");
+      return;
+    }
+    setSubscriptionLoading(true);
+    try {
+      const res = await fetch("/api/checkout/subscription", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSubscriptionLoading(false);
+    }
+  }
 
   const [filters, setFilters] = useState({
     procedures: [] as string[],
@@ -34,20 +75,23 @@ function WatchContent() {
   const [recordings, setRecordings] = useState<any[]>([]);
   const [series, setSeries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
+    setError(null);
     const params = new URLSearchParams();
     params.set("page", pagination.page.toString());
 
     try {
-      // Fetch both recordings and series in parallel
       const [recordingsRes, seriesRes] = await Promise.all([
         fetch(`/api/recordings?${params}`),
         fetch(`/api/series?status=PUBLISHED`),
       ]);
+
+      if (!recordingsRes.ok) throw new Error("Failed to load recordings.");
 
       const recordingsData = await recordingsRes.json();
       setRecordings(recordingsData.recordings || []);
@@ -59,6 +103,7 @@ function WatchContent() {
       }
     } catch (err) {
       console.error("Error fetching data:", err);
+      setError("Failed to load recordings.");
     } finally {
       setLoading(false);
     }
@@ -203,6 +248,13 @@ function WatchContent() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <DisclaimerBanner dismissible />
 
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 flex items-center justify-between">
+              <p className="text-sm text-red-700">{error}</p>
+              <button onClick={fetchData} className="text-sm text-red-600 hover:text-red-700 font-medium">Retry</button>
+            </div>
+          )}
+
           {/* Looking for mentors CTA */}
           <div className="mb-8 p-4 bg-cyan-50 border border-cyan-200 rounded-xl">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -221,6 +273,35 @@ function WatchContent() {
               </Link>
             </div>
           </div>
+
+          {/* Subscription CTA */}
+          {subscription.status !== "active" && (
+            <div className="mb-8 p-4 bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-200 rounded-xl">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                  <p className="font-medium text-teal-900">Unlock Unlimited Recordings</p>
+                  <p className="text-sm text-teal-700">
+                    Get access to all recovery stories for ${SUBSCRIPTION_MONTHLY_PRICE}/mo or ${SUBSCRIPTION_ANNUAL_PRICE}/yr
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleSubscribe("monthly")}
+                    disabled={subscriptionLoading}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium whitespace-nowrap disabled:opacity-50"
+                  >
+                    {subscriptionLoading ? "Loading..." : "Subscribe"}
+                  </button>
+                  <Link
+                    href="/how-it-works#pricing"
+                    className="text-teal-600 hover:text-teal-700 px-3 py-2 text-sm font-medium whitespace-nowrap"
+                  >
+                    Learn More
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Search and Sort Bar */}
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
