@@ -376,6 +376,199 @@ export async function sendSubscriptionCancelledEmail(to: string, name: string, a
   }
 }
 
+// Group session signup confirmation
+export async function sendGroupSessionSignupEmail(
+  to: string,
+  name: string,
+  sessionTitle: string,
+  date: Date,
+  videoLink?: string
+) {
+  const dateStr = date.toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+  const timeStr = date.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  const content = `
+    <h1 style="color: #0d9488; font-size: 24px; margin-bottom: 20px;">You're Signed Up!</h1>
+    <p>Hi ${name},</p>
+    <p>You've registered for the group session <strong>${sessionTitle}</strong>.</p>
+    <div style="background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 8px; padding: 20px; margin: 20px 0;">
+      <p style="margin: 0 0 10px 0;"><strong>Date:</strong> ${dateStr}</p>
+      <p style="margin: 0;"><strong>Time:</strong> ${timeStr}</p>
+    </div>
+    <p style="color: #6b7280;">We'll send you a confirmation with the video link once enough participants have signed up (minimum of 3 needed).</p>
+    ${videoLink ? `
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${videoLink}" style="display: inline-block; background: #0d9488; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600;">
+        Join Session
+      </a>
+    </div>
+    ` : `
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/patient" style="display: inline-block; background: #0d9488; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600;">
+        View Your Dashboard
+      </a>
+    </div>
+    `}
+  `;
+
+  try {
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to,
+      subject: `You're signed up for: ${sessionTitle}`,
+      html: baseTemplate(content),
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to send group session signup email:", error);
+    return { success: false, error };
+  }
+}
+
+// Group session confirmed (minimum met, video link available)
+export async function sendGroupSessionConfirmedEmail(
+  to: string,
+  name: string,
+  sessionTitle: string,
+  date: Date,
+  videoLink: string
+) {
+  const dateStr = date.toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+  const timeStr = date.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  const content = `
+    <h1 style="color: #0d9488; font-size: 24px; margin-bottom: 20px;">Group Session Confirmed!</h1>
+    <p>Hi ${name},</p>
+    <p>Great news! <strong>${sessionTitle}</strong> has reached its minimum number of participants and is confirmed.</p>
+    <div style="background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 8px; padding: 20px; margin: 20px 0;">
+      <p style="margin: 0 0 10px 0;"><strong>Date:</strong> ${dateStr}</p>
+      <p style="margin: 0;"><strong>Time:</strong> ${timeStr}</p>
+    </div>
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${videoLink}" style="display: inline-block; background: #0d9488; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600;">
+        Join Session
+      </a>
+    </div>
+    <p style="color: #6b7280; font-size: 14px;">The link will be active 15 minutes before the session starts.</p>
+  `;
+
+  try {
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to,
+      subject: `Confirmed: ${sessionTitle}`,
+      html: baseTemplate(content),
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to send group session confirmed email:", error);
+    return { success: false, error };
+  }
+}
+
+// Group session cancelled
+export async function sendGroupSessionCancelledEmail(
+  to: string,
+  name: string,
+  sessionTitle: string,
+  reason: string
+) {
+  const content = `
+    <h1 style="color: #dc2626; font-size: 24px; margin-bottom: 20px;">Group Session Cancelled</h1>
+    <p>Hi ${name},</p>
+    <p>Unfortunately, <strong>${sessionTitle}</strong> has been cancelled.</p>
+    <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 20px; margin: 20px 0;">
+      <p style="margin: 0;"><strong>Reason:</strong> ${reason}</p>
+    </div>
+    ${reason.includes("minimum") ? `<p>If you paid for this session, a full refund will be processed automatically.</p>` : ""}
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${process.env.NEXT_PUBLIC_APP_URL}/group-sessions" style="display: inline-block; background: #0d9488; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600;">
+        Browse Other Sessions
+      </a>
+    </div>
+  `;
+
+  try {
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to,
+      subject: `Cancelled: ${sessionTitle}`,
+      html: baseTemplate(content),
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to send group session cancelled email:", error);
+    return { success: false, error };
+  }
+}
+
+// Group session reminder
+export async function sendGroupSessionReminderEmail(
+  to: string,
+  name: string,
+  sessionTitle: string,
+  date: Date,
+  videoLink: string,
+  reminderType: "day" | "hour"
+) {
+  const dateStr = date.toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+  const timeStr = date.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  const timeUntil = reminderType === "day" ? "tomorrow" : "in 1 hour";
+
+  const content = `
+    <h1 style="color: #0d9488; font-size: 24px; margin-bottom: 20px;">Session Reminder</h1>
+    <p>Hi ${name},</p>
+    <p>Your group session <strong>${sessionTitle}</strong> is ${timeUntil}.</p>
+    <div style="background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 8px; padding: 20px; margin: 20px 0;">
+      <p style="margin: 0 0 10px 0;"><strong>Date:</strong> ${dateStr}</p>
+      <p style="margin: 0;"><strong>Time:</strong> ${timeStr}</p>
+    </div>
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${videoLink}" style="display: inline-block; background: #0d9488; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600;">
+        Join Session
+      </a>
+    </div>
+    <p style="color: #6b7280; font-size: 14px;">Make sure to test your camera and microphone beforehand.</p>
+  `;
+
+  try {
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to,
+      subject: `Reminder: ${sessionTitle} ${timeUntil}`,
+      html: baseTemplate(content),
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to send group session reminder email:", error);
+    return { success: false, error };
+  }
+}
+
 // Call reminder - sent to both parties (1 day before and 1 hour before)
 export async function sendCallReminderEmail(
   recipientEmail: string,

@@ -12,6 +12,8 @@ type NavLink = {
 const patientLinks: NavLink[] = [
   { href: "/watch", label: "Watch Stories" },
   { href: "/mentors", label: "Book a Mentor" },
+  { href: "/group-sessions", label: "Group Sessions" },
+  { href: "/recommendations", label: "Recommendations" },
   { href: "/how-it-works", label: "How It Works" },
   { href: "/about", label: "About" },
 ];
@@ -57,7 +59,7 @@ export default function Navbar() {
             </span>
           </Link>
 
-          <div className="hidden md:flex items-center gap-6">
+          <div className="hidden lg:flex items-center gap-5">
             {session && (
               <Link
                 href={getDashboardPath()}
@@ -126,7 +128,7 @@ export default function Navbar() {
           </div>
 
           <button
-            className="md:hidden p-2"
+            className="lg:hidden p-2"
             onClick={() => setMenuOpen(!menuOpen)}
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -140,7 +142,7 @@ export default function Navbar() {
         </div>
 
         {menuOpen && (
-          <div className="md:hidden pb-4 space-y-2">
+          <div className="lg:hidden pb-4 space-y-2">
             {session && (
               <Link
                 href={getDashboardPath()}

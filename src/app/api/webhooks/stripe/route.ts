@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { PLATFORM_FEE_PERCENT } from "@/lib/constants";
 import { v4 as uuidv4 } from "uuid";
 import Stripe from "stripe";
-import { sendSubscriptionConfirmationEmail, sendSubscriptionCancelledEmail } from "@/lib/email";
+import { sendSubscriptionConfirmationEmail, sendSubscriptionCancelledEmail, sendGroupSessionSignupEmail } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
 }
 
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
-  const { type, userId, recordingId, callId, contributorId, scheduledAt, durationMinutes, questionsInAdvance, seriesId, recordingIds } = session.metadata || {};
+  const { type, userId, recordingId, callId, contributorId, scheduledAt, durationMinutes, questionsInAdvance, seriesId, recordingIds, groupSessionId } = session.metadata || {};
 
   if (type === "recording_purchase" && userId && recordingId) {
     await handleRecordingPurchase(session, userId, recordingId);
@@ -79,6 +79,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     await handleCallPayment(session, userId, contributorId, scheduledAt, durationMinutes, questionsInAdvance);
   } else if (type === "series_purchase" && userId && seriesId) {
     await handleSeriesPurchase(session, userId, seriesId, recordingIds);
+  } else if (type === "group_session_payment" && userId && groupSessionId) {
+    await handleGroupSessionPayment(session, userId, groupSessionId);
   }
 }
 
@@ -222,7 +224,7 @@ async function handleCallPayment(
     status: "COMPLETED",
     stripePaymentId: session.payment_intent as string,
     stripeSessionId: session.id,
-    metadata: { contributorId, callId },
+    metadata: { contributorId, callId, description: `${duration}-min call with ${contributor.name || "Mentor"}` },
     createdAt: new Date().toISOString(),
   });
 
@@ -379,6 +381,90 @@ async function handleSeriesPurchase(
   console.log(`Series purchase completed: user ${userId}, series ${seriesId}, recordings: ${recordingIdList.length}`);
 }
 
+async function handleGroupSessionPayment(
+  session: Stripe.Checkout.Session,
+  userId: string,
+  groupSessionId: string
+) {
+  const paymentId = uuidv4();
+  const amount = (session.amount_total || 0) / 100;
+
+  // Create payment record
+  const { error: paymentError } = await supabase.from("Payment").insert({
+    id: paymentId,
+    userId,
+    type: "GROUP_SESSION_PAYMENT",
+    amount,
+    currency: session.currency || "usd",
+    status: "COMPLETED",
+    stripePaymentId: session.payment_intent as string,
+    stripeSessionId: session.id,
+    metadata: { groupSessionId, description: "Group Session Registration" },
+    createdAt: new Date().toISOString(),
+  });
+
+  if (paymentError) {
+    console.error("Error creating group session payment:", paymentError);
+    throw paymentError;
+  }
+
+  // Create participant record
+  const { error: participantError } = await supabase.from("GroupSessionParticipant").insert({
+    id: uuidv4(),
+    groupSessionId,
+    userId,
+    pricePaid: amount,
+    wasSubscriber: false,
+    paymentId,
+    stripeSessionId: session.id,
+    status: "REGISTERED",
+    createdAt: new Date().toISOString(),
+  });
+
+  if (participantError) {
+    console.error("Error creating group session participant:", participantError);
+    throw participantError;
+  }
+
+  // Send signup confirmation email
+  const { data: user } = await supabase
+    .from("User")
+    .select("email, name")
+    .eq("id", userId)
+    .single();
+
+  const { data: groupSession } = await supabase
+    .from("GroupSession")
+    .select("title, scheduledAt, contributorId")
+    .eq("id", groupSessionId)
+    .single();
+
+  if (user?.email && groupSession) {
+    await sendGroupSessionSignupEmail(
+      user.email,
+      user.name || "there",
+      groupSession.title,
+      new Date(groupSession.scheduledAt)
+    );
+  }
+
+  // Notify contributor of new participant
+  if (groupSession) {
+    const { data: contributor } = await supabase
+      .from("User")
+      .select("email, name")
+      .eq("id", groupSession.contributorId)
+      .single();
+
+    if (contributor?.email) {
+      // Reuse the signup email pattern but for the contributor
+      console.log(`New participant ${user?.name} signed up for group session ${groupSession.title} (contributor: ${contributor.email})`);
+    }
+  }
+
+  console.log(`Group session payment completed: user ${userId}, session ${groupSessionId}`);
+}
+
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   const userId = subscription.metadata?.userId;
   if (!userId) {
@@ -428,7 +514,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
       currency: "usd",
       status: "COMPLETED",
       stripePaymentId: invoiceId,
-      metadata: { subscriptionId: subscription.id, plan },
+      metadata: { subscriptionId: subscription.id, plan, description: `${plan === "annual" ? "Annual" : "Monthly"} Subscription` },
       createdAt: new Date().toISOString(),
     });
 

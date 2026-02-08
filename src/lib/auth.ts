@@ -48,6 +48,17 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.subscriptionStatus = (user as any).subscriptionStatus;
       }
+      // Refresh subscription status from DB on each request
+      if (token.id) {
+        const { data: dbUser } = await supabase
+          .from("User")
+          .select("subscriptionStatus")
+          .eq("id", token.id)
+          .single();
+        if (dbUser) {
+          token.subscriptionStatus = dbUser.subscriptionStatus;
+        }
+      }
       return token;
     },
     async session({ session, token }) {

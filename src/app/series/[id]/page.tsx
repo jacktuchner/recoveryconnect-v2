@@ -75,6 +75,7 @@ export default function SeriesDetailPage() {
   if (!series) return <div className="max-w-4xl mx-auto px-4 py-8">Series not found.</div>;
 
   const canViewContent = series.hasAccess || series.isContributor;
+  const isSubscriber = series.isSubscriber || false;
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -98,7 +99,7 @@ export default function SeriesDetailPage() {
             <div className="text-right">
               {canViewContent ? (
                 <span className="text-sm bg-green-100 text-green-700 px-3 py-1 rounded-full font-medium">
-                  Purchased
+                  {isSubscriber ? "Included in your subscription" : "Purchased"}
                 </span>
               ) : (
                 <div className="bg-white rounded-lg p-4 border border-purple-200 shadow-sm">

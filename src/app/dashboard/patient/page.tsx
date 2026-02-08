@@ -11,6 +11,12 @@ import ProfileWizard from "@/components/ProfileWizard";
 import VideoCall from "@/components/VideoCall";
 import PurchaseHistory from "@/components/PurchaseHistory";
 
+// Supabase returns TIMESTAMP(3) without timezone suffix — values are UTC.
+function parseDate(s: string): Date {
+  if (!s.endsWith("Z") && !s.includes("+")) return new Date(s + "Z");
+  return new Date(s);
+}
+
 interface ProcedureProfile {
   procedureDetails?: string;
   surgeryDate?: string;
@@ -50,6 +56,7 @@ export default function PatientDashboard() {
   const router = useRouter();
   const [profile, setProfile] = useState<any>(null);
   const [calls, setCalls] = useState<any[]>([]);
+  const [groupSessions, setGroupSessions] = useState<any[]>([]);
   const [showWizard, setShowWizard] = useState(false);
   const [showAddProcedure, setShowAddProcedure] = useState(false);
   const [editing, setEditing] = useState<{ proc: string; idx: number } | null>(null);
@@ -94,6 +101,10 @@ export default function PatientDashboard() {
   const [savingPrivacy, setSavingPrivacy] = useState(false);
   const [privacySaved, setPrivacySaved] = useState(false);
 
+  const [upgradingRole, setUpgradingRole] = useState(false);
+  const [upgradeSuccess, setUpgradeSuccess] = useState(false);
+  const [upgradeError, setUpgradeError] = useState<string | null>(null);
+
   useEffect(() => {
     if (status === "unauthenticated") router.push("/auth/signin");
   }, [status, router]);
@@ -125,6 +136,11 @@ export default function PatientDashboard() {
           }
         }
         if (callsRes.ok) setCalls(await callsRes.json());
+        // Fetch group sessions
+        try {
+          const gsRes = await fetch("/api/group-sessions?participating=true");
+          if (gsRes.ok) setGroupSessions(await gsRes.json());
+        } catch {}
         if (settingsRes.ok) {
           const settings = await settingsRes.json();
           setPrivacySettings({
@@ -1130,6 +1146,89 @@ export default function PatientDashboard() {
         </section>
       )}
 
+      {/* My Group Sessions */}
+      {groupSessions.length > 0 && (
+        <section className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold">My Group Sessions</h2>
+            <Link
+              href="/group-sessions"
+              className="text-sm text-teal-600 hover:text-teal-700 font-medium"
+            >
+              Browse More
+            </Link>
+          </div>
+          <div className="space-y-3">
+            {groupSessions.map((gs: any) => {
+              const isUpcoming = (gs.status === "SCHEDULED" || gs.status === "CONFIRMED") && parseDate(gs.scheduledAt) > new Date();
+              const canJoin = gs.status === "CONFIRMED" && gs.videoRoomUrl && isUpcoming;
+
+              return (
+                <div key={gs.id} className="border border-gray-200 rounded-xl overflow-hidden">
+                  <div className="flex items-center justify-between p-4 bg-gray-50">
+                    <div>
+                      <Link href={`/group-sessions/${gs.id}`} className="font-medium text-gray-900 hover:text-teal-600">
+                        {gs.title}
+                      </Link>
+                      <p className="text-sm text-gray-500">
+                        {parseDate(gs.scheduledAt).toLocaleDateString()} at{" "}
+                        {parseDate(gs.scheduledAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        {" "}&middot; {gs.durationMinutes} min
+                        {" "}&middot; {gs.participantCount}/{gs.maxCapacity} participants
+                      </p>
+                      <span className="text-xs bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full mt-1 inline-block">
+                        {gs.procedureType}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {isUpcoming && (gs.status === "SCHEDULED" || gs.status === "CONFIRMED") && (
+                        <button
+                          onClick={async () => {
+                            if (!confirm("Are you sure you want to cancel your registration?")) return;
+                            try {
+                              const res = await fetch(`/api/group-sessions/${gs.id}/cancel`, { method: "POST" });
+                              if (res.ok) {
+                                setGroupSessions((prev) => prev.filter((s: any) => s.id !== gs.id));
+                              } else {
+                                const data = await res.json();
+                                alert(data.error || "Failed to cancel");
+                              }
+                            } catch {
+                              alert("Failed to cancel");
+                            }
+                          }}
+                          className="text-xs text-red-600 hover:text-red-700 font-medium px-2 py-1 rounded hover:bg-red-50"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                      <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+                        gs.status === "CONFIRMED" ? "bg-green-100 text-green-700" :
+                        gs.status === "SCHEDULED" ? "bg-yellow-100 text-yellow-700" :
+                        gs.status === "COMPLETED" ? "bg-gray-100 text-gray-600" :
+                        "bg-red-100 text-red-700"
+                      }`}>
+                        {gs.status}
+                      </span>
+                    </div>
+                  </div>
+                  {canJoin && (
+                    <div className="p-4 border-t border-gray-200">
+                      <VideoCall
+                        roomUrl={gs.videoRoomUrl}
+                        callId={gs.id}
+                        scheduledAt={parseDate(gs.scheduledAt)}
+                        durationMinutes={gs.durationMinutes}
+                      />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
       {/* Upcoming Calls */}
       <section className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
         <h2 className="text-xl font-bold mb-4">Your Calls</h2>
@@ -1194,6 +1293,68 @@ export default function PatientDashboard() {
           </div>
         )}
       </section>
+
+      {/* Become a Contributor CTA */}
+      {(session?.user as any)?.role === "PATIENT" && (() => {
+        const threeMonthsAgo = new Date();
+        threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+        const hasOldEnoughSurgery = procedures.some((proc: string) => {
+          const instances = getInstances(procedureProfiles, proc, profile);
+          return instances.some((inst) => inst.surgeryDate && new Date(inst.surgeryDate) <= threeMonthsAgo);
+        });
+        if (!hasOldEnoughSurgery) return null;
+
+        return (
+          <section className="bg-gradient-to-r from-teal-50 to-cyan-50 rounded-xl border border-teal-200 p-6 mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">You&apos;ve come a long way</h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  Help someone just starting their recovery journey. Share your experience as a contributor — record your story, recommend products, and mentor others.
+                </p>
+              </div>
+              {upgradeSuccess ? (
+                <div className="flex flex-col items-start sm:items-end gap-2">
+                  <span className="text-sm text-green-700 font-medium">Role upgraded successfully!</span>
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="text-sm bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 font-medium"
+                  >
+                    Refresh to get started
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col items-start sm:items-end gap-2">
+                  {upgradeError && <span className="text-sm text-red-600">{upgradeError}</span>}
+                  <button
+                    onClick={async () => {
+                      setUpgradingRole(true);
+                      setUpgradeError(null);
+                      try {
+                        const res = await fetch("/api/user/upgrade-role", { method: "POST" });
+                        if (res.ok) {
+                          setUpgradeSuccess(true);
+                        } else {
+                          const data = await res.json();
+                          setUpgradeError(data.error || "Failed to upgrade role");
+                        }
+                      } catch {
+                        setUpgradeError("Failed to upgrade role");
+                      } finally {
+                        setUpgradingRole(false);
+                      }
+                    }}
+                    disabled={upgradingRole}
+                    className="text-sm bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 font-medium disabled:opacity-50"
+                  >
+                    {upgradingRole ? "Upgrading..." : "Become a Contributor"}
+                  </button>
+                </div>
+              )}
+            </div>
+          </section>
+        );
+      })()}
     </div>
   );
 }

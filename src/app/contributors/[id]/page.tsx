@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import RecordingCard from "@/components/RecordingCard";
 import MatchScoreTooltip from "@/components/MatchScoreTooltip";
+import { RECOMMENDATION_CATEGORIES } from "@/lib/constants";
 import { getTimeSinceSurgeryLabel } from "@/lib/surgeryDate";
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -434,6 +435,43 @@ export default function ContributorDetailPage() {
                 </Link>
               );
             })}
+          </div>
+        </section>
+      )}
+
+      {/* Recommendations */}
+      {contributor.recommendations?.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-xl font-bold mb-4">Recommendations ({contributor.recommendations.length})</h2>
+          <div className="grid sm:grid-cols-2 gap-4">
+            {contributor.recommendations.map((rec: any) => (
+              <Link
+                key={rec.id}
+                href={`/recommendations/${rec.id}`}
+                className="bg-white rounded-xl border border-gray-200 p-4 hover:border-teal-300 hover:shadow-md transition-all"
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <span className="text-xs bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full font-medium">
+                    {RECOMMENDATION_CATEGORIES.find((c) => c.value === rec.category)?.label || rec.category}
+                  </span>
+                  {rec.priceRange && (
+                    <span className="text-xs text-gray-500">{rec.priceRange}</span>
+                  )}
+                </div>
+                <h3 className="font-medium text-gray-900 mb-1">{rec.name}</h3>
+                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full inline-block mb-2">
+                  {rec.procedureType}
+                </span>
+                {rec.myComment && (
+                  <p className="text-sm text-gray-500 line-clamp-2 mt-1">&ldquo;{rec.myComment}&rdquo;</p>
+                )}
+                <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
+                  <span>{rec.endorsementCount} {rec.endorsementCount === 1 ? "endorsement" : "endorsements"}</span>
+                  <span>{rec.helpfulCount} helpful</span>
+                  {rec.location && <span>{rec.location}</span>}
+                </div>
+              </Link>
+            ))}
           </div>
         </section>
       )}

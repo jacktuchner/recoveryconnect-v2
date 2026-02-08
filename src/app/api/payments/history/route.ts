@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
       .range(offset, offset + limit - 1);
 
     if (role === "patient") {
-      query = query.in("type", ["RECORDING_PURCHASE", "CALL_PAYMENT"]);
+      query = query.in("type", ["RECORDING_PURCHASE", "CALL_PAYMENT", "SUBSCRIPTION", "GROUP_SESSION_PAYMENT"]);
     } else {
       query = query.eq("type", "CONTRIBUTOR_PAYOUT");
     }

@@ -102,6 +102,12 @@ model User {
   series         RecordingSeries[] @relation("UserSeries")
   seriesAccess   SeriesAccess[]
   subscriberViews SubscriberView[]
+  groupSessionsHosted  GroupSession[]             @relation("ContributorGroupSessions")
+  groupSessionsJoined  GroupSessionParticipant[]
+  recommendationsCreated Recommendation[]         @relation("RecommendationsCreated")
+  endorsements         RecommendationEndorsement[] @relation("UserEndorsements")
+  recommendationVotes  RecommendationVote[]       @relation("UserRecommendationVotes")
+  recommendationComments RecommendationComment[]  @relation("UserRecommendationComments")
 }
 
 model Profile {
@@ -296,6 +302,7 @@ enum PaymentType {
   CALL_PAYMENT
   CONTRIBUTOR_PAYOUT
   SUBSCRIPTION
+  GROUP_SESSION_PAYMENT
 }
 
 enum PaymentStatus {
@@ -433,6 +440,146 @@ model Report {
 
   @@index([status])
   @@index([reporterId])
+}
+
+// ─── Group Sessions ───
+
+enum GroupSessionStatus {
+  SCHEDULED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+model GroupSession {
+  id                String             @id @default(cuid())
+  contributorId     String
+  contributor       User               @relation("ContributorGroupSessions", fields: [contributorId], references: [id])
+  title             String
+  description       String?            @db.Text
+  procedureType     String
+  scheduledAt       DateTime
+  durationMinutes   Int                @default(60)
+  maxCapacity       Int
+  minAttendees      Int                @default(3)
+  pricePerPerson    Float
+  status            GroupSessionStatus @default(SCHEDULED)
+  videoRoomUrl      String?
+  freeForSubscribers Boolean           @default(true)
+  dayReminderSent   DateTime?
+  hourReminderSent  DateTime?
+  minimumCheckAt    DateTime?
+  participants      GroupSessionParticipant[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  @@index([procedureType, status])
+  @@index([contributorId])
+  @@index([scheduledAt, status])
+}
+
+model GroupSessionParticipant {
+  id              String       @id @default(cuid())
+  groupSessionId  String
+  groupSession    GroupSession @relation(fields: [groupSessionId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User         @relation(fields: [userId], references: [id])
+  pricePaid       Float
+  wasSubscriber   Boolean      @default(false)
+  paymentId       String?
+  stripeSessionId String?
+  status          String       @default("REGISTERED")
+  createdAt       DateTime     @default(now())
+
+  @@unique([groupSessionId, userId])
+  @@index([userId])
+}
+
+// ─── Recommendations ───
+
+enum RecommendationCategory {
+  RECOVERY_PRODUCT
+  PT_PROVIDER
+  MASSAGE_THERAPY
+  MEDICAL_PROVIDER
+  APP_OR_TOOL
+  BOOK_OR_RESOURCE
+  OTHER
+}
+
+enum RecommendationStatus {
+  ACTIVE
+  HIDDEN
+  REMOVED
+}
+
+enum EndorsementSource {
+  MANUAL
+  AI_EXTRACTED
+}
+
+model Recommendation {
+  id               String                   @id @default(cuid())
+  name             String
+  normalizedName   String
+  category         RecommendationCategory
+  procedureType    String
+  description      String?                  @db.Text
+  location         String?
+  url              String?
+  priceRange       String?
+  status           RecommendationStatus     @default(ACTIVE)
+  endorsementCount Int                      @default(0)
+  helpfulCount     Int                      @default(0)
+  createdById      String
+  createdBy        User                     @relation("RecommendationsCreated", fields: [createdById], references: [id])
+  endorsements     RecommendationEndorsement[]
+  votes            RecommendationVote[]
+  comments         RecommendationComment[]
+  createdAt        DateTime                 @default(now())
+  updatedAt        DateTime                 @updatedAt
+
+  @@unique([normalizedName, procedureType])
+  @@index([procedureType, status])
+}
+
+model RecommendationEndorsement {
+  id               String            @id @default(cuid())
+  recommendationId String
+  recommendation   Recommendation    @relation(fields: [recommendationId], references: [id], onDelete: Cascade)
+  contributorId    String
+  contributor      User              @relation("UserEndorsements", fields: [contributorId], references: [id])
+  comment          String?           @db.Text
+  recoveryPhase    String?
+  source           EndorsementSource @default(MANUAL)
+  sourceId         String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@unique([recommendationId, contributorId])
+}
+
+model RecommendationVote {
+  id               String         @id @default(cuid())
+  recommendationId String
+  recommendation   Recommendation @relation(fields: [recommendationId], references: [id], onDelete: Cascade)
+  userId           String
+  user             User           @relation("UserRecommendationVotes", fields: [userId], references: [id])
+  createdAt        DateTime       @default(now())
+
+  @@unique([recommendationId, userId])
+}
+
+model RecommendationComment {
+  id               String         @id @default(cuid())
+  recommendationId String
+  recommendation   Recommendation @relation(fields: [recommendationId], references: [id], onDelete: Cascade)
+  userId           String
+  user             User           @relation("UserRecommendationComments", fields: [userId], references: [id])
+  content          String         @db.Text
+  createdAt        DateTime       @default(now())
+
+  @@index([recommendationId, createdAt])
 }
 
 // ─── Subscriber Views (for subscription payout tracking) ───

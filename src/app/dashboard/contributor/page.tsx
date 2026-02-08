@@ -13,6 +13,8 @@ import RecordingsSection from "@/components/contributor/RecordingsSection";
 import SeriesSection from "@/components/contributor/SeriesSection";
 import CallRequestsSection from "@/components/contributor/CallRequestsSection";
 import EarningsOverview from "@/components/contributor/EarningsOverview";
+import GroupSessionsSection from "@/components/contributor/GroupSessionsSection";
+import RecommendationsSection from "@/components/contributor/RecommendationsSection";
 import PurchaseHistory from "@/components/PurchaseHistory";
 
 export default function ContributorDashboard() {
@@ -22,6 +24,8 @@ export default function ContributorDashboard() {
   const [recordings, setRecordings] = useState<any[]>([]);
   const [calls, setCalls] = useState<any[]>([]);
   const [series, setSeries] = useState<any[]>([]);
+  const [groupSessions, setGroupSessions] = useState<any[]>([]);
+  const [recommendations, setRecommendations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [upgradingRole, setUpgradingRole] = useState(false);
   const [upgradeSuccess, setUpgradeSuccess] = useState(false);
@@ -65,15 +69,19 @@ export default function ContributorDashboard() {
             });
             setIntroVideoUrl(p.introVideoUrl || null);
             setIntroVideoDuration(p.introVideoDuration || null);
-            const [recRes, seriesRes] = await Promise.all([
+            const [recRes, seriesRes, gsRes, recsRes] = await Promise.all([
               fetch("/api/recordings/mine"),
               fetch(`/api/series?contributorId=${userId}`),
+              fetch(`/api/group-sessions?contributorId=${userId}`),
+              fetch("/api/recommendations/mine"),
             ]);
             if (recRes.ok) setRecordings(await recRes.json());
             if (seriesRes.ok) {
               const seriesData = await seriesRes.json();
               setSeries(seriesData.series || []);
             }
+            if (gsRes.ok) setGroupSessions(await gsRes.json());
+            if (recsRes.ok) setRecommendations(await recsRes.json());
           }
         }
         if (callsRes.ok) setCalls(await callsRes.json());
@@ -108,7 +116,7 @@ export default function ContributorDashboard() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
         <div className="bg-white rounded-xl border border-gray-200 p-4">
           <p className="text-sm text-gray-500">Recordings</p>
           <p className="text-2xl font-bold text-teal-700">{recordings.length}</p>
@@ -124,6 +132,10 @@ export default function ContributorDashboard() {
         <div className="bg-white rounded-xl border border-gray-200 p-4">
           <p className="text-sm text-gray-500">Pending Calls</p>
           <p className="text-2xl font-bold text-yellow-600">{calls.filter((c) => c.status === "REQUESTED").length}</p>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <p className="text-sm text-gray-500">Group Sessions</p>
+          <p className="text-2xl font-bold text-teal-700">{groupSessions.filter((s: any) => s.status === "SCHEDULED" || s.status === "CONFIRMED").length}</p>
         </div>
       </div>
 
@@ -162,6 +174,18 @@ export default function ContributorDashboard() {
       <SeriesSection
         series={series}
         onSeriesUpdate={setSeries}
+      />
+
+      <GroupSessionsSection
+        sessions={groupSessions}
+        contributorProcedures={profile?.procedureTypes || []}
+        onSessionsUpdate={setGroupSessions}
+      />
+
+      <RecommendationsSection
+        recommendations={recommendations}
+        contributorProcedures={profile?.procedureTypes || []}
+        onRecommendationsUpdate={setRecommendations}
       />
 
       {(profile?.isAvailableForCalls || sharedForm.isAvailableForCalls) && (

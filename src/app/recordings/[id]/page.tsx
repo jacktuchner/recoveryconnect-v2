@@ -184,8 +184,11 @@ export default function RecordingDetailPage() {
   return (
     <ContentAcknowledgmentModal>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Link href="/watch" className="text-sm text-teal-600 hover:text-teal-700 mb-4 inline-block">
-          &larr; Back to Stories
+        <Link
+          href={isContributor ? "/dashboard/contributor" : "/watch"}
+          className="text-sm text-teal-600 hover:text-teal-700 mb-4 inline-block"
+        >
+          &larr; {isContributor ? "Back to Dashboard" : "Back to Stories"}
         </Link>
 
         {/* Disclaimer Banner */}
@@ -322,7 +325,7 @@ export default function RecordingDetailPage() {
                 </span>
               </div>
 
-              {recording.contributor?.profile?.isAvailableForCalls && (
+              {recording.contributor?.profile?.isAvailableForCalls && !isContributor && (
                 <Link
                   href={`/book/${recording.contributorId}`}
                   className="mt-3 inline-block bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 text-sm font-medium"
@@ -344,7 +347,7 @@ export default function RecordingDetailPage() {
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-bold">Reviews ({recording.reviews?.length || 0})</h2>
-                {session && canViewContent && (
+                {session && canViewContent && !isContributor && (
                   <button
                     onClick={() => setShowReviewForm(!showReviewForm)}
                     className="text-sm text-teal-600 hover:text-teal-700 font-medium"

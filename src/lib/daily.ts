@@ -26,13 +26,14 @@ export interface CreateRoomOptions {
   expiresInMinutes?: number;
   enableChat?: boolean;
   enableScreenshare?: boolean;
+  maxParticipants?: number;
 }
 
 /**
  * Creates a Daily.co video room for a call
  */
 export async function createRoom(options: CreateRoomOptions): Promise<string> {
-  const { callId, expiresInMinutes = 120, enableChat = true, enableScreenshare = true } = options;
+  const { callId, expiresInMinutes = 120, enableChat = true, enableScreenshare = true, maxParticipants } = options;
 
   const apiKey = process.env.DAILY_API_KEY;
 
@@ -58,7 +59,7 @@ export async function createRoom(options: CreateRoomOptions): Promise<string> {
           enable_knocking: false,
           start_video_off: false,
           start_audio_off: false,
-          max_participants: 2,
+          max_participants: maxParticipants || 2,
           eject_at_room_exp: true,
         },
       }),

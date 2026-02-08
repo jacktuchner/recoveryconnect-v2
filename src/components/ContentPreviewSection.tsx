@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 
 interface FeaturedRecording {
@@ -38,19 +39,25 @@ function formatDuration(seconds: number): string {
   return `${mins}:${secs.toString().padStart(2, "0")}`;
 }
 
-function PreviewCard({ recording }: { recording: FeaturedRecording }) {
-  return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden group relative">
-      {/* Blurred/locked overlay */}
-      <div className="absolute inset-0 z-10 bg-gradient-to-t from-white via-white/80 to-transparent flex flex-col items-center justify-end pb-6">
-        <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center mb-3">
-          <svg className="w-6 h-6 text-teal-600" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
-          </svg>
+function PreviewCard({ recording, loggedIn, isSubscriber }: { recording: FeaturedRecording; loggedIn: boolean; isSubscriber: boolean }) {
+  const unlocked = isSubscriber;
+
+  const card = (
+    <div className={`bg-white rounded-xl border border-gray-200 overflow-hidden group relative ${unlocked ? "hover:border-teal-300 hover:shadow-md transition-all" : ""}`}>
+      {/* Locked overlay — only shown for non-subscribers */}
+      {!unlocked && (
+        <div className="absolute inset-0 z-10 bg-gradient-to-t from-white via-white/80 to-transparent flex flex-col items-center justify-end pb-6">
+          <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center mb-3">
+            <svg className="w-6 h-6 text-teal-600" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+            </svg>
+          </div>
+          <p className="text-sm font-medium text-gray-700 mb-1">
+            {loggedIn ? "Purchase to watch" : "Sign up to unlock"}
+          </p>
+          <p className="text-xs text-gray-500">${recording.price.toFixed(2)}</p>
         </div>
-        <p className="text-sm font-medium text-gray-700 mb-1">Sign up to unlock</p>
-        <p className="text-xs text-gray-500">${recording.price.toFixed(2)}</p>
-      </div>
+      )}
 
       {/* Content preview */}
       <div className="bg-gradient-to-br from-teal-50 to-cyan-50 p-4 relative">
@@ -62,8 +69,8 @@ function PreviewCard({ recording }: { recording: FeaturedRecording }) {
             {categoryLabels[recording.category] || recording.category}
           </span>
         </div>
-        <div className="flex items-center justify-center h-12 blur-sm">
-          <svg className="w-10 h-10 text-teal-300" fill="currentColor" viewBox="0 0 24 24">
+        <div className={`flex items-center justify-center h-12 ${unlocked ? "" : "blur-sm"}`}>
+          <svg className={`w-10 h-10 ${unlocked ? "text-teal-500" : "text-teal-300"}`} fill="currentColor" viewBox="0 0 24 24">
             <path d="M8 5v14l11-7z" />
           </svg>
         </div>
@@ -85,13 +92,26 @@ function PreviewCard({ recording }: { recording: FeaturedRecording }) {
           <span className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">
             {recording.procedureType}
           </span>
+          {unlocked && (
+            <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded">
+              Included
+            </span>
+          )}
         </div>
       </div>
     </div>
   );
+
+  if (unlocked) {
+    return <Link href={`/recordings/${recording.id}`}>{card}</Link>;
+  }
+  return card;
 }
 
 export default function ContentPreviewSection() {
+  const { data: session } = useSession();
+  const loggedIn = !!session?.user;
+  const isSubscriber = (session?.user as any)?.subscriptionStatus === "active";
   const [recordings, setRecordings] = useState<FeaturedRecording[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -140,30 +160,44 @@ export default function ContentPreviewSection() {
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold mb-4">Real Recovery Stories</h2>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            Hear from real people about their surgery recovery. Sign up for free
-            to browse all content matched to your situation.
+            {isSubscriber
+              ? "Hear from real people about their surgery recovery. As a subscriber, all stories are included."
+              : loggedIn
+              ? "Hear from real people about their surgery recovery. Browse content matched to your situation."
+              : "Hear from real people about their surgery recovery. Sign up for free to browse all content matched to your situation."}
           </p>
         </div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto mb-10">
           {recordings.slice(0, 6).map((rec) => (
-            <PreviewCard key={rec.id} recording={rec} />
+            <PreviewCard key={rec.id} recording={rec} loggedIn={loggedIn} isSubscriber={isSubscriber} />
           ))}
         </div>
 
         <div className="text-center">
-          <Link
-            href="/auth/register"
-            className="inline-flex items-center justify-center bg-teal-600 text-white font-semibold px-8 py-3 rounded-lg hover:bg-teal-700 transition-colors mr-4"
-          >
-            Sign Up to Unlock
-          </Link>
-          <Link
-            href="/watch"
-            className="inline-flex items-center justify-center border-2 border-teal-600 text-teal-700 font-semibold px-8 py-3 rounded-lg hover:bg-teal-50 transition-colors"
-          >
-            Browse All Stories
-          </Link>
+          {loggedIn ? (
+            <Link
+              href="/watch"
+              className="inline-flex items-center justify-center bg-teal-600 text-white font-semibold px-8 py-3 rounded-lg hover:bg-teal-700 transition-colors"
+            >
+              Browse All Stories
+            </Link>
+          ) : (
+            <>
+              <Link
+                href="/auth/register"
+                className="inline-flex items-center justify-center bg-teal-600 text-white font-semibold px-8 py-3 rounded-lg hover:bg-teal-700 transition-colors mr-4"
+              >
+                Sign Up to Unlock
+              </Link>
+              <Link
+                href="/watch"
+                className="inline-flex items-center justify-center border-2 border-teal-600 text-teal-700 font-semibold px-8 py-3 rounded-lg hover:bg-teal-50 transition-colors"
+              >
+                Browse All Stories
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </section>

@@ -220,7 +220,10 @@ function WatchContent() {
               <h1 className="text-3xl sm:text-4xl font-bold">Watch Recovery Stories</h1>
             </div>
             <p className="text-lg sm:text-xl text-teal-100 max-w-2xl">
-              Real people sharing what recovery is actually like. Buy once, watch anytime.
+              Real people sharing what recovery is actually like.
+              {subscription.status === "active"
+                ? " You have unlimited access to all recordings."
+                : " Buy individually or subscribe for unlimited access."}
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <span className="inline-flex items-center gap-1.5 text-sm bg-white/10 px-3 py-1.5 rounded-full">
@@ -239,7 +242,7 @@ function WatchContent() {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                Pay per recording
+                {subscription.status === "active" ? "Subscriber — unlimited access" : "Pay per recording"}
               </span>
             </div>
           </div>
@@ -419,6 +422,7 @@ function WatchContent() {
                         totalDuration={s.totalDuration}
                         matchScore={s.matchScore}
                         matchBreakdown={s.matchBreakdown}
+                        isSubscriber={subscription.status === "active"}
                       />
                     ))}
                   </div>
@@ -426,11 +430,16 @@ function WatchContent() {
                 </div>
               )}
 
-              {/* Results count */}
-              {!loading && (
-                <p className="text-sm text-gray-500 mb-4">
-                  {sortedRecordings.length} recording{sortedRecordings.length !== 1 ? "s" : ""} found
-                </p>
+              {/* Individual Recordings Header */}
+              {!loading && sortedRecordings.length > 0 && (
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-lg font-semibold text-gray-900">Individual Recordings</h2>
+                    <span className="text-xs bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full">
+                      {sortedRecordings.length} available
+                    </span>
+                  </div>
+                </div>
               )}
 
               {loading ? (
@@ -470,6 +479,7 @@ function WatchContent() {
                       }
                       matchScore={rec.matchScore}
                       matchBreakdown={rec.matchBreakdown}
+                      isSubscriber={subscription.status === "active"}
                     />
                   ))}
                 </div>

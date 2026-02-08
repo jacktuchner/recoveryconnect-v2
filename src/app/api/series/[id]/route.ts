@@ -37,8 +37,23 @@ export async function GET(
     }
 
     // Check if user has access to this series
-    const hasAccess = userId && series.access?.some((a: any) => a.userId === userId);
+    let hasAccess = userId && series.access?.some((a: any) => a.userId === userId);
+    let isSubscriber = false;
     const isContributor = userId === series.contributorId;
+
+    // Check subscription status
+    if (userId && !hasAccess && !isContributor) {
+      const { data: user } = await supabase
+        .from("User")
+        .select("subscriptionStatus")
+        .eq("id", userId)
+        .single();
+
+      if (user?.subscriptionStatus === "active") {
+        hasAccess = true;
+        isSubscriber = true;
+      }
+    }
 
     // Sort recordings by sequence number
     const sortedRecordings = (series.recordings || [])
@@ -81,6 +96,7 @@ export async function GET(
       savings: totalValue - discountedPrice,
       totalDuration,
       hasAccess: hasAccess || isContributor,
+      isSubscriber,
       isContributor,
       access: undefined, // Don't expose access list
     });

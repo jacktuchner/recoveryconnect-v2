@@ -132,6 +132,35 @@ export const DEFAULT_CALL_DURATION = 30; // minutes
 export const MIN_CALL_RATE = 40;
 export const MAX_CALL_RATE = 75;
 
+// Group session pricing & limits
+export const MIN_GROUP_SESSION_PRICE = 10;
+export const MAX_GROUP_SESSION_PRICE = 35;
+export const MIN_GROUP_CAPACITY = 4;
+export const MAX_GROUP_CAPACITY = 20;
+export const DEFAULT_MIN_ATTENDEES = 3;
+export const GROUP_SESSION_DURATIONS = [45, 60, 90];
+export const GROUP_SESSION_CANCEL_HOURS_BEFORE = 4;
+
+// Recommendation categories & pricing
+export const RECOMMENDATION_CATEGORIES = [
+  { value: "RECOVERY_PRODUCT", label: "Recovery Product", description: "Slings, braces, ice machines, compression gear" },
+  { value: "PT_PROVIDER", label: "Physical Therapist", description: "Physical therapist or PT clinic" },
+  { value: "MASSAGE_THERAPY", label: "Massage Therapist", description: "Massage therapist or bodywork provider" },
+  { value: "MEDICAL_PROVIDER", label: "Medical Provider", description: "Doctor, surgeon, or clinic" },
+  { value: "APP_OR_TOOL", label: "App or Tool", description: "Recovery apps, trackers, online tools" },
+  { value: "BOOK_OR_RESOURCE", label: "Book or Resource", description: "Books, websites, videos" },
+  { value: "OTHER", label: "Other", description: "Anything else helpful for recovery" },
+] as const;
+
+export const RECOMMENDATION_PRICE_RANGES = [
+  { value: "FREE", label: "Free" },
+  { value: "$", label: "$ (Under $25)" },
+  { value: "$$", label: "$$ ($25-$100)" },
+  { value: "$$$", label: "$$$ ($100+)" },
+] as const;
+
+export const LOCATION_BASED_CATEGORIES = ["PT_PROVIDER", "MASSAGE_THERAPY", "MEDICAL_PROVIDER"] as const;
+
 // Subscription pricing
 export const SUBSCRIPTION_MONTHLY_PRICE = 19.99;
 export const SUBSCRIPTION_ANNUAL_PRICE = 149.99;

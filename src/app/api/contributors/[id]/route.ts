@@ -66,7 +66,7 @@ export async function GET(
       }));
 
     // Fetch series, call count, and availability in parallel
-    const [seriesResult, callCountResult, availabilityResult] = await Promise.all([
+    const [seriesResult, callCountResult, availabilityResult, recommendationsResult] = await Promise.all([
       // Series: published series with their recordings
       supabase
         .from("RecordingSeries")
@@ -95,6 +95,12 @@ export async function GET(
             .order("dayOfWeek")
             .order("startTime")
         : Promise.resolve({ data: null }),
+
+      // Recommendations endorsed by this contributor
+      supabase
+        .from("RecommendationEndorsement")
+        .select("comment, recoveryPhase, recommendation:Recommendation!RecommendationEndorsement_recommendationId_fkey(id, name, category, procedureType, description, location, url, priceRange, endorsementCount, helpfulCount, status)")
+        .eq("contributorId", id),
     ]);
 
     const series = (seriesResult.data || []).map((s: any) => ({
@@ -107,6 +113,15 @@ export async function GET(
 
     const completedCallCount = callCountResult.count || 0;
     const availability = availabilityResult.data || [];
+
+    // Filter to active recommendations only
+    const recommendations = (recommendationsResult.data || [])
+      .filter((e: any) => e.recommendation?.status === "ACTIVE")
+      .map((e: any) => ({
+        ...e.recommendation,
+        myComment: e.comment,
+        myRecoveryPhase: e.recoveryPhase,
+      }));
 
     // Match score: only for logged-in patients with a profile
     let matchScore: number | undefined;
@@ -170,6 +185,7 @@ export async function GET(
       series,
       completedCallCount,
       availability,
+      recommendations,
       ...(matchScore !== undefined && { matchScore, matchBreakdown }),
     });
   } catch (error) {
