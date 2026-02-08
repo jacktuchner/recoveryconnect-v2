@@ -67,6 +67,42 @@ function Dropdown({ label, links, onNavigate }: { label: string; links: NavLink[
   );
 }
 
+function MessagesLink({ onClick }: { onClick?: () => void }) {
+  const { data: session } = useSession();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (!session?.user) return;
+    async function fetchUnread() {
+      try {
+        const res = await fetch("/api/messages/unread");
+        if (res.ok) {
+          const data = await res.json();
+          setUnreadCount(data.unreadCount || 0);
+        }
+      } catch {}
+    }
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 15000);
+    return () => clearInterval(interval);
+  }, [session]);
+
+  return (
+    <Link
+      href="/messages"
+      className="relative text-gray-600 hover:text-teal-600 transition-colors"
+      onClick={onClick}
+    >
+      Messages
+      {unreadCount > 0 && (
+        <span className="absolute -top-1.5 -right-3 bg-teal-600 text-white text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center">
+          {unreadCount > 9 ? "9+" : unreadCount}
+        </span>
+      )}
+    </Link>
+  );
+}
+
 export default function Navbar() {
   const { data: session } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -134,6 +170,8 @@ export default function Navbar() {
             {!session && (
               <Dropdown label="Browse" links={browseLinks} />
             )}
+
+            {session && <MessagesLink />}
 
             <Link href="/how-it-works" className="text-gray-600 hover:text-teal-600 transition-colors">
               How It Works
@@ -245,6 +283,12 @@ export default function Navbar() {
                   </Link>
                 ))}
               </>
+            )}
+
+            {session && (
+              <Link href="/messages" className="block py-2 text-gray-600" onClick={() => setMenuOpen(false)}>
+                Messages
+              </Link>
             )}
 
             <Link href="/how-it-works" className="block py-2 text-gray-600" onClick={() => setMenuOpen(false)}>

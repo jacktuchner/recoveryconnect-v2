@@ -8,6 +8,7 @@ import RecordingCard from "@/components/RecordingCard";
 import MatchScoreTooltip from "@/components/MatchScoreTooltip";
 import { RECOMMENDATION_CATEGORIES } from "@/lib/constants";
 import { getTimeSinceSurgeryLabel } from "@/lib/surgeryDate";
+import MessageButton from "@/components/MessageButton";
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -152,13 +153,18 @@ export default function ContributorDetailPage() {
               )}
             </div>
           </div>
-          {contributor.profile?.isAvailableForCalls && !isOwnProfile && (
-            <Link
-              href={`/book/${contributor.id}`}
-              className="bg-teal-600 text-white px-5 py-2.5 rounded-lg hover:bg-teal-700 font-medium text-sm flex-shrink-0"
-            >
-              Book a Call &middot; ${(contributor.profile.hourlyRate / 2).toFixed(0)}/30min
-            </Link>
+          {!isOwnProfile && (
+            <div className="flex flex-col gap-2 flex-shrink-0">
+              {contributor.profile?.isAvailableForCalls && (
+                <Link
+                  href={`/book/${contributor.id}`}
+                  className="bg-teal-600 text-white px-5 py-2.5 rounded-lg hover:bg-teal-700 font-medium text-sm text-center"
+                >
+                  Book a Call &middot; ${(contributor.profile.hourlyRate / 2).toFixed(0)}/30min
+                </Link>
+              )}
+              <MessageButton contributorId={contributor.id} />
+            </div>
           )}
         </div>
 

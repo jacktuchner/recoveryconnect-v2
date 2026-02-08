@@ -108,6 +108,9 @@ model User {
   endorsements         RecommendationEndorsement[] @relation("UserEndorsements")
   recommendationVotes  RecommendationVote[]       @relation("UserRecommendationVotes")
   recommendationComments RecommendationComment[]  @relation("UserRecommendationComments")
+  conversationsAsP1      Conversation[]             @relation("ConversationParticipant1")
+  conversationsAsP2      Conversation[]             @relation("ConversationParticipant2")
+  messagesSent           Message[]                  @relation("MessageSender")
 }
 
 model Profile {
@@ -580,6 +583,37 @@ model RecommendationComment {
   createdAt        DateTime       @default(now())
 
   @@index([recommendationId, createdAt])
+}
+
+// ─── Direct Messaging ───
+
+model Conversation {
+  id             String   @id @default(cuid())
+  participant1Id String
+  participant1   User     @relation("ConversationParticipant1", fields: [participant1Id], references: [id])
+  participant2Id String
+  participant2   User     @relation("ConversationParticipant2", fields: [participant2Id], references: [id])
+  lastMessageAt  DateTime @default(now())
+  createdAt      DateTime @default(now())
+
+  messages       Message[]
+
+  @@unique([participant1Id, participant2Id])
+  @@index([participant1Id, lastMessageAt])
+  @@index([participant2Id, lastMessageAt])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation("MessageSender", fields: [senderId], references: [id])
+  content        String       @db.Text
+  isRead         Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId, createdAt])
 }
 
 // ─── Subscriber Views (for subscription payout tracking) ───

@@ -569,6 +569,45 @@ export async function sendGroupSessionReminderEmail(
   }
 }
 
+// New message notification
+export async function sendNewMessageEmail(
+  to: string,
+  recipientName: string,
+  senderName: string,
+  messagePreview: string,
+  conversationId: string
+) {
+  const preview = messagePreview.length > 100 ? messagePreview.slice(0, 100) + "..." : messagePreview;
+
+  const content = `
+    <h1 style="color: #0d9488; font-size: 24px; margin-bottom: 20px;">New Message</h1>
+    <p>Hi ${recipientName},</p>
+    <p><strong>${senderName}</strong> sent you a message:</p>
+    <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin: 20px 0;">
+      <p style="margin: 0; color: #6b7280; font-style: italic;">&ldquo;${preview}&rdquo;</p>
+    </div>
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${process.env.NEXT_PUBLIC_APP_URL}/messages/${conversationId}"
+         style="display: inline-block; background: #0d9488; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600;">
+        Reply
+      </a>
+    </div>
+  `;
+
+  try {
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to,
+      subject: `New message from ${senderName}`,
+      html: baseTemplate(content),
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to send new message email:", error);
+    return { success: false, error };
+  }
+}
+
 // Call reminder - sent to both parties (1 day before and 1 hour before)
 export async function sendCallReminderEmail(
   recipientEmail: string,
