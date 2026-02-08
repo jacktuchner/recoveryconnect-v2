@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 type NavLink = {
   href: string;
@@ -10,41 +10,81 @@ type NavLink = {
 };
 
 const patientLinks: NavLink[] = [
+  { href: "/dashboard/patient", label: "Patient Dashboard" },
   { href: "/watch", label: "Watch Stories" },
   { href: "/mentors", label: "Book a Mentor" },
   { href: "/group-sessions", label: "Group Sessions" },
   { href: "/recommendations", label: "Recommendations" },
+];
+
+const browseLinks: NavLink[] = [
+  { href: "/watch", label: "Watch Stories" },
+  { href: "/mentors", label: "Book a Mentor" },
+  { href: "/group-sessions", label: "Group Sessions" },
+  { href: "/recommendations", label: "Recommendations" },
+];
+
+const infoLinks: NavLink[] = [
   { href: "/how-it-works", label: "How It Works" },
   { href: "/about", label: "About" },
 ];
 
-const contributorLinks: NavLink[] = [
-  { href: "/about", label: "About" },
-];
+function Dropdown({ label, links, onNavigate }: { label: string; links: NavLink[]; onNavigate?: () => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-1 text-gray-600 hover:text-teal-600 transition-colors"
+      >
+        {label}
+        <svg className={`w-3.5 h-3.5 transition-transform ${open ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {open && (
+        <div className="absolute top-full left-0 mt-2 w-52 bg-white rounded-lg border border-gray-200 shadow-lg py-1 z-50">
+          {links.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="block px-4 py-2 text-sm text-gray-700 hover:bg-teal-50 hover:text-teal-700"
+              onClick={() => { setOpen(false); onNavigate?.(); }}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Navbar() {
   const { data: session } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const userRole = (session?.user as any)?.role;
+  const isBoth = userRole === "BOTH" || userRole === "ADMIN";
+  const isContributor = userRole === "CONTRIBUTOR" || userRole === "BOTH" || userRole === "ADMIN";
+  const isContributorOnly = userRole === "CONTRIBUTOR";
 
-  // Determine which links to show based on role
-  const getNavLinks = (): NavLink[] => {
-    if (!session) return patientLinks;
-    if (userRole === "CONTRIBUTOR") return contributorLinks;
-    // PATIENT, BOTH, ADMIN all see patient links
-    return patientLinks;
-  };
-
-  // Determine dashboard path based on role
-  const getDashboardPath = (): string => {
-    if (userRole === "CONTRIBUTOR" || userRole === "BOTH") {
-      return "/dashboard/contributor";
-    }
-    return "/dashboard/patient";
-  };
-
-  const navLinks = getNavLinks();
+  const contributorLinks: NavLink[] = [
+    { href: "/dashboard/contributor", label: "Contributor Dashboard" },
+    ...((session && isContributor) ? [{ href: `/contributors/${(session.user as any)?.id}`, label: "My Public Profile" }] : []),
+  ];
 
   return (
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
@@ -60,41 +100,48 @@ export default function Navbar() {
           </Link>
 
           <div className="hidden lg:flex items-center gap-5">
-            {session && (
-              <Link
-                href={getDashboardPath()}
-                className="text-gray-600 hover:text-teal-600 transition-colors"
-              >
-                Dashboard
-              </Link>
+            {/* BOTH/ADMIN: three dropdowns */}
+            {session && isBoth && (
+              <>
+                <Dropdown label="Contributor" links={contributorLinks} />
+                <Dropdown label="Patient" links={patientLinks} />
+                {userRole === "ADMIN" && (
+                  <Link href="/admin" className="text-purple-600 hover:text-purple-700 font-medium transition-colors">
+                    Admin
+                  </Link>
+                )}
+              </>
             )}
-            {/* Show Admin link for admins */}
-            {session && userRole === "ADMIN" && (
-              <Link
-                href="/admin"
-                className="text-purple-600 hover:text-purple-700 font-medium transition-colors"
-              >
-                Admin
-              </Link>
+
+            {/* CONTRIBUTOR only */}
+            {session && isContributorOnly && (
+              <>
+                <Link href="/dashboard/contributor" className="text-gray-600 hover:text-teal-600 transition-colors">
+                  Dashboard
+                </Link>
+                <Link href={`/contributors/${(session.user as any)?.id}`} className="text-gray-600 hover:text-teal-600 transition-colors">
+                  My Profile
+                </Link>
+              </>
             )}
-            {/* Show public profile link for contributors */}
-            {session && (userRole === "CONTRIBUTOR" || userRole === "BOTH") && (
-              <Link
-                href={`/contributors/${(session.user as any)?.id}`}
-                className="text-gray-600 hover:text-teal-600 transition-colors"
-              >
-                My Profile
-              </Link>
+
+            {/* PATIENT only */}
+            {session && userRole === "PATIENT" && (
+              <>
+                <Link href="/dashboard/patient" className="text-gray-600 hover:text-teal-600 transition-colors">
+                  Dashboard
+                </Link>
+                <Dropdown label="Browse" links={browseLinks} />
+              </>
             )}
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-gray-600 hover:text-teal-600 transition-colors"
-              >
-                {link.label}
-              </Link>
-            ))}
+
+            {/* Not logged in */}
+            {!session && (
+              <Dropdown label="Browse" links={browseLinks} />
+            )}
+
+            <Dropdown label="Info" links={infoLinks} />
+
             {session ? (
               <>
                 <button
@@ -111,16 +158,10 @@ export default function Navbar() {
               </>
             ) : (
               <>
-                <Link
-                  href="/auth/signin"
-                  className="text-gray-600 hover:text-teal-600 transition-colors"
-                >
+                <Link href="/auth/signin" className="text-gray-600 hover:text-teal-600 transition-colors">
                   Sign In
                 </Link>
-                <Link
-                  href="/auth/register"
-                  className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors"
-                >
+                <Link href="/auth/register" className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors">
                   Get Started
                 </Link>
               </>
@@ -141,49 +182,80 @@ export default function Navbar() {
           </button>
         </div>
 
+        {/* Mobile menu */}
         {menuOpen && (
-          <div className="lg:hidden pb-4 space-y-2">
-            {session && (
-              <Link
-                href={getDashboardPath()}
-                className="block py-2 text-gray-600"
-                onClick={() => setMenuOpen(false)}
-              >
-                Dashboard
-              </Link>
+          <div className="lg:hidden pb-4 space-y-1">
+            {/* BOTH/ADMIN mobile */}
+            {session && isBoth && (
+              <>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide pt-2 pb-1">Contributor</p>
+                {contributorLinks.map((link) => (
+                  <Link key={link.href} href={link.href} className="block py-2 pl-3 text-gray-600" onClick={() => setMenuOpen(false)}>
+                    {link.label}
+                  </Link>
+                ))}
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide pt-2 pb-1">Patient</p>
+                {patientLinks.map((link) => (
+                  <Link key={link.href} href={link.href} className="block py-2 pl-3 text-gray-600" onClick={() => setMenuOpen(false)}>
+                    {link.label}
+                  </Link>
+                ))}
+                {userRole === "ADMIN" && (
+                  <Link href="/admin" className="block py-2 text-purple-600 font-medium" onClick={() => setMenuOpen(false)}>
+                    Admin
+                  </Link>
+                )}
+              </>
             )}
-            {/* Show Admin link for admins (mobile) */}
-            {session && userRole === "ADMIN" && (
-              <Link
-                href="/admin"
-                className="block py-2 text-purple-600 font-medium"
-                onClick={() => setMenuOpen(false)}
-              >
-                Admin
-              </Link>
+
+            {/* CONTRIBUTOR only mobile */}
+            {session && isContributorOnly && (
+              <>
+                <Link href="/dashboard/contributor" className="block py-2 text-gray-600" onClick={() => setMenuOpen(false)}>
+                  Dashboard
+                </Link>
+                <Link href={`/contributors/${(session.user as any)?.id}`} className="block py-2 text-gray-600" onClick={() => setMenuOpen(false)}>
+                  My Profile
+                </Link>
+              </>
             )}
-            {/* Show public profile link for contributors (mobile) */}
-            {session && (userRole === "CONTRIBUTOR" || userRole === "BOTH") && (
-              <Link
-                href={`/contributors/${(session.user as any)?.id}`}
-                className="block py-2 text-gray-600"
-                onClick={() => setMenuOpen(false)}
-              >
-                My Profile
-              </Link>
+
+            {/* PATIENT only mobile */}
+            {session && userRole === "PATIENT" && (
+              <>
+                <Link href="/dashboard/patient" className="block py-2 text-gray-600" onClick={() => setMenuOpen(false)}>
+                  Dashboard
+                </Link>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide pt-2 pb-1">Browse</p>
+                {browseLinks.map((link) => (
+                  <Link key={link.href} href={link.href} className="block py-2 pl-3 text-gray-600" onClick={() => setMenuOpen(false)}>
+                    {link.label}
+                  </Link>
+                ))}
+              </>
             )}
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="block py-2 text-gray-600"
-                onClick={() => setMenuOpen(false)}
-              >
+
+            {/* Not logged in mobile */}
+            {!session && (
+              <>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide pt-2 pb-1">Browse</p>
+                {browseLinks.map((link) => (
+                  <Link key={link.href} href={link.href} className="block py-2 pl-3 text-gray-600" onClick={() => setMenuOpen(false)}>
+                    {link.label}
+                  </Link>
+                ))}
+              </>
+            )}
+
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide pt-2 pb-1">Info</p>
+            {infoLinks.map((link) => (
+              <Link key={link.href} href={link.href} className="block py-2 pl-3 text-gray-600" onClick={() => setMenuOpen(false)}>
                 {link.label}
               </Link>
             ))}
+
             {session ? (
-              <button onClick={() => signOut()} className="block py-2 text-gray-600">Sign Out</button>
+              <button onClick={() => signOut()} className="block py-2 text-gray-600 pt-3">Sign Out</button>
             ) : (
               <>
                 <Link href="/auth/signin" className="block py-2 text-gray-600" onClick={() => setMenuOpen(false)}>Sign In</Link>

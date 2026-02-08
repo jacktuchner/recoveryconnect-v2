@@ -680,6 +680,58 @@ export default function PatientDashboard() {
         </section>
       )}
 
+      {/* Become a Contributor CTA */}
+      {(session?.user as any)?.role === "PATIENT" && (
+        <section className="bg-gradient-to-r from-cyan-50 to-teal-50 rounded-xl border border-teal-200 p-6 mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">Recovering from a procedure?</h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Your experience can help others. Become a contributor to share your recovery story, recommend products, and mentor patients who are just starting out.
+              </p>
+            </div>
+            {upgradeSuccess ? (
+              <div className="flex flex-col items-start sm:items-end gap-2">
+                <span className="text-sm text-green-700 font-medium">You&apos;re now a contributor!</span>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="text-sm bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 font-medium"
+                >
+                  Refresh to get started
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col items-start sm:items-end gap-2">
+                {upgradeError && <span className="text-sm text-red-600">{upgradeError}</span>}
+                <button
+                  onClick={async () => {
+                    setUpgradingRole(true);
+                    setUpgradeError(null);
+                    try {
+                      const res = await fetch("/api/user/upgrade-role", { method: "POST" });
+                      if (res.ok) {
+                        setUpgradeSuccess(true);
+                      } else {
+                        const data = await res.json();
+                        setUpgradeError(data.error || "Failed to upgrade role");
+                      }
+                    } catch {
+                      setUpgradeError("Failed to upgrade role");
+                    } finally {
+                      setUpgradingRole(false);
+                    }
+                  }}
+                  disabled={upgradingRole}
+                  className="text-sm bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 font-medium disabled:opacity-50 whitespace-nowrap"
+                >
+                  {upgradingRole ? "Upgrading..." : "Become a Contributor"}
+                </button>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
       {/* My Procedures Section */}
       <section className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
         <div className="flex items-center justify-between mb-4">
@@ -1294,67 +1346,6 @@ export default function PatientDashboard() {
         )}
       </section>
 
-      {/* Become a Contributor CTA */}
-      {(session?.user as any)?.role === "PATIENT" && (() => {
-        const threeMonthsAgo = new Date();
-        threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-        const hasOldEnoughSurgery = procedures.some((proc: string) => {
-          const instances = getInstances(procedureProfiles, proc, profile);
-          return instances.some((inst) => inst.surgeryDate && new Date(inst.surgeryDate) <= threeMonthsAgo);
-        });
-        if (!hasOldEnoughSurgery) return null;
-
-        return (
-          <section className="bg-gradient-to-r from-teal-50 to-cyan-50 rounded-xl border border-teal-200 p-6 mb-8">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900">You&apos;ve come a long way</h2>
-                <p className="text-sm text-gray-600 mt-1">
-                  Help someone just starting their recovery journey. Share your experience as a contributor — record your story, recommend products, and mentor others.
-                </p>
-              </div>
-              {upgradeSuccess ? (
-                <div className="flex flex-col items-start sm:items-end gap-2">
-                  <span className="text-sm text-green-700 font-medium">Role upgraded successfully!</span>
-                  <button
-                    onClick={() => window.location.reload()}
-                    className="text-sm bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 font-medium"
-                  >
-                    Refresh to get started
-                  </button>
-                </div>
-              ) : (
-                <div className="flex flex-col items-start sm:items-end gap-2">
-                  {upgradeError && <span className="text-sm text-red-600">{upgradeError}</span>}
-                  <button
-                    onClick={async () => {
-                      setUpgradingRole(true);
-                      setUpgradeError(null);
-                      try {
-                        const res = await fetch("/api/user/upgrade-role", { method: "POST" });
-                        if (res.ok) {
-                          setUpgradeSuccess(true);
-                        } else {
-                          const data = await res.json();
-                          setUpgradeError(data.error || "Failed to upgrade role");
-                        }
-                      } catch {
-                        setUpgradeError("Failed to upgrade role");
-                      } finally {
-                        setUpgradingRole(false);
-                      }
-                    }}
-                    disabled={upgradingRole}
-                    className="text-sm bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 font-medium disabled:opacity-50"
-                  >
-                    {upgradingRole ? "Upgrading..." : "Become a Contributor"}
-                  </button>
-                </div>
-              )}
-            </div>
-          </section>
-        );
-      })()}
     </div>
   );
 }

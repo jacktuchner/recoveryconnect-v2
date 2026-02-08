@@ -13,10 +13,10 @@ export async function POST() {
   const userId = (session.user as any).id;
   const currentRole = (session.user as any).role;
 
-  // Only allow upgrade from CONTRIBUTOR to BOTH
-  if (currentRole !== "CONTRIBUTOR") {
+  // Only allow upgrade from CONTRIBUTOR or PATIENT to BOTH
+  if (currentRole !== "CONTRIBUTOR" && currentRole !== "PATIENT") {
     return NextResponse.json(
-      { error: "Only contributors can upgrade to patient access" },
+      { error: "Already have full access" },
       { status: 400 }
     );
   }
