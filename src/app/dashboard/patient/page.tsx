@@ -10,6 +10,7 @@ import RecoveryTimeline from "@/components/RecoveryTimeline";
 import ProfileWizard from "@/components/ProfileWizard";
 import VideoCall from "@/components/VideoCall";
 import PurchaseHistory from "@/components/PurchaseHistory";
+import CallReviewForm from "@/components/CallReviewForm";
 
 // Supabase returns TIMESTAMP(3) without timezone suffix — values are UTC.
 function parseDate(s: string): Date {
@@ -68,6 +69,12 @@ export default function PatientDashboard() {
   const [wizardError, setWizardError] = useState<string | null>(null);
   const [switchingProcedure, setSwitchingProcedure] = useState(false);
 
+  // Reviews state
+  const [myReviews, setMyReviews] = useState<any[]>([]);
+  const [reviewingCallId, setReviewingCallId] = useState<string | null>(null);
+  const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
+  const [deletingReviewId, setDeletingReviewId] = useState<string | null>(null);
+
   // Shared profile fields
   const [sharedForm, setSharedForm] = useState({
     ageRange: "",
@@ -113,11 +120,13 @@ export default function PatientDashboard() {
     if (!session?.user) return;
     async function load() {
       try {
-        const [profileRes, callsRes, settingsRes, subRes] = await Promise.all([
+        const userId = (session?.user as any)?.id;
+        const [profileRes, callsRes, settingsRes, subRes, reviewsRes] = await Promise.all([
           fetch("/api/profile"),
           fetch("/api/calls"),
           fetch("/api/user/settings"),
           fetch("/api/subscription"),
+          fetch(`/api/reviews?authorId=${userId}`),
         ]);
         if (subRes.ok) {
           setSubscription(await subRes.json());
@@ -147,6 +156,9 @@ export default function PatientDashboard() {
             showRealName: settings.showRealName ?? true,
             displayName: settings.displayName || "",
           });
+        }
+        if (reviewsRes.ok) {
+          setMyReviews(await reviewsRes.json());
         }
       } catch (err) {
         console.error(err);
@@ -550,6 +562,31 @@ export default function PatientDashboard() {
     }
   }
 
+  // Helper: check if a call has been reviewed
+  function callHasReview(callId: string) {
+    return myReviews.some((r: any) => r.callId === callId);
+  }
+
+  async function deleteReview(reviewId: string) {
+    if (!confirm("Are you sure you want to delete this review?")) return;
+    setDeletingReviewId(reviewId);
+    try {
+      const res = await fetch(`/api/reviews/${reviewId}`, { method: "DELETE" });
+      if (res.ok) {
+        setMyReviews((prev) => prev.filter((r: any) => r.id !== reviewId));
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setDeletingReviewId(null);
+    }
+  }
+
+  // Pending reviews: completed calls without a review (limit 3)
+  const pendingCallReviews = calls
+    .filter((c: any) => c.status === "COMPLETED" && !callHasReview(c.id))
+    .slice(0, 3);
+
   if (status === "loading" || loading) {
     return <div className="max-w-4xl mx-auto px-4 py-8">Loading...</div>;
   }
@@ -729,6 +766,55 @@ export default function PatientDashboard() {
               </div>
             )}
           </div>
+        </section>
+      )}
+
+      {/* Pending Reviews Banner */}
+      {pendingCallReviews.length > 0 && (
+        <section className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-8">
+          <h3 className="font-semibold text-amber-900 mb-2">Leave a Review</h3>
+          <p className="text-sm text-amber-700 mb-3">
+            You have {pendingCallReviews.length} completed {pendingCallReviews.length === 1 ? "call" : "calls"} waiting for your feedback.
+          </p>
+          <div className="space-y-2">
+            {pendingCallReviews.map((call: any) => (
+              <div key={call.id} className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-amber-100">
+                <div>
+                  <p className="text-sm font-medium text-gray-900">{call.contributor?.name}</p>
+                  <p className="text-xs text-gray-500">
+                    {new Date(call.scheduledAt).toLocaleDateString()} &middot; {call.durationMinutes} min
+                  </p>
+                </div>
+                <button
+                  onClick={() => setReviewingCallId(call.id)}
+                  className="text-sm text-teal-600 hover:text-teal-700 font-medium"
+                >
+                  Leave a Review
+                </button>
+              </div>
+            ))}
+          </div>
+          {/* Inline review form for pending review */}
+          {pendingCallReviews.some((c: any) => c.id === reviewingCallId) && (
+            <div className="mt-3">
+              {(() => {
+                const call = pendingCallReviews.find((c: any) => c.id === reviewingCallId);
+                if (!call) return null;
+                return (
+                  <CallReviewForm
+                    callId={call.id}
+                    contributorId={call.contributorId || call.contributor?.id}
+                    contributorName={call.contributor?.name || "Contributor"}
+                    onReviewSubmitted={(review) => {
+                      setMyReviews((prev) => [review, ...prev]);
+                      setReviewingCallId(null);
+                    }}
+                    onCancel={() => setReviewingCallId(null)}
+                  />
+                );
+              })()}
+            </div>
+          )}
         </section>
       )}
 
@@ -1339,9 +1425,108 @@ export default function PatientDashboard() {
                       />
                     </div>
                   )}
+
+                  {/* Call Review prompt for completed calls */}
+                  {call.status === "COMPLETED" && !callHasReview(call.id) && reviewingCallId !== call.id && (
+                    <div className="px-4 py-2 border-t border-gray-100 bg-teal-50/50">
+                      <button
+                        onClick={() => setReviewingCallId(call.id)}
+                        className="text-sm text-teal-600 hover:text-teal-700 font-medium"
+                      >
+                        Leave a Review
+                      </button>
+                    </div>
+                  )}
+                  {call.status === "COMPLETED" && callHasReview(call.id) && (
+                    <div className="px-4 py-2 border-t border-gray-100">
+                      <span className="text-xs text-green-600 font-medium">Reviewed</span>
+                    </div>
+                  )}
+                  {reviewingCallId === call.id && (
+                    <div className="p-4 border-t border-gray-200">
+                      <CallReviewForm
+                        callId={call.id}
+                        contributorId={call.contributorId || call.contributor?.id}
+                        contributorName={call.contributor?.name || "Contributor"}
+                        onReviewSubmitted={(review) => {
+                          setMyReviews((prev) => [review, ...prev]);
+                          setReviewingCallId(null);
+                        }}
+                        onCancel={() => setReviewingCallId(null)}
+                      />
+                    </div>
+                  )}
                 </div>
               );
             })}
+          </div>
+        )}
+      </section>
+
+      {/* My Reviews Section */}
+      <section className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
+        <h2 className="text-xl font-bold mb-4">My Reviews ({myReviews.length})</h2>
+        {myReviews.length === 0 ? (
+          <p className="text-gray-400 text-sm">You haven&apos;t left any reviews yet.</p>
+        ) : (
+          <div className="space-y-4">
+            {myReviews.map((review: any) => (
+              <div key={review.id} className="border border-gray-200 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-sm">{review.subject?.name || "Contributor"}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${
+                      review.callId ? "bg-blue-50 text-blue-600" : "bg-purple-50 text-purple-600"
+                    }`}>
+                      {review.callId ? "Call Review" : "Recording Review"}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setEditingReviewId(editingReviewId === review.id ? null : review.id)}
+                      className="text-sm text-teal-600 hover:text-teal-700 font-medium"
+                    >
+                      {editingReviewId === review.id ? "Cancel" : "Edit"}
+                    </button>
+                    <button
+                      onClick={() => deleteReview(review.id)}
+                      disabled={deletingReviewId === review.id}
+                      className="text-sm text-red-500 hover:text-red-600 font-medium disabled:opacity-50"
+                    >
+                      {deletingReviewId === review.id ? "..." : "Delete"}
+                    </button>
+                  </div>
+                </div>
+
+                {editingReviewId === review.id ? (
+                  <CallReviewForm
+                    callId={review.callId}
+                    recordingId={review.recordingId}
+                    contributorId={review.subjectId}
+                    contributorName={review.subject?.name || "Contributor"}
+                    editMode
+                    existingReview={review}
+                    onReviewSubmitted={(updated) => {
+                      setMyReviews((prev) => prev.map((r: any) => r.id === updated.id ? { ...r, ...updated } : r));
+                      setEditingReviewId(null);
+                    }}
+                    onCancel={() => setEditingReviewId(null)}
+                  />
+                ) : (
+                  <>
+                    <div className="flex items-center gap-1 mb-1">
+                      <span className="text-yellow-500 text-sm">
+                        {"\u2605".repeat(review.rating)}{"\u2606".repeat(5 - review.rating)}
+                      </span>
+                      <span className="text-xs text-gray-400 ml-2">
+                        {new Date(review.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                    {review.comment && <p className="text-sm text-gray-600">{review.comment}</p>}
+                  </>
+                )}
+              </div>
+            ))}
           </div>
         )}
       </section>

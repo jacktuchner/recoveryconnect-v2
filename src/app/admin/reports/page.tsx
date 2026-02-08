@@ -7,6 +7,7 @@ interface Report {
   recordingId: string | null;
   userId: string | null;
   callId: string | null;
+  reviewId: string | null;
   reason: string;
   details: string | null;
   status: string;
@@ -33,6 +34,13 @@ interface Report {
     scheduledAt: string;
     patientId: string;
     contributorId: string;
+  } | null;
+  review: {
+    id: string;
+    rating: number;
+    comment: string | null;
+    authorId: string;
+    subjectId: string;
   } | null;
 }
 
@@ -113,6 +121,7 @@ export default function AdminReportsPage() {
   }
 
   function getReportType(report: Report): string {
+    if (report.reviewId) return "Review";
     if (report.recordingId) return "Recording";
     if (report.userId) return "User";
     if (report.callId) return "Call";
@@ -120,10 +129,32 @@ export default function AdminReportsPage() {
   }
 
   function getReportTarget(report: Report): string {
+    if (report.review) {
+      const stars = "\u2605".repeat(report.review.rating) + "\u2606".repeat(5 - report.review.rating);
+      const snippet = report.review.comment
+        ? report.review.comment.length > 60
+          ? report.review.comment.substring(0, 60) + "..."
+          : report.review.comment
+        : "No comment";
+      return `${stars} - ${snippet}`;
+    }
     if (report.recording) return report.recording.title;
     if (report.reportedUser) return report.reportedUser.name || report.reportedUser.email;
     if (report.call) return `Call on ${new Date(report.call.scheduledAt).toLocaleDateString()}`;
     return "Unknown";
+  }
+
+  async function handleDeleteReview(reviewId: string) {
+    if (!confirm("Are you sure you want to delete this review?")) return;
+    try {
+      const res = await fetch(`/api/reviews/${reviewId}`, { method: "DELETE" });
+      if (res.ok) {
+        // Refresh reports
+        loadReports();
+      }
+    } catch (err) {
+      console.error("Failed to delete review:", err);
+    }
   }
 
   function formatDate(dateStr: string) {
@@ -150,6 +181,7 @@ export default function AdminReportsPage() {
             <option value="recording">Recordings</option>
             <option value="user">Users</option>
             <option value="call">Calls</option>
+            <option value="review">Reviews</option>
           </select>
           <select
             value={statusFilter}
@@ -184,7 +216,9 @@ export default function AdminReportsPage() {
                   <div className="flex items-center gap-3 mb-2">
                     <span
                       className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                        report.recordingId
+                        report.reviewId
+                          ? "bg-yellow-100 text-yellow-700"
+                          : report.recordingId
                           ? "bg-purple-100 text-purple-700"
                           : report.callId
                           ? "bg-blue-100 text-blue-700"
@@ -256,6 +290,14 @@ export default function AdminReportsPage() {
                       >
                         {actionLoading === report.id ? "..." : "Dismiss"}
                       </button>
+                      {report.reviewId && (
+                        <button
+                          onClick={() => handleDeleteReview(report.reviewId!)}
+                          className="px-4 py-2 bg-red-100 text-red-700 text-sm font-medium rounded-lg hover:bg-red-200 transition-colors"
+                        >
+                          Delete Review
+                        </button>
+                      )}
                     </>
                   ) : (
                     <button

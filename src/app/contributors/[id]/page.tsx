@@ -483,15 +483,25 @@ export default function ContributorDetailPage() {
           <p className="text-gray-400">No reviews yet.</p>
         ) : (
           <div className="space-y-4">
-            {contributor.reviewsReceived.map((r: any) => (
+            {contributor.reviewsReceived
+              .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+              .map((r: any) => (
               <div key={r.id} className="bg-white rounded-lg border border-gray-200 p-4">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="font-medium text-sm">{r.author?.name || "Anonymous"}</span>
                   <span className="text-yellow-500 text-sm">
-                    {"★".repeat(r.rating)}{"☆".repeat(5 - r.rating)}
+                    {"\u2605".repeat(r.rating)}{"\u2606".repeat(5 - r.rating)}
+                  </span>
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${
+                    r.callId ? "bg-blue-50 text-blue-600" : "bg-purple-50 text-purple-600"
+                  }`}>
+                    {r.callId ? "Call Review" : "Recording Review"}
                   </span>
                 </div>
                 {r.comment && <p className="text-sm text-gray-600">{r.comment}</p>}
+                {r.createdAt && (
+                  <p className="text-xs text-gray-400 mt-1">{new Date(r.createdAt).toLocaleDateString()}</p>
+                )}
               </div>
             ))}
           </div>

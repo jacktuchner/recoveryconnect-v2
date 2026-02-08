@@ -6,6 +6,7 @@ interface ReportButtonProps {
   recordingId?: string;
   userId?: string;
   callId?: string;
+  reviewId?: string;
   contentTitle?: string;
 }
 
@@ -20,7 +21,7 @@ const REPORT_REASONS = [
   { value: "other", label: "Other concern" },
 ];
 
-export default function ReportButton({ recordingId, userId, callId, contentTitle }: ReportButtonProps) {
+export default function ReportButton({ recordingId, userId, callId, reviewId, contentTitle }: ReportButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [details, setDetails] = useState("");
@@ -43,6 +44,7 @@ export default function ReportButton({ recordingId, userId, callId, contentTitle
           recordingId,
           reportedUserId: userId,
           callId,
+          reviewId,
           reason,
           details,
         }),
@@ -68,7 +70,7 @@ export default function ReportButton({ recordingId, userId, callId, contentTitle
   };
 
   // Determine content type for display
-  const contentType = recordingId ? "recording" : userId ? "user" : "call";
+  const contentType = reviewId ? "review" : recordingId ? "recording" : userId ? "user" : "call";
 
   return (
     <>

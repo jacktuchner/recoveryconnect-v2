@@ -24,11 +24,6 @@ const browseLinks: NavLink[] = [
   { href: "/recommendations", label: "Recommendations" },
 ];
 
-const infoLinks: NavLink[] = [
-  { href: "/how-it-works", label: "How It Works" },
-  { href: "/about", label: "About" },
-];
-
 function Dropdown({ label, links, onNavigate }: { label: string; links: NavLink[]; onNavigate?: () => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -140,7 +135,12 @@ export default function Navbar() {
               <Dropdown label="Browse" links={browseLinks} />
             )}
 
-            <Dropdown label="Info" links={infoLinks} />
+            <Link href="/how-it-works" className="text-gray-600 hover:text-teal-600 transition-colors">
+              How It Works
+            </Link>
+            <Link href="/about" className="text-gray-600 hover:text-teal-600 transition-colors">
+              About
+            </Link>
 
             {session ? (
               <>
@@ -247,12 +247,12 @@ export default function Navbar() {
               </>
             )}
 
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide pt-2 pb-1">Info</p>
-            {infoLinks.map((link) => (
-              <Link key={link.href} href={link.href} className="block py-2 pl-3 text-gray-600" onClick={() => setMenuOpen(false)}>
-                {link.label}
-              </Link>
-            ))}
+            <Link href="/how-it-works" className="block py-2 text-gray-600" onClick={() => setMenuOpen(false)}>
+              How It Works
+            </Link>
+            <Link href="/about" className="block py-2 text-gray-600" onClick={() => setMenuOpen(false)}>
+              About
+            </Link>
 
             {session ? (
               <button onClick={() => signOut()} className="block py-2 text-gray-600 pt-3">Sign Out</button>

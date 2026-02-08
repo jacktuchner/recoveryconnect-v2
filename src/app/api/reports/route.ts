@@ -13,12 +13,12 @@ export async function POST(req: NextRequest) {
 
     const userId = (session.user as Record<string, string>).id;
     const body = await req.json();
-    const { recordingId, reportedUserId, callId, reason, details } = body;
+    const { recordingId, reportedUserId, callId, reviewId, reason, details } = body;
 
     // Validate that at least one target is specified
-    if (!recordingId && !reportedUserId && !callId) {
+    if (!recordingId && !reportedUserId && !callId && !reviewId) {
       return NextResponse.json(
-        { error: "Must specify recordingId, reportedUserId, or callId" },
+        { error: "Must specify recordingId, reportedUserId, callId, or reviewId" },
         { status: 400 }
       );
     }
@@ -36,7 +36,9 @@ export async function POST(req: NextRequest) {
       .select("id")
       .eq("reporterId", userId);
 
-    if (recordingId) {
+    if (reviewId) {
+      existingQuery = existingQuery.eq("reviewId", reviewId);
+    } else if (recordingId) {
       existingQuery = existingQuery.eq("recordingId", recordingId);
     } else if (reportedUserId) {
       existingQuery = existingQuery.eq("userId", reportedUserId);
@@ -61,6 +63,7 @@ export async function POST(req: NextRequest) {
         recordingId: recordingId || null,
         userId: reportedUserId || null,
         callId: callId || null,
+        reviewId: reviewId || null,
         reason,
         details: details || null,
         status: "PENDING",
@@ -97,7 +100,7 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status");
-    const type = searchParams.get("type"); // "recording", "user", "call"
+    const type = searchParams.get("type"); // "recording", "user", "call", "review"
 
     let query = supabase
       .from("Report")
@@ -106,7 +109,8 @@ export async function GET(req: NextRequest) {
         reporter:User!Report_reporterId_fkey(id, name, email),
         recording:Recording(id, title, contributorId),
         reportedUser:User!Report_userId_fkey(id, name, email),
-        call:Call(id, scheduledAt, patientId, contributorId)
+        call:Call(id, scheduledAt, patientId, contributorId),
+        review:Review(id, rating, comment, authorId, subjectId)
       `)
       .order("createdAt", { ascending: false });
 
@@ -120,6 +124,8 @@ export async function GET(req: NextRequest) {
       query = query.not("userId", "is", null);
     } else if (type === "call") {
       query = query.not("callId", "is", null);
+    } else if (type === "review") {
+      query = query.not("reviewId", "is", null);
     }
 
     const { data: reports, error } = await query;
