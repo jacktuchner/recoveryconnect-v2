@@ -78,8 +78,11 @@ export default function ContributorDetailPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <Link href="/browse?tab=contributors" className="text-sm text-teal-600 hover:text-teal-700 mb-4 inline-block">
-        &larr; Back to Contributors
+      <Link
+        href={isOwnProfile ? "/dashboard/contributor/profile" : "/browse?tab=contributors"}
+        className="text-sm text-teal-600 hover:text-teal-700 mb-4 inline-block"
+      >
+        &larr; {isOwnProfile ? "Back to Dashboard" : "Back to Contributors"}
       </Link>
 
       {/* Intro Video */}

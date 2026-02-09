@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { PROCEDURE_TYPES, RECORDING_CATEGORIES } from "@/lib/constants";
 import ContentPreviewSection from "@/components/ContentPreviewSection";
+import HeroCTA from "@/components/HeroCTA";
 
 export default function HomePage() {
   return (
@@ -18,20 +19,7 @@ export default function HomePage() {
               real people who match your age, activity level, and goals — so you
               know what recovery actually feels like.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Link
-                href="/auth/register"
-                className="inline-flex items-center justify-center bg-white text-teal-700 font-semibold px-6 py-3 rounded-lg hover:bg-teal-50 transition-colors"
-              >
-                Get Started Free
-              </Link>
-              <Link
-                href="/watch"
-                className="inline-flex items-center justify-center border-2 border-teal-300 text-white font-semibold px-6 py-3 rounded-lg hover:bg-teal-600 transition-colors"
-              >
-                Watch Stories
-              </Link>
-            </div>
+            <HeroCTA />
           </div>
         </div>
       </section>

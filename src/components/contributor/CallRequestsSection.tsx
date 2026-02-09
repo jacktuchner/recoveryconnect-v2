@@ -25,7 +25,7 @@ export default function CallRequestsSection({ calls, onCallUpdate }: CallRequest
   }
 
   return (
-    <section className="bg-white rounded-xl border border-gray-200 p-6">
+    <section className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
       <h2 className="text-xl font-bold mb-4">Call Requests</h2>
       {calls.length === 0 ? (
         <p className="text-gray-500 text-center py-8">No call requests yet.</p>

@@ -10,11 +10,12 @@ type NavLink = {
 };
 
 const patientLinks: NavLink[] = [
-  { href: "/dashboard/patient", label: "Patient Dashboard" },
+  { href: "/dashboard/patient", label: "Dashboard" },
   { href: "/watch", label: "Watch Stories" },
   { href: "/mentors", label: "Book a Mentor" },
   { href: "/group-sessions", label: "Group Sessions" },
   { href: "/recommendations", label: "Recommendations" },
+  { href: "/dashboard/patient/settings", label: "Settings" },
 ];
 
 const browseLinks: NavLink[] = [
@@ -112,9 +113,14 @@ export default function Navbar() {
   const isContributor = userRole === "CONTRIBUTOR" || userRole === "BOTH" || userRole === "ADMIN";
   const isContributorOnly = userRole === "CONTRIBUTOR";
 
+  const userId = (session?.user as any)?.id;
+
   const contributorLinks: NavLink[] = [
-    { href: "/dashboard/contributor", label: "Contributor Dashboard" },
-    ...((session && isContributor) ? [{ href: `/contributors/${(session.user as any)?.id}`, label: "My Public Profile" }] : []),
+    { href: "/dashboard/contributor", label: "Overview" },
+    { href: "/dashboard/contributor/content", label: "Content" },
+    { href: "/dashboard/contributor/profile", label: "Profile" },
+    { href: "/dashboard/contributor/analytics", label: "Analytics" },
+    { href: "/dashboard/contributor/settings", label: "Settings" },
   ];
 
   return (
@@ -146,24 +152,12 @@ export default function Navbar() {
 
             {/* CONTRIBUTOR only */}
             {session && isContributorOnly && (
-              <>
-                <Link href="/dashboard/contributor" className="text-gray-600 hover:text-teal-600 transition-colors">
-                  Dashboard
-                </Link>
-                <Link href={`/contributors/${(session.user as any)?.id}`} className="text-gray-600 hover:text-teal-600 transition-colors">
-                  My Profile
-                </Link>
-              </>
+              <Dropdown label="Contributor" links={contributorLinks} />
             )}
 
             {/* PATIENT only */}
             {session && userRole === "PATIENT" && (
-              <>
-                <Link href="/dashboard/patient" className="text-gray-600 hover:text-teal-600 transition-colors">
-                  Dashboard
-                </Link>
-                <Dropdown label="Browse" links={browseLinks} />
-              </>
+              <Dropdown label="Patient" links={patientLinks} />
             )}
 
             {/* Not logged in */}
@@ -249,23 +243,20 @@ export default function Navbar() {
             {/* CONTRIBUTOR only mobile */}
             {session && isContributorOnly && (
               <>
-                <Link href="/dashboard/contributor" className="block py-2 text-gray-600" onClick={() => setMenuOpen(false)}>
-                  Dashboard
-                </Link>
-                <Link href={`/contributors/${(session.user as any)?.id}`} className="block py-2 text-gray-600" onClick={() => setMenuOpen(false)}>
-                  My Profile
-                </Link>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide pt-2 pb-1">Contributor</p>
+                {contributorLinks.map((link) => (
+                  <Link key={link.href} href={link.href} className="block py-2 pl-3 text-gray-600" onClick={() => setMenuOpen(false)}>
+                    {link.label}
+                  </Link>
+                ))}
               </>
             )}
 
             {/* PATIENT only mobile */}
             {session && userRole === "PATIENT" && (
               <>
-                <Link href="/dashboard/patient" className="block py-2 text-gray-600" onClick={() => setMenuOpen(false)}>
-                  Dashboard
-                </Link>
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide pt-2 pb-1">Browse</p>
-                {browseLinks.map((link) => (
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide pt-2 pb-1">Patient</p>
+                {patientLinks.map((link) => (
                   <Link key={link.href} href={link.href} className="block py-2 pl-3 text-gray-600" onClick={() => setMenuOpen(false)}>
                     {link.label}
                   </Link>

@@ -111,6 +111,9 @@ model User {
   conversationsAsP1      Conversation[]             @relation("ConversationParticipant1")
   conversationsAsP2      Conversation[]             @relation("ConversationParticipant2")
   messagesSent           Message[]                  @relation("MessageSender")
+  journalEntries         JournalEntry[]
+  journalSharesGiven     JournalShare[]  @relation("PatientJournalShares")
+  journalSharesReceived  JournalShare[]  @relation("ContributorJournalShares")
 }
 
 model Profile {
@@ -614,6 +617,43 @@ model Message {
   createdAt      DateTime     @default(now())
 
   @@index([conversationId, createdAt])
+}
+
+// ─── Recovery Journal ───
+
+model JournalEntry {
+  id            String   @id
+  patientId     String
+  patient       User     @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  procedureType String
+  recoveryWeek  Int?
+  painLevel     Int      // 1-10
+  mobilityLevel Int      // 1-10
+  mood          Int      // 1-5
+  notes         String?  @db.Text
+  milestones    String[] @default([])
+  isShared      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([patientId, procedureType])
+  @@index([patientId, createdAt(sort: Desc)])
+  @@index([isShared, patientId])
+}
+
+// ─── Journal Sharing ───
+
+model JournalShare {
+  id            String   @id
+  patientId     String
+  patient       User     @relation("PatientJournalShares", fields: [patientId], references: [id], onDelete: Cascade)
+  contributorId String
+  contributor   User     @relation("ContributorJournalShares", fields: [contributorId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+
+  @@unique([patientId, contributorId])
+  @@index([patientId])
+  @@index([contributorId])
 }
 
 // ─── Subscriber Views (for subscription payout tracking) ───

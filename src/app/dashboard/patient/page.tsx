@@ -3,10 +3,9 @@
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { PROCEDURE_TYPES, AGE_RANGES, ACTIVITY_LEVELS, RECOVERY_GOALS, COMPLICATING_FACTORS, LIFESTYLE_CONTEXTS, SUBSCRIPTION_MONTHLY_PRICE, SUBSCRIPTION_ANNUAL_PRICE } from "@/lib/constants";
 import { getTimeSinceSurgery, getTimeSinceSurgeryLabel, getCurrentRecoveryWeek } from "@/lib/surgeryDate";
-import RecoveryTimeline from "@/components/RecoveryTimeline";
+import RecoveryJournal from "@/components/patient/RecoveryJournal";
 import ProfileWizard from "@/components/ProfileWizard";
 import VideoCall from "@/components/VideoCall";
 import PurchaseHistory from "@/components/PurchaseHistory";
@@ -54,7 +53,6 @@ function enrichInstance(inst: ProcedureProfile): ProcedureProfile {
 
 export default function PatientDashboard() {
   const { data: session, status } = useSession();
-  const router = useRouter();
   const [profile, setProfile] = useState<any>(null);
   const [calls, setCalls] = useState<any[]>([]);
   const [groupSessions, setGroupSessions] = useState<any[]>([]);
@@ -101,30 +99,14 @@ export default function PatientDashboard() {
   }>({ status: null, plan: null, currentPeriodEnd: null, cancelAtPeriodEnd: false });
   const [subscriptionLoading, setSubscriptionLoading] = useState(false);
 
-  const [privacySettings, setPrivacySettings] = useState({
-    showRealName: true,
-    displayName: "",
-  });
-  const [savingPrivacy, setSavingPrivacy] = useState(false);
-  const [privacySaved, setPrivacySaved] = useState(false);
-
-  const [upgradingRole, setUpgradingRole] = useState(false);
-  const [upgradeSuccess, setUpgradeSuccess] = useState(false);
-  const [upgradeError, setUpgradeError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (status === "unauthenticated") router.push("/auth/signin");
-  }, [status, router]);
-
   useEffect(() => {
     if (!session?.user) return;
     async function load() {
       try {
         const userId = (session?.user as any)?.id;
-        const [profileRes, callsRes, settingsRes, subRes, reviewsRes] = await Promise.all([
+        const [profileRes, callsRes, subRes, reviewsRes] = await Promise.all([
           fetch("/api/profile"),
           fetch("/api/calls"),
-          fetch("/api/user/settings"),
           fetch("/api/subscription"),
           fetch(`/api/reviews?authorId=${userId}`),
         ]);
@@ -150,13 +132,6 @@ export default function PatientDashboard() {
           const gsRes = await fetch("/api/group-sessions?participating=true");
           if (gsRes.ok) setGroupSessions(await gsRes.json());
         } catch {}
-        if (settingsRes.ok) {
-          const settings = await settingsRes.json();
-          setPrivacySettings({
-            showRealName: settings.showRealName ?? true,
-            displayName: settings.displayName || "",
-          });
-        }
         if (reviewsRes.ok) {
           setMyReviews(await reviewsRes.json());
         }
@@ -491,26 +466,6 @@ export default function PatientDashboard() {
     }));
   }
 
-  async function savePrivacySettings() {
-    setSavingPrivacy(true);
-    setPrivacySaved(false);
-    try {
-      const res = await fetch("/api/user/settings", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(privacySettings),
-      });
-      if (res.ok) {
-        setPrivacySaved(true);
-        setTimeout(() => setPrivacySaved(false), 3000);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setSavingPrivacy(false);
-    }
-  }
-
   async function openSubscriptionPortal() {
     setSubscriptionLoading(true);
     try {
@@ -588,14 +543,14 @@ export default function PatientDashboard() {
     .slice(0, 3);
 
   if (status === "loading" || loading) {
-    return <div className="max-w-4xl mx-auto px-4 py-8">Loading...</div>;
+    return <div className="text-gray-500">Loading...</div>;
   }
 
   if (showWizard) {
     return (
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div>
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Welcome to RecoveryConnect</h1>
+          <h2 className="text-2xl font-bold text-gray-900">Welcome to RecoveryConnect</h2>
           <p className="text-gray-600 mt-1">Let&apos;s set up your profile to find the best matches.</p>
         </div>
         <ProfileWizard
@@ -617,12 +572,8 @@ export default function PatientDashboard() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div>
       <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold">Patient Dashboard</h1>
-          <p className="text-gray-600 mt-1">Welcome, {session?.user?.name}</p>
-        </div>
         <Link
           href="/watch"
           className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium"
@@ -713,58 +664,6 @@ export default function PatientDashboard() {
                 Learn More
               </Link>
             </div>
-          </div>
-        </section>
-      )}
-
-      {/* Become a Contributor CTA */}
-      {(session?.user as any)?.role === "PATIENT" && (
-        <section className="bg-gradient-to-r from-cyan-50 to-teal-50 rounded-xl border border-teal-200 p-6 mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">Recovering from a procedure?</h2>
-              <p className="text-sm text-gray-600 mt-1">
-                Your experience can help others. Become a contributor to share your recovery story, recommend products, and mentor patients who are just starting out.
-              </p>
-            </div>
-            {upgradeSuccess ? (
-              <div className="flex flex-col items-start sm:items-end gap-2">
-                <span className="text-sm text-green-700 font-medium">You&apos;re now a contributor!</span>
-                <button
-                  onClick={() => window.location.reload()}
-                  className="text-sm bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 font-medium"
-                >
-                  Refresh to get started
-                </button>
-              </div>
-            ) : (
-              <div className="flex flex-col items-start sm:items-end gap-2">
-                {upgradeError && <span className="text-sm text-red-600">{upgradeError}</span>}
-                <button
-                  onClick={async () => {
-                    setUpgradingRole(true);
-                    setUpgradeError(null);
-                    try {
-                      const res = await fetch("/api/user/upgrade-role", { method: "POST" });
-                      if (res.ok) {
-                        setUpgradeSuccess(true);
-                      } else {
-                        const data = await res.json();
-                        setUpgradeError(data.error || "Failed to upgrade role");
-                      }
-                    } catch {
-                      setUpgradeError("Failed to upgrade role");
-                    } finally {
-                      setUpgradingRole(false);
-                    }
-                  }}
-                  disabled={upgradingRole}
-                  className="text-sm bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 font-medium disabled:opacity-50 whitespace-nowrap"
-                >
-                  {upgradingRole ? "Upgrading..." : "Become a Contributor"}
-                </button>
-              </div>
-            )}
           </div>
         </section>
       )}
@@ -1222,64 +1121,14 @@ export default function PatientDashboard() {
 
       <PurchaseHistory role="patient" />
 
-      {/* Privacy Settings */}
-      <section className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
-        <h2 className="text-xl font-bold mb-4">Privacy Settings</h2>
-        <p className="text-sm text-gray-600 mb-4">
-          Control how your name appears when you leave reviews.
-        </p>
-
-        <div className="space-y-4">
-          <label className="flex items-start gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={privacySettings.showRealName}
-              onChange={(e) => setPrivacySettings((prev) => ({ ...prev, showRealName: e.target.checked }))}
-              className="mt-1 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
-            />
-            <div>
-              <span className="font-medium text-gray-900">Show my real name publicly</span>
-              <p className="text-sm text-gray-500">
-                When enabled, your real name ({session?.user?.name}) will be visible.
-              </p>
-            </div>
-          </label>
-
-          {!privacySettings.showRealName && (
-            <div className="ml-7">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Display Name</label>
-              <input
-                type="text"
-                value={privacySettings.displayName}
-                onChange={(e) => setPrivacySettings((prev) => ({ ...prev, displayName: e.target.value }))}
-                placeholder="e.g., RecoveryWarrior23"
-                className="w-full max-w-xs border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                maxLength={50}
-              />
-            </div>
-          )}
-
-          <div className="flex items-center gap-3 pt-2">
-            <button
-              onClick={savePrivacySettings}
-              disabled={savingPrivacy}
-              className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 disabled:opacity-50 text-sm font-medium"
-            >
-              {savingPrivacy ? "Saving..." : "Save Privacy Settings"}
-            </button>
-            {privacySaved && (
-              <span className="text-sm text-green-600 font-medium">Saved!</span>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* Recovery Timeline */}
+      {/* Recovery Journal */}
       {activeProcedure && (
         <section className="mb-8">
-          <RecoveryTimeline
+          <RecoveryJournal
             procedureType={activeProcedure}
+            surgeryDate={getProcedureData(activeProcedure, 0).surgeryDate || null}
             currentWeek={getCurrentRecoveryWeek(getProcedureData(activeProcedure, 0).surgeryDate || null) ?? undefined}
+            isSubscriber={subscription.status === "active"}
           />
         </section>
       )}

@@ -17,7 +17,7 @@ The core platform is built and functional. Most features are implemented. The bu
 | Layer | Technology |
 |-------|-----------|
 | Frontend | Next.js 16 (App Router), React 19, TailwindCSS 4 |
-| Backend | Next.js API Routes (58 endpoints) |
+| Backend | Next.js API Routes (68 endpoints) |
 | Database | Supabase (PostgreSQL), Prisma (schema only) |
 | Auth | NextAuth.js v4 (credentials provider, JWT strategy) |
 | Payments | Stripe (Checkout, Subscriptions, Connect for payouts) |
@@ -78,6 +78,21 @@ The core platform is built and functional. Most features are implemented. The bu
 - [x] Comments
 - [x] Subscriber-only access
 
+### Tier 5: Direct Messaging (Implemented)
+- [x] Conversation model (unique per user pair, lastMessageAt tracking)
+- [x] Message model (text, read receipts)
+- [x] Create/find conversations (POST /api/conversations)
+- [x] List conversations with last message preview + unread count (GET /api/conversations)
+- [x] Fetch messages + mark as read (GET /api/conversations/[id])
+- [x] Send messages (POST /api/messages)
+- [x] Unread count endpoint for navbar badge (GET /api/messages/unread)
+- [x] Subscriber-only for patients, contributors reply free
+- [x] MessageButton on contributor profiles
+- [x] Messages link + unread badge in navbar (polls every 15s)
+- [x] Chat UI with polling (3s), auto-scroll, read receipts
+- [x] Throttled email notifications (skip if last message <10 min ago)
+- [x] Privacy-aware display names throughout
+
 ### Matching System (Implemented)
 - [x] Multi-factor matching algorithm
 - [x] Scores based on: procedure type, details, age range, activity level, recovery goals, complicating factors, lifestyle context
@@ -110,6 +125,7 @@ The core platform is built and functional. Most features are implemented. The bu
 - [x] Subscription confirmation/cancellation
 - [x] Password reset
 - [x] Call reminders
+- [x] New message notifications (throttled)
 
 ---
 
@@ -159,10 +175,17 @@ ACL Reconstruction, Total Hip Replacement, Total Knee Replacement, Total Shoulde
 - `/group-sessions/[id]` — Session detail + registration
 - `/recommendations` — Browse recommendations (subscriber-only)
 - `/recommendations/[id]` — Recommendation detail
-- `/dashboard/patient` — Patient dashboard
+- `/dashboard/patient` — Patient dashboard (tabbed layout)
+- `/dashboard/patient/settings` — Settings (privacy, subscription, journal sharing, become a contributor)
+- `/messages` — Conversations list
+- `/messages/[conversationId]` — Chat view
 
 ### Contributor
-- `/dashboard/contributor` — Contributor dashboard (recordings, series, calls, earnings, group sessions, recommendations, Stripe Connect)
+- `/dashboard/contributor` — Overview (stats, call requests, shared patient journals, payout history, reviews received)
+- `/dashboard/contributor/content` — Content management (recordings, series, group sessions, recommendations)
+- `/dashboard/contributor/profile` — Profile editing (procedures, shared profile, bio & intro video)
+- `/dashboard/contributor/analytics` — Earnings & engagement analytics
+- `/dashboard/contributor/settings` — Settings (availability, payout settings, privacy settings, upgrade to patient access)
 
 ### Admin
 - `/admin` — Stats overview
@@ -220,20 +243,53 @@ DAILY_API_KEY
 - [x] Reports API supports reviewId in create and fetch
 - [x] Admin reports page: review type filter, review context display, "Delete Review" action
 
+### Contributor Dashboard Tabs (Implemented)
+- [x] Shared layout with tab bar (Overview, Content, Profile, Analytics, Settings)
+- [x] Each tab fetches only its own data (no wasted API calls)
+- [x] Overview: stats cards, call requests, shared patient journals, payout history, reviews received
+- [x] Content: recordings, series, group sessions, recommendations
+- [x] Profile: procedures, shared profile, bio & intro video, "View Public Profile" button
+- [x] Analytics: full earnings & engagement analytics (dedicated page)
+- [x] Settings: availability manager, payout settings, privacy settings, upgrade to patient access
+- [x] Public profile back link is context-aware (dashboard vs browse)
+
+### Recovery Journal (Implemented)
+- [x] Daily journal entries with pain level (1-10), mobility level (1-10), mood (1-5), notes, milestones
+- [x] Per-procedure tracking with recovery week calculation from surgery date
+- [x] Share toggle per entry (isShared flag)
+- [x] Per-contributor journal sharing — patients grant access to specific contributors via JournalShare table
+- [x] Journal sharing manager in patient Settings (toggle switches per eligible contributor)
+- [x] In-journal hint linking to Settings when share toggle is enabled
+- [x] Shared patient journals section on contributor Overview (expandable per patient, shows entries)
+- [x] API: GET/POST/DELETE `/api/journal/shares` (patient manages shares)
+- [x] API: GET `/api/journal/shares/received` (contributor sees who shared with them)
+- [x] API: GET `/api/journal/shared/[patientId]` (contributor views entries, requires explicit share grant)
+
+### Patient Dashboard Tabs (Implemented)
+- [x] Shared layout with tab bar (Dashboard, Settings)
+- [x] Dashboard: subscription banners, procedures, profile, purchase history, journal, calls, reviews
+- [x] Settings: privacy settings, subscription management, journal sharing controls, become a contributor CTA
+- [x] Subscription portal redirects back to settings page
+
+### Navigation (Implemented)
+- [x] Contributor dropdown: Overview, Content, Profile, Analytics, Settings
+- [x] Patient dropdown: Dashboard, Watch Stories, Book a Mentor, Group Sessions, Recommendations, Settings
+- [x] BOTH/ADMIN: both dropdowns side by side
+- [x] CONTRIBUTOR-only and PATIENT-only: single dropdown (consistent pattern)
+- [x] Logged-out: "Browse" dropdown
+- [x] Mobile menu: section headers with indented links for all roles
+- [x] Messages link with unread badge (top-level, cross-cutting)
+
 ---
 
 ## What's Next — Potential Enhancements
 
 These are **not yet built** but are natural next steps:
 
-1. **Full-text search** — Search across recording transcriptions for deeper content discovery.
-2. **Contributor analytics** — Detailed earnings breakdowns, view trends, engagement metrics.
-3. **AI-powered recommendations** — Suggest recordings/contributors based on user profile and behavior.
-4. **Direct messaging** — Chat between patients and contributors.
-5. **Mobile app** — Currently web-only.
-6. **Content moderation AI** — Automated content filtering beyond manual admin review.
-7. **Recovery journal/tracking** — Let patients log recovery milestones and progress.
-
+1. **Full-text search + transcriptions** — The transcription pipeline (OpenAI Whisper) is already built but not active — needs an API key (~$0.006/min, very cheap). Once activated: transcribe all recordings, display transcripts on recording pages for accessibility, build a search UI so patients can search by what contributors actually say (e.g. "knee pain at night"), and wire up the existing content moderation flags to the admin dashboard. Buy the OpenAI API key when ready to build this.
+2. **AI-powered recommendations** — Suggest recordings/contributors based on user profile and behavior.
+3. **Mobile app (Capacitor)** — Wrap existing Next.js app in native iOS/Android shell via Capacitor. Get app store presence, push notifications, and native feel with minimal code changes.
+4. **Content moderation AI** — Automated content filtering beyond manual admin review.
 ---
 
 ## Dev Workflow

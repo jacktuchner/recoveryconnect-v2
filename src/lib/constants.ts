@@ -166,3 +166,11 @@ export const SUBSCRIPTION_MONTHLY_PRICE = 19.99;
 export const SUBSCRIPTION_ANNUAL_PRICE = 149.99;
 export const STRIPE_MONTHLY_PRICE_ID = process.env.STRIPE_MONTHLY_PRICE_ID || "";
 export const STRIPE_ANNUAL_PRICE_ID = process.env.STRIPE_ANNUAL_PRICE_ID || "";
+
+export const JOURNAL_MILESTONE_PRESETS = [
+  "First time walking unassisted", "Drove a car", "Returned to work",
+  "Slept through the night", "Went up stairs normally", "Stopped taking pain meds",
+  "First workout/exercise", "Walked a mile", "Returned to sport", "Full range of motion",
+] as const;
+export const JOURNAL_MOOD_EMOJIS = ["\u{1F61E}", "\u{1F615}", "\u{1F610}", "\u{1F642}", "\u{1F604}"] as const;
+export const JOURNAL_NUDGE_DAYS = 7;
