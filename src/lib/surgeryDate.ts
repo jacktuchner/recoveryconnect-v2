@@ -123,6 +123,45 @@ export function formatSurgeryDate(surgeryDate: Date | string | null): string | n
 }
 
 /**
+ * Get a human-readable label for time since diagnosis (chronic pain)
+ * No week-level bucketing — uses months/years only
+ */
+export function getTimeSinceDiagnosisLabel(diagnosisDate: Date | string | null): string | null {
+  if (!diagnosisDate) return null;
+
+  const diagnosis = typeof diagnosisDate === "string" ? new Date(diagnosisDate) : diagnosisDate;
+  const now = new Date();
+  const diffMs = now.getTime() - diagnosis.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 0) return "Not yet diagnosed";
+  if (diffDays < 30) return "Less than a month";
+
+  const months = Math.floor(diffDays / 30);
+  if (months < 12) {
+    return `${months} month${months !== 1 ? "s" : ""}`;
+  }
+
+  const years = Math.floor(diffDays / 365);
+  if (years === 1) return "1 year";
+  return `${years}+ years`;
+}
+
+/**
+ * Wrapper that picks surgery vs diagnosis label based on condition category
+ */
+export function getConditionDurationLabel(
+  date: Date | string | null,
+  conditionCategory?: string | null
+): string | null {
+  if (!date) return null;
+  if (conditionCategory === "CHRONIC_PAIN") {
+    return getTimeSinceDiagnosisLabel(date);
+  }
+  return getTimeSinceSurgeryLabel(date);
+}
+
+/**
  * Check if two people are in a similar recovery stage (for matching)
  * Returns a score from 0 to 1
  */

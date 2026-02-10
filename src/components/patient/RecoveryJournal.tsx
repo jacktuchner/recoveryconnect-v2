@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { JOURNAL_MILESTONE_PRESETS, JOURNAL_MOOD_EMOJIS, JOURNAL_NUDGE_DAYS } from "@/lib/constants";
-import { getTimeSinceSurgeryLabel } from "@/lib/surgeryDate";
+import { JOURNAL_MILESTONE_PRESETS, JOURNAL_MILESTONE_PRESETS_CHRONIC_PAIN, JOURNAL_MOOD_EMOJIS, JOURNAL_NUDGE_DAYS, JOURNAL_TRIGGER_PRESETS } from "@/lib/constants";
+import { getTimeSinceSurgeryLabel, getTimeSinceDiagnosisLabel } from "@/lib/surgeryDate";
 
 interface JournalEntry {
   id: string;
@@ -15,6 +15,9 @@ interface JournalEntry {
   mood: number;
   notes: string | null;
   milestones: string[];
+  triggers: string[];
+  isFlare: boolean;
+  energyLevel: number | null;
   isShared: boolean;
   createdAt: string;
   updatedAt: string;
@@ -25,6 +28,7 @@ interface RecoveryJournalProps {
   surgeryDate: string | null;
   currentWeek: number | undefined;
   isSubscriber?: boolean;
+  conditionCategory?: string;
 }
 
 function parseDate(s: string): Date {
@@ -32,7 +36,9 @@ function parseDate(s: string): Date {
   return new Date(s);
 }
 
-export default function RecoveryJournal({ procedureType, surgeryDate, currentWeek, isSubscriber }: RecoveryJournalProps) {
+export default function RecoveryJournal({ procedureType, surgeryDate, currentWeek, isSubscriber, conditionCategory }: RecoveryJournalProps) {
+  const isChronicPain = conditionCategory === "CHRONIC_PAIN";
+  const milestonePresets = isChronicPain ? JOURNAL_MILESTONE_PRESETS_CHRONIC_PAIN : JOURNAL_MILESTONE_PRESETS;
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -50,6 +56,9 @@ export default function RecoveryJournal({ procedureType, surgeryDate, currentWee
   const [formMilestones, setFormMilestones] = useState<string[]>([]);
   const [formCustomMilestone, setFormCustomMilestone] = useState("");
   const [formShared, setFormShared] = useState(false);
+  const [formTriggers, setFormTriggers] = useState<string[]>([]);
+  const [formIsFlare, setFormIsFlare] = useState(false);
+  const [formEnergyLevel, setFormEnergyLevel] = useState(5);
 
   const fetchEntries = useCallback(async (p: number) => {
     try {
@@ -87,6 +96,9 @@ export default function RecoveryJournal({ procedureType, surgeryDate, currentWee
     setFormMilestones([]);
     setFormCustomMilestone("");
     setFormShared(false);
+    setFormTriggers([]);
+    setFormIsFlare(false);
+    setFormEnergyLevel(5);
     setEditingId(null);
     setShowForm(false);
   }
@@ -99,6 +111,9 @@ export default function RecoveryJournal({ procedureType, surgeryDate, currentWee
     setFormMilestones(entry.milestones || []);
     setFormCustomMilestone("");
     setFormShared(entry.isShared);
+    setFormTriggers(entry.triggers || []);
+    setFormIsFlare(entry.isFlare || false);
+    setFormEnergyLevel(entry.energyLevel ?? 5);
     setEditingId(entry.id);
     setShowForm(true);
   }
@@ -111,6 +126,12 @@ export default function RecoveryJournal({ procedureType, surgeryDate, currentWee
   function toggleMilestone(m: string) {
     setFormMilestones((prev) =>
       prev.includes(m) ? prev.filter((x) => x !== m) : [...prev, m]
+    );
+  }
+
+  function toggleTrigger(t: string) {
+    setFormTriggers((prev) =>
+      prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]
     );
   }
 
@@ -136,6 +157,11 @@ export default function RecoveryJournal({ procedureType, surgeryDate, currentWee
             notes: formNotes || null,
             milestones: formMilestones,
             isShared: formShared,
+            ...(isChronicPain && {
+              triggers: formTriggers,
+              isFlare: formIsFlare,
+              energyLevel: formEnergyLevel,
+            }),
           }),
         });
         if (res.ok) {
@@ -156,6 +182,12 @@ export default function RecoveryJournal({ procedureType, surgeryDate, currentWee
             milestones: formMilestones,
             isShared: formShared,
             surgeryDate,
+            conditionCategory,
+            ...(isChronicPain && {
+              triggers: formTriggers,
+              isFlare: formIsFlare,
+              energyLevel: formEnergyLevel,
+            }),
           }),
         });
         if (res.ok) {
@@ -186,8 +218,9 @@ export default function RecoveryJournal({ procedureType, surgeryDate, currentWee
     }
   }
 
-  // Compute week label for header
-  const weekLabel = surgeryDate ? getTimeSinceSurgeryLabel(surgeryDate) : null;
+  // Compute week label for header (skip for chronic pain)
+  const weekLabel = isChronicPain ? null : (surgeryDate ? getTimeSinceSurgeryLabel(surgeryDate) : null);
+  const diagnosisLabel = isChronicPain && surgeryDate ? getTimeSinceDiagnosisLabel(surgeryDate) : null;
 
   // Nudge: no entries or last entry > 7 days ago
   const lastEntryDate = entries.length > 0 ? parseDate(entries[0].createdAt) : null;
@@ -269,6 +302,18 @@ export default function RecoveryJournal({ procedureType, surgeryDate, currentWee
           {chartEntries.map((e, i) => (
             <circle key={`m-${i}`} cx={padding.left + i * xStep} cy={toY(e.mobilityLevel)} r="3" fill="#14b8a6" />
           ))}
+          {/* Energy line (blue, chronic pain only) */}
+          {isChronicPain && buildEnergyPath() && (
+            <>
+              <path d={buildEnergyPath()!} fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              {chartEntries.filter((e) => e.energyLevel != null).map((e) => {
+                const origIdx = chartEntries.indexOf(e);
+                return (
+                  <circle key={`e-${origIdx}`} cx={padding.left + origIdx * xStep} cy={toY(e.energyLevel!)} r="3" fill="#3b82f6" />
+                );
+              })}
+            </>
+          )}
           {/* X-axis labels */}
           {chartEntries.map((e, i) => (
             <text
@@ -290,15 +335,47 @@ export default function RecoveryJournal({ procedureType, surgeryDate, currentWee
           <span className="flex items-center gap-1">
             <span className="w-3 h-0.5 bg-teal-500 inline-block rounded" /> Mobility
           </span>
+          {isChronicPain && (
+            <span className="flex items-center gap-1">
+              <span className="w-3 h-0.5 bg-blue-500 inline-block rounded" /> Energy
+            </span>
+          )}
         </div>
       </div>
     );
   }
 
+  // Add energy line to chart for chronic pain
+  function buildEnergyPath() {
+    if (!isChronicPain) return null;
+    const width = 400;
+    const padding = { top: 20, right: 20, bottom: 30, left: 35 };
+    const plotW = width - padding.left - padding.right;
+    const plotH = 160 - padding.top - padding.bottom;
+    const n = chartEntries.length;
+    const xStep = n > 1 ? plotW / (n - 1) : plotW;
+
+    function toY(val: number) {
+      return padding.top + plotH - ((val - 1) / 9) * plotH;
+    }
+
+    return chartEntries
+      .filter((e) => e.energyLevel != null)
+      .map((e, i) => {
+        const origIdx = chartEntries.indexOf(e);
+        const x = padding.left + origIdx * xStep;
+        const y = toY(e.energyLevel!);
+        return `${i === 0 ? "M" : "L"} ${x} ${y}`;
+      })
+      .join(" ");
+  }
+
+  const journalTitle = isChronicPain ? "Health Journal" : "Recovery Journal";
+
   if (loading) {
     return (
       <section className="bg-white rounded-xl border border-gray-200 p-6">
-        <h2 className="text-xl font-bold">Recovery Journal</h2>
+        <h2 className="text-xl font-bold">{journalTitle}</h2>
         <p className="text-gray-400 text-sm mt-2">Loading...</p>
       </section>
     );
@@ -309,10 +386,15 @@ export default function RecoveryJournal({ procedureType, surgeryDate, currentWee
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <h2 className="text-xl font-bold">Recovery Journal</h2>
+          <h2 className="text-xl font-bold">{journalTitle}</h2>
           {weekLabel && (
             <span className="text-xs bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full font-medium">
               {weekLabel}
+            </span>
+          )}
+          {diagnosisLabel && (
+            <span className="text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full font-medium">
+              Diagnosed {diagnosisLabel} ago
             </span>
           )}
         </div>
@@ -331,7 +413,7 @@ export default function RecoveryJournal({ procedureType, surgeryDate, currentWee
 
       {/* Quick Stats */}
       {latest && (
-        <div className="grid grid-cols-3 gap-3 mb-4">
+        <div className={`grid ${isChronicPain ? "grid-cols-4" : "grid-cols-3"} gap-3 mb-4`}>
           <div className="bg-orange-50 rounded-lg p-3 text-center">
             <p className="text-xs text-gray-500 mb-1">Pain</p>
             <p className="text-2xl font-bold text-orange-600">
@@ -363,6 +445,16 @@ export default function RecoveryJournal({ procedureType, surgeryDate, currentWee
               ) : null}
             </p>
           </div>
+          {isChronicPain && (
+            <div className="bg-blue-50 rounded-lg p-3 text-center">
+              <p className="text-xs text-gray-500 mb-1">Energy</p>
+              <p className="text-2xl font-bold text-blue-600">
+                {latest.energyLevel ?? "—"}
+                {latest.energyLevel != null && trendArrow(latest.energyLevel, previous?.energyLevel ?? null, false)}
+              </p>
+              <p className="text-xs text-gray-400">/10</p>
+            </div>
+          )}
         </div>
       )}
 
@@ -449,11 +541,68 @@ export default function RecoveryJournal({ procedureType, surgeryDate, currentWee
             </div>
           </div>
 
+          {/* Chronic Pain: Triggers */}
+          {isChronicPain && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Triggers</label>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {JOURNAL_TRIGGER_PRESETS.map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => toggleTrigger(t)}
+                    className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                      formTriggers.includes(t)
+                        ? "bg-red-50 border-red-300 text-red-700"
+                        : "border-gray-200 text-gray-600 hover:border-gray-300"
+                    }`}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Chronic Pain: Flare Toggle & Energy */}
+          {isChronicPain && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Flare Day?</label>
+                <button
+                  type="button"
+                  onClick={() => setFormIsFlare(!formIsFlare)}
+                  className={`px-4 py-2 rounded-lg border-2 text-sm font-medium transition-all ${
+                    formIsFlare
+                      ? "bg-red-50 border-red-400 text-red-700"
+                      : "border-gray-200 text-gray-500 hover:border-gray-300"
+                  }`}
+                >
+                  {formIsFlare ? "Yes — Flare" : "No"}
+                </button>
+              </div>
+              <div>
+                <label className="flex items-center justify-between text-sm font-medium text-gray-700 mb-2">
+                  <span>Energy Level</span>
+                  <span className="text-blue-600 font-bold">{formEnergyLevel}/10</span>
+                </label>
+                <input
+                  type="range" min={1} max={10} value={formEnergyLevel}
+                  onChange={(e) => setFormEnergyLevel(parseInt(e.target.value))}
+                  className="w-full accent-blue-500"
+                />
+                <div className="flex justify-between text-xs text-gray-400 mt-1">
+                  <span>Exhausted</span><span>Energized</span>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Milestones */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Milestones</label>
             <div className="flex flex-wrap gap-2 mb-2">
-              {JOURNAL_MILESTONE_PRESETS.map((m) => (
+              {milestonePresets.map((m) => (
                 <button
                   key={m}
                   type="button"
@@ -469,10 +618,10 @@ export default function RecoveryJournal({ procedureType, surgeryDate, currentWee
               ))}
             </div>
             {/* Custom milestones display */}
-            {formMilestones.filter((m) => !(JOURNAL_MILESTONE_PRESETS as readonly string[]).includes(m)).length > 0 && (
+            {formMilestones.filter((m) => !(milestonePresets as readonly string[]).includes(m)).length > 0 && (
               <div className="flex flex-wrap gap-1 mb-2">
                 {formMilestones
-                  .filter((m) => !(JOURNAL_MILESTONE_PRESETS as readonly string[]).includes(m))
+                  .filter((m) => !(milestonePresets as readonly string[]).includes(m))
                   .map((m) => (
                     <span key={m} className="text-xs bg-amber-50 border border-amber-300 text-amber-700 px-2 py-0.5 rounded-full flex items-center gap-1">
                       {m}
@@ -595,9 +744,14 @@ export default function RecoveryJournal({ procedureType, surgeryDate, currentWee
                       day: "numeric",
                     })}
                   </span>
-                  {entry.recoveryWeek !== null && (
+                  {entry.recoveryWeek !== null && !isChronicPain && (
                     <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
                       Week {entry.recoveryWeek}
+                    </span>
+                  )}
+                  {isChronicPain && entry.isFlare && (
+                    <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">
+                      Flare
                     </span>
                   )}
                   {entry.isShared && (
@@ -635,7 +789,24 @@ export default function RecoveryJournal({ procedureType, surgeryDate, currentWee
                   <span className="text-gray-300">/10</span>
                 </span>
                 <span className="text-lg">{JOURNAL_MOOD_EMOJIS[entry.mood - 1]}</span>
+                {isChronicPain && entry.energyLevel != null && (
+                  <span className="flex items-center gap-1">
+                    <span className="text-blue-500 font-medium">Energy {entry.energyLevel}</span>
+                    <span className="text-gray-300">/10</span>
+                  </span>
+                )}
               </div>
+
+              {/* Triggers (chronic pain) */}
+              {isChronicPain && entry.triggers?.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {entry.triggers.map((t) => (
+                    <span key={t} className="text-xs bg-red-50 text-red-600 px-2 py-0.5 rounded-full border border-red-200">
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              )}
 
               {/* Milestones */}
               {entry.milestones?.length > 0 && (

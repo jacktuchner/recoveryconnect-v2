@@ -91,6 +91,8 @@ export async function POST(req: NextRequest) {
         timeSinceSurgery: body.timeSinceSurgery || null,
         recoveryGoals: body.recoveryGoals || [],
         complicatingFactors: body.complicatingFactors || [],
+        // Condition category
+        conditionCategory: body.conditionCategory || "SURGERY",
         // Profile-wide fields
         ageRange: body.ageRange,
         activityLevel: body.activityLevel || "RECREATIONAL",
@@ -144,6 +146,11 @@ export async function PUT(req: NextRequest) {
       isAvailableForCalls: body.isAvailableForCalls || false,
       updatedAt: new Date().toISOString(),
     };
+
+    // Handle conditionCategory
+    if (body.conditionCategory !== undefined) {
+      updateData.conditionCategory = body.conditionCategory;
+    }
 
     // Handle procedureProfiles
     if (body.procedureProfiles !== undefined) {

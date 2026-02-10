@@ -261,7 +261,7 @@ export default function RecommendationsSection({ recommendations, contributorPro
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Procedure Type</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">What is this recommendation for?</label>
               <select
                 value={form.procedureType}
                 onChange={(e) => setForm((f) => ({ ...f, procedureType: e.target.value }))}

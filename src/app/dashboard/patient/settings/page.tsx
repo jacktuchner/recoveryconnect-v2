@@ -195,9 +195,9 @@ export default function PatientSettingsPage() {
         <section className="bg-gradient-to-r from-cyan-50 to-teal-50 rounded-xl border border-teal-200 p-6 mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">Recovering from a procedure?</h2>
+              <h2 className="text-lg font-semibold text-gray-900">Been through it?</h2>
               <p className="text-sm text-gray-600 mt-1">
-                Your experience can help others. Become a contributor to share your recovery story, recommend products, and mentor patients who are just starting out.
+                Your experience can help others. Become a contributor to share your story, recommend products, and mentor patients who are just starting out.
               </p>
             </div>
             {upgradeSuccess ? (

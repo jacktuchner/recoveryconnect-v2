@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { PROCEDURE_TYPES } from "@/lib/constants";
+import { PROCEDURE_TYPES, CHRONIC_PAIN_CONDITIONS } from "@/lib/constants";
 
 interface Recording {
   id: string;
@@ -36,31 +36,43 @@ export default function SeriesForm({ initialData, onSuccess, onCancel }: SeriesF
     initialData?.recordingIds || []
   );
   const [availableRecordings, setAvailableRecordings] = useState<Recording[]>([]);
+  const [contributorProcedures, setContributorProcedures] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const isEditing = !!initialData?.id;
 
-  // Fetch contributor's recordings
+  // Fetch contributor's recordings and profile
   useEffect(() => {
-    async function loadRecordings() {
+    async function loadData() {
       try {
-        const res = await fetch("/api/recordings/mine");
-        if (res.ok) {
-          const recordings = await res.json();
-          // Filter to only published recordings
+        const [recRes, profileRes] = await Promise.all([
+          fetch("/api/recordings/mine"),
+          fetch("/api/profile"),
+        ]);
+        if (recRes.ok) {
+          const recordings = await recRes.json();
           setAvailableRecordings(
             recordings.filter((r: Recording) => r.status === "PUBLISHED")
           );
         }
+        if (profileRes.ok) {
+          const profile = await profileRes.json();
+          const procedures = profile?.procedureTypes?.length > 0
+            ? profile.procedureTypes
+            : profile?.procedureType
+              ? [profile.procedureType]
+              : [];
+          setContributorProcedures(procedures);
+        }
       } catch (err) {
-        console.error("Failed to load recordings:", err);
+        console.error("Failed to load data:", err);
       } finally {
         setLoading(false);
       }
     }
-    loadRecordings();
+    loadData();
   }, []);
 
   // Filter recordings by selected procedure type
@@ -94,7 +106,7 @@ export default function SeriesForm({ initialData, onSuccess, onCancel }: SeriesF
 
   async function handleSubmit() {
     if (!form.title || !form.procedureType) {
-      setError("Title and procedure type are required");
+      setError("Title and a surgery or condition are required");
       return;
     }
 
@@ -184,10 +196,10 @@ export default function SeriesForm({ initialData, onSuccess, onCancel }: SeriesF
           />
         </div>
 
-        {/* Procedure Type */}
+        {/* Procedure / Condition */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Procedure Type *
+            What is this series about? *
           </label>
           <select
             value={form.procedureType}
@@ -198,8 +210,11 @@ export default function SeriesForm({ initialData, onSuccess, onCancel }: SeriesF
             }}
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
           >
-            <option value="">Select procedure...</option>
-            {PROCEDURE_TYPES.map((p) => (
+            <option value="">Select...</option>
+            {(contributorProcedures.length > 0
+              ? contributorProcedures
+              : [...(PROCEDURE_TYPES as unknown as string[]), ...(CHRONIC_PAIN_CONDITIONS as unknown as string[])]
+            ).map((p) => (
               <option key={p} value={p}>
                 {p}
               </option>
@@ -271,7 +286,7 @@ export default function SeriesForm({ initialData, onSuccess, onCancel }: SeriesF
             )
           ) : (
             <p className="text-sm text-gray-500 py-4">
-              Select a procedure type first to see available recordings.
+              Select a surgery or condition first to see available recordings.
             </p>
           )}
         </div>

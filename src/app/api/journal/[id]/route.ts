@@ -61,6 +61,9 @@ export async function PATCH(
 
     if (body.notes !== undefined) updates.notes = body.notes;
     if (body.milestones !== undefined) updates.milestones = body.milestones;
+    if (body.triggers !== undefined) updates.triggers = body.triggers;
+    if (body.isFlare !== undefined) updates.isFlare = body.isFlare;
+    if (body.energyLevel !== undefined) updates.energyLevel = body.energyLevel;
     if (body.isShared !== undefined) {
       if (body.isShared === true) {
         // Only subscribers can share entries

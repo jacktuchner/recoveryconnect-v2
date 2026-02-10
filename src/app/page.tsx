@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { PROCEDURE_TYPES, RECORDING_CATEGORIES } from "@/lib/constants";
+import { PROCEDURE_TYPES, RECORDING_CATEGORIES, CHRONIC_PAIN_CONDITIONS } from "@/lib/constants";
 import ContentPreviewSection from "@/components/ContentPreviewSection";
 import HeroCTA from "@/components/HeroCTA";
 import ContributorCTA from "@/components/ContributorCTA";
@@ -14,13 +14,13 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
           <div className="max-w-3xl">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6">
-              Recovery guidance from people who've
-              <span className="text-teal-200"> actually experienced it</span>
+              Guidance from people who&apos;ve
+              <span className="text-teal-200"> actually been through it</span>
             </h1>
             <p className="text-lg sm:text-xl text-teal-100 mb-8 leading-relaxed">
               Your doctor tells you what to expect medically. We connect you with
               real people who match your age, activity level, and goals — so you
-              know what recovery actually feels like.
+              know what it actually feels like.
             </p>
             <HeroCTA />
           </div>
@@ -33,7 +33,7 @@ export default function HomePage() {
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold mb-4">How RecoveryConnect Works</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Two tiers of peer recovery support, designed to give you exactly the
+              Two tiers of peer support, designed to give you exactly the
               guidance you need.
             </p>
           </div>
@@ -46,14 +46,14 @@ export default function HomePage() {
                   <path d="M8 5v14l11-7z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold mb-2">Watch Recovery Stories</h3>
+              <h3 className="text-xl font-bold mb-2">Watch Real Stories</h3>
               <p className="text-gray-600 mb-4">
-                Browse structured voice and video recordings from past patients,
+                Browse structured voice and video recordings from real people,
                 filtered to match your profile. Available anytime.
               </p>
               <ul className="space-y-2 text-sm text-gray-600 mb-6">
                 <li className="flex items-center gap-2">
-                  <span className="text-teal-500">&#10003;</span> Week-by-week recovery timelines
+                  <span className="text-teal-500">&#10003;</span> Recovery and management timelines
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="text-teal-500">&#10003;</span> Practical tips and lessons learned
@@ -82,7 +82,7 @@ export default function HomePage() {
               </div>
               <h3 className="text-xl font-bold mb-2">Book a Live Mentor Call</h3>
               <p className="text-gray-600 mb-4">
-                Book a personal video call with someone who had the same procedure.
+                Book a personal video call with someone who&apos;s been through the same thing.
                 Ask questions, get specific advice, feel supported.
               </p>
               <ul className="space-y-2 text-sm text-gray-600 mb-6">
@@ -118,18 +118,19 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold mb-4">
-              Same Surgery, Different Recovery
+              Same Condition, Different Journey
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              A 28-year-old competitive runner recovering from ACL reconstruction
-              needs different guidance than a 65-year-old who wants to walk
-              pain-free. We match you with people in your situation.
+              A 28-year-old runner recovering from ACL reconstruction needs different
+              guidance than a 65-year-old returning to golf after a total knee replacement.
+              Someone newly diagnosed with fibromyalgia needs different advice than
+              someone managing CRPS for a decade. We match you with people in your situation.
             </p>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-4xl mx-auto">
             {[
-              { label: "Procedure type", icon: "🏥", desc: "Same surgery, same technique" },
+              { label: "Condition type", icon: "\u{1F3E5}", desc: "Same condition, same context" },
               { label: "Age & activity", icon: "🏃", desc: "Similar physical profile" },
               { label: "Recovery goals", icon: "🎯", desc: "What 'recovered' means to you" },
               { label: "Life situation", icon: "🏠", desc: "Kids, job, living situation" },
@@ -144,23 +145,44 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Procedures */}
+      {/* Supported Conditions */}
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Supported Procedures</h2>
-            <p className="text-gray-600">Starting with high-volume orthopedic surgeries, expanding based on demand.</p>
+            <h2 className="text-3xl font-bold mb-4">Supported Conditions</h2>
+            <p className="text-gray-600">Surgery recovery and chronic pain conditions, expanding based on demand.</p>
           </div>
-          <div className="flex flex-wrap justify-center gap-3">
-            {PROCEDURE_TYPES.map((proc) => (
-              <Link
-                key={proc}
-                href={`/watch?procedure=${encodeURIComponent(proc)}`}
-                className="bg-white border border-gray-200 rounded-full px-5 py-2.5 text-sm font-medium text-gray-700 hover:border-teal-300 hover:text-teal-700 transition-colors"
-              >
-                {proc}
-              </Link>
-            ))}
+
+          <div className="max-w-4xl mx-auto space-y-8">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 text-center">Surgeries</h3>
+              <div className="flex flex-wrap justify-center gap-3">
+                {PROCEDURE_TYPES.map((proc) => (
+                  <Link
+                    key={proc}
+                    href={`/watch?procedure=${encodeURIComponent(proc)}`}
+                    className="bg-white border border-gray-200 rounded-full px-5 py-2.5 text-sm font-medium text-gray-700 hover:border-teal-300 hover:text-teal-700 transition-colors"
+                  >
+                    {proc}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 text-center">Chronic Pain</h3>
+              <div className="flex flex-wrap justify-center gap-3">
+                {CHRONIC_PAIN_CONDITIONS.map((cond) => (
+                  <Link
+                    key={cond}
+                    href={`/watch?procedure=${encodeURIComponent(cond)}`}
+                    className="bg-white border border-purple-200 rounded-full px-5 py-2.5 text-sm font-medium text-gray-700 hover:border-purple-400 hover:text-purple-700 transition-colors"
+                  >
+                    {cond}
+                  </Link>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -169,7 +191,7 @@ export default function HomePage() {
       <section className="bg-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Structured Recovery Content</h2>
+            <h2 className="text-3xl font-bold mb-4">Structured Content</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
               Contributors record guided entries across six categories, so you
               find exactly the information you need.
@@ -193,12 +215,13 @@ export default function HomePage() {
       <section className="bg-gradient-to-br from-cyan-600 to-teal-700 text-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl font-bold mb-4">
-            Had surgery? Help others through it.
+            Been through it? Help others navigate it.
           </h2>
           <p className="text-cyan-100 max-w-2xl mx-auto mb-8">
-            Get paid to share your recovery experience. Record content on your own
-            time, or set up availability for live video calls. Your experience is
-            valuable — and someone out there needs to hear it.
+            Get paid to share your experience. Record content on your own
+            time, or set up availability for live video calls. Whether you&apos;ve
+            recovered from surgery or manage chronic pain — someone out there needs
+            to hear your story.
           </p>
           <ContributorCTA />
         </div>

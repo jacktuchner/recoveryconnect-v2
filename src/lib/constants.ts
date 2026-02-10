@@ -167,6 +167,140 @@ export const SUBSCRIPTION_ANNUAL_PRICE = 149.99;
 export const STRIPE_MONTHLY_PRICE_ID = process.env.STRIPE_MONTHLY_PRICE_ID || "";
 export const STRIPE_ANNUAL_PRICE_ID = process.env.STRIPE_ANNUAL_PRICE_ID || "";
 
+// ─── Condition Categories ───
+
+export const CONDITION_CATEGORIES = [
+  { value: "SURGERY", label: "Surgery Recovery" },
+  { value: "CHRONIC_PAIN", label: "Chronic Pain" },
+] as const;
+
+export const CHRONIC_PAIN_CONDITIONS = [
+  "Fibromyalgia",
+  "Chronic Lower Back Pain",
+  "CRPS (Complex Regional Pain Syndrome)",
+  "Rheumatoid Arthritis",
+  "Osteoarthritis",
+  "Chronic Migraine",
+  "Neuropathic Pain",
+  "Endometriosis",
+  "Chronic Fatigue Syndrome",
+  "Vulvodynia",
+  "TMJ Disorder",
+  "Interstitial Cystitis",
+] as const;
+
+export const CHRONIC_PAIN_DETAILS: Record<string, string[]> = {
+  "Fibromyalgia": [
+    "Widespread pain dominant",
+    "Fibro fog / cognitive issues",
+    "Fatigue dominant",
+    "IBS co-occurrence",
+  ],
+  "Chronic Lower Back Pain": [
+    "Disc-related (herniation/degeneration)",
+    "Spinal stenosis",
+    "Non-specific / muscular",
+    "Sciatica",
+  ],
+  "CRPS (Complex Regional Pain Syndrome)": [
+    "Type I (without nerve injury)",
+    "Type II (with nerve injury)",
+    "Upper extremity",
+    "Lower extremity",
+  ],
+  "Rheumatoid Arthritis": [
+    "Seropositive",
+    "Seronegative",
+    "Early-stage",
+    "Advanced/erosive",
+  ],
+  "Chronic Migraine": [
+    "With aura",
+    "Without aura",
+    "Vestibular migraine",
+    "Menstrual migraine",
+  ],
+  "Endometriosis": [
+    "Stage I-II (minimal/mild)",
+    "Stage III-IV (moderate/severe)",
+    "Deep infiltrating",
+    "Post-surgical recurrence",
+  ],
+};
+
+export const TIME_SINCE_DIAGNOSIS = [
+  "Less than 6 months",
+  "6-12 months",
+  "1-2 years",
+  "2-5 years",
+  "5-10 years",
+  "10+ years",
+] as const;
+
+export const CHRONIC_PAIN_GOALS = [
+  "Reduce daily pain levels",
+  "Improve sleep quality",
+  "Manage flare-ups better",
+  "Reduce medication reliance",
+  "Maintain employment/career",
+  "Return to exercise",
+  "Improve mental health",
+  "Better daily functioning",
+  "Find effective treatments",
+  "Build a support system",
+] as const;
+
+export const CHRONIC_PAIN_COMPLICATING_FACTORS = [
+  "Multiple pain conditions",
+  "Anxiety or depression",
+  "Medication sensitivity",
+  "Sleep disorder",
+  "Autoimmune comorbidity",
+  "Limited mobility",
+  "Central sensitization",
+  "Opioid history",
+] as const;
+
+export const RECORDING_CATEGORIES_CHRONIC_PAIN = [
+  { value: "WEEKLY_TIMELINE", label: "My Condition Journey", description: "Your story living with chronic pain over time" },
+  { value: "WISH_I_KNEW", label: "Things I Wish I Knew", description: "What you wish someone told you after diagnosis" },
+  { value: "PRACTICAL_TIPS", label: "Daily Management Tips", description: "Pacing, routines, tools, and strategies that help" },
+  { value: "MENTAL_HEALTH", label: "Mental & Emotional Health", description: "Coping mentally and emotionally with chronic pain" },
+  { value: "RETURN_TO_ACTIVITY", label: "Activity & Pacing", description: "Staying active, pacing strategies, and setbacks" },
+  { value: "MISTAKES_AND_LESSONS", label: "Mistakes & Lessons", description: "What you would do differently knowing what you know now" },
+] as const;
+
+export const JOURNAL_MILESTONE_PRESETS_CHRONIC_PAIN = [
+  "Low-pain day", "Exercised without a flare", "Slept through the night",
+  "Reduced medication", "Worked a full day", "Tried a new treatment",
+  "Cooked a meal", "Went for a walk", "Socialized without crashing",
+  "Managed a flare well",
+] as const;
+
+export const JOURNAL_TRIGGER_PRESETS = [
+  "Weather change", "Poor sleep", "Stress", "Overexertion",
+  "Certain foods", "Hormonal cycle", "Travel", "Sitting too long",
+  "Cold exposure", "Emotional upset",
+] as const;
+
+// ─── Helpers ───
+
+export function isChronicPainCondition(conditionOrProcedure: string): boolean {
+  return (CHRONIC_PAIN_CONDITIONS as readonly string[]).includes(conditionOrProcedure);
+}
+
+export function getRecordingCategoriesForCondition(conditionCategory: string) {
+  return conditionCategory === "CHRONIC_PAIN" ? RECORDING_CATEGORIES_CHRONIC_PAIN : RECORDING_CATEGORIES;
+}
+
+export function getAllConditions(): { value: string; label: string; category: "SURGERY" | "CHRONIC_PAIN" }[] {
+  const surgeries = PROCEDURE_TYPES.map((p) => ({ value: p, label: p, category: "SURGERY" as const }));
+  const chronic = CHRONIC_PAIN_CONDITIONS.map((c) => ({ value: c, label: c, category: "CHRONIC_PAIN" as const }));
+  return [...surgeries, ...chronic];
+}
+
+// ─── Recovery Journal ───
+
 export const JOURNAL_MILESTONE_PRESETS = [
   "First time walking unassisted", "Drove a car", "Returned to work",
   "Slept through the night", "Went up stairs normally", "Stopped taking pain meds",

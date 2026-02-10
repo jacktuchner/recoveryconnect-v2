@@ -57,8 +57,8 @@ export default function HowItWorksPage() {
           </h1>
           <p className="text-lg sm:text-xl text-teal-100 max-w-2xl mx-auto">
             {activeTab === "patient"
-              ? "Get matched with real people who\u2019ve been through your exact surgery. Learn from their experience through recordings or live calls."
-              : "Share your recovery story, help others heal, and earn money doing it. Set your own prices and schedule."}
+              ? "Get matched with real people who\u2019ve been through the same thing. Learn from their experience through recordings or live calls."
+              : "Share your story, help others heal, and earn money doing it. Set your own prices and schedule."}
           </p>
         </div>
       </div>
@@ -112,7 +112,7 @@ export default function HowItWorksPage() {
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-3">Create Your Profile</h3>
                 <p className="text-gray-600">
-                  Tell us about your surgery, age, activity level, and recovery goals.
+                  Tell us about your surgery or condition, age, activity level, and goals.
                   This helps us match you with contributors who truly understand your situation.
                 </p>
               </div>
@@ -132,7 +132,7 @@ export default function HowItWorksPage() {
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-3">Find Your Match</h3>
                 <p className="text-gray-600">
-                  Browse contributors who&apos;ve had your surgery. Filter by procedure, age,
+                  Browse contributors who&apos;ve been through the same thing. Filter by surgery or condition, age,
                   activity level, and see match scores showing how similar their situation is to yours.
                 </p>
               </div>
@@ -171,15 +171,15 @@ export default function HowItWorksPage() {
                       <path d="M8 5v14l11-7z" />
                     </svg>
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-3">Watch Recovery Stories</h3>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-3">Watch Real Stories</h3>
                   <p className="text-gray-600 mb-6">
-                    Pre-recorded audio and video from contributors sharing their recovery journey.
+                    Pre-recorded audio and video from contributors sharing their journey.
                     Buy once, watch anytime.
                   </p>
                   <ul className="space-y-3 mb-8">
                     <li className="flex items-start gap-3">
                       <CheckIcon className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700">Week-by-week recovery timelines</span>
+                      <span className="text-gray-700">Recovery and management timelines</span>
                     </li>
                     <li className="flex items-start gap-3">
                       <CheckIcon className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
@@ -360,9 +360,9 @@ export default function HowItWorksPage() {
               <div className="bg-white rounded-xl border border-gray-200 p-6">
                 <h3 className="font-semibold text-gray-900 mb-2">Who are the contributors?</h3>
                 <p className="text-gray-600">
-                  Contributors are real people who have been through surgical recovery themselves.
+                  Contributors are real people who have been through surgery recovery or live with chronic pain themselves.
                   They share their experiences to help others going through similar situations.
-                  All contributors are verified and share their actual recovery journey.
+                  All contributors are verified and share their actual journey.
                 </p>
               </div>
 
@@ -378,7 +378,7 @@ export default function HowItWorksPage() {
               <div className="bg-white rounded-xl border border-gray-200 p-6">
                 <h3 className="font-semibold text-gray-900 mb-2">How does matching work?</h3>
                 <p className="text-gray-600">
-                  We match you based on procedure type, age range, activity level, and recovery goals.
+                  We match you based on your surgery or condition, age range, activity level, and goals.
                   The more complete your profile, the better your matches. Match scores show you how
                   similar a contributor&apos;s situation is to yours.
                 </p>
@@ -424,7 +424,7 @@ export default function HowItWorksPage() {
           {/* Patient CTA */}
           <div className="bg-gradient-to-br from-teal-600 to-cyan-700 text-white py-16">
             <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-              <h2 className="text-3xl font-bold mb-4">Ready to Start Your Recovery Journey?</h2>
+              <h2 className="text-3xl font-bold mb-4">Ready to Get Started?</h2>
               <p className="text-lg text-teal-100 mb-8">
                 {session
                   ? "Browse recordings and find contributors who understand your situation."
@@ -490,7 +490,7 @@ export default function HowItWorksPage() {
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-3">Sign Up & Set Up</h3>
                 <p className="text-gray-600">
-                  Create your contributor profile, add your procedures and recovery details,
+                  Create your contributor profile, add your surgeries or conditions and details,
                   and connect Stripe so you can get paid.
                 </p>
               </div>
@@ -510,7 +510,7 @@ export default function HowItWorksPage() {
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-3">Share Your Story</h3>
                 <p className="text-gray-600">
-                  Record audio or video of your recovery journey. Create series, recommend products
+                  Record audio or video about your experience. Create series, recommend products
                   and providers, and set your availability for live calls.
                 </p>
               </div>
@@ -551,7 +551,7 @@ export default function HowItWorksPage() {
                   </div>
                   <h3 className="text-xl font-bold text-gray-900 mb-3">Recordings</h3>
                   <p className="text-gray-600 mb-4">
-                    Record your recovery story. You set the price, earn 75% of each sale.
+                    Record your story. You set the price, earn 75% of each sale.
                     Subscribers can watch unlimited, and you earn based on views.
                   </p>
                   <ul className="space-y-2">
@@ -607,7 +607,7 @@ export default function HowItWorksPage() {
                   </div>
                   <h3 className="text-xl font-bold text-gray-900 mb-3">Group Sessions</h3>
                   <p className="text-gray-600 mb-4">
-                    Host group recovery sessions for multiple patients at once.
+                    Host group sessions for multiple patients at once.
                     You set the price and max capacity.
                   </p>
                   <ul className="space-y-2">
@@ -650,8 +650,8 @@ export default function HowItWorksPage() {
               <div className="bg-white rounded-xl border border-gray-200 p-6">
                 <h3 className="font-semibold text-gray-900 mb-2">What do I need to record?</h3>
                 <p className="text-gray-600">
-                  Share your recovery timeline, practical tips, mental health strategies &mdash; whatever
-                  helped you through your recovery. Patients are looking for real, honest experiences
+                  Share your timeline, practical tips, mental health strategies &mdash; whatever
+                  helped you through it. Patients are looking for real, honest experiences
                   from someone who&apos;s been in their shoes.
                 </p>
               </div>
@@ -667,7 +667,7 @@ export default function HowItWorksPage() {
               <div className="bg-white rounded-xl border border-gray-200 p-6">
                 <h3 className="font-semibold text-gray-900 mb-2">What about recommendations?</h3>
                 <p className="text-gray-600">
-                  You can recommend products, providers, and services that helped during your recovery.
+                  You can recommend products, providers, and services that helped you.
                   Multiple endorsements from different contributors boost visibility, helping patients
                   find the most trusted recommendations.
                 </p>
@@ -690,7 +690,7 @@ export default function HowItWorksPage() {
               <p className="text-lg text-teal-100 mb-8">
                 {session
                   ? "Head to your contributor dashboard to start recording, set up calls, and manage your profile."
-                  : "Sign up as a contributor and start helping others while earning money from your recovery experience."}
+                  : "Sign up as a contributor and start helping others while earning money from your experience."}
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 {session ? (

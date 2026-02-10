@@ -3,8 +3,10 @@
 import { useState } from "react";
 import {
   PROCEDURE_TYPES, RECOVERY_GOALS, COMPLICATING_FACTORS,
+  CHRONIC_PAIN_CONDITIONS, CHRONIC_PAIN_GOALS, CHRONIC_PAIN_COMPLICATING_FACTORS,
+  isChronicPainCondition, getAllConditions,
 } from "@/lib/constants";
-import { getTimeSinceSurgery, getTimeSinceSurgeryLabel } from "@/lib/surgeryDate";
+import { getTimeSinceSurgery, getTimeSinceSurgeryLabel, getTimeSinceDiagnosisLabel } from "@/lib/surgeryDate";
 
 interface ProcedureProfile {
   procedureDetails?: string;
@@ -196,7 +198,7 @@ export default function ProceduresSection({ profile, sharedForm, onProfileUpdate
       // Last instance — remove the whole procedure type
       return removeProcedure(proc);
     }
-    const label = instances[idx].procedureDetails || `surgery #${idx + 1}`;
+    const label = instances[idx].procedureDetails || (isChronicPainCondition(proc) ? `entry #${idx + 1}` : `surgery #${idx + 1}`);
     if (!confirm(`Remove "${label}" from ${proc}?`)) return;
 
     setSaving(true);
@@ -277,9 +279,9 @@ export default function ProceduresSection({ profile, sharedForm, onProfileUpdate
     <section className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-xl font-bold">My Procedures</h2>
+          <h2 className="text-xl font-bold">My Health Profile</h2>
           <p className="text-sm text-gray-500 mt-1">
-            Each procedure has its own recovery timeline and details
+            Your surgeries and conditions, each with their own timeline and details
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -291,7 +293,7 @@ export default function ProceduresSection({ profile, sharedForm, onProfileUpdate
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            Add Procedure
+            Add
           </button>
         </div>
       </div>
@@ -313,13 +315,13 @@ export default function ProceduresSection({ profile, sharedForm, onProfileUpdate
                   <div>
                     <h3 className="font-semibold text-gray-900">{proc}</h3>
                     <p className="text-sm text-gray-500">
-                      {instances.length} {instances.length === 1 ? "surgery" : "surgeries"}
+                      {isChronicPainCondition(proc) ? null : `${instances.length} ${instances.length === 1 ? "surgery" : "surgeries"}`}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   {procedures.length > 1 && (
-                    <button onClick={() => removeProcedure(proc)} className="text-gray-400 hover:text-red-500 p-1" title="Remove procedure">
+                    <button onClick={() => removeProcedure(proc)} className="text-gray-400 hover:text-red-500 p-1" title="Remove">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
@@ -344,8 +346,8 @@ export default function ProceduresSection({ profile, sharedForm, onProfileUpdate
                             </p>
                             <p className="text-xs text-gray-500">
                               {data.surgeryDate
-                                ? getTimeSinceSurgeryLabel(data.surgeryDate)
-                                : (data.timeSinceSurgery || "Surgery date not set")}
+                                ? (isChronicPainCondition(proc) ? getTimeSinceDiagnosisLabel(data.surgeryDate) : getTimeSinceSurgeryLabel(data.surgeryDate))
+                                : (data.timeSinceSurgery || (isChronicPainCondition(proc) ? "Diagnosis date not set" : "Surgery date not set"))}
                               {data.recoveryGoals?.length ? ` · ${data.recoveryGoals.length} goals` : ""}
                             </p>
                             {((data.recoveryGoals?.length ?? 0) > 0 || (data.complicatingFactors?.length ?? 0) > 0) && (
@@ -362,7 +364,7 @@ export default function ProceduresSection({ profile, sharedForm, onProfileUpdate
                           <div className="flex items-center gap-2 ml-3">
                             <button onClick={() => startEditing(proc, idx)} className="text-sm text-teal-600 hover:text-teal-700 font-medium px-2 py-1">Edit</button>
                             {instances.length > 1 && (
-                              <button onClick={() => removeInstance(proc, idx)} className="text-gray-400 hover:text-red-500 p-1" title="Remove this surgery">
+                              <button onClick={() => removeInstance(proc, idx)} className="text-gray-400 hover:text-red-500 p-1" title={isChronicPainCondition(proc) ? "Remove this entry" : "Remove this surgery"}>
                                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                 </svg>
@@ -376,22 +378,22 @@ export default function ProceduresSection({ profile, sharedForm, onProfileUpdate
                         <div className="p-4 space-y-4 bg-gray-50/50">
                           <div className="grid sm:grid-cols-2 gap-4">
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">Procedure Details</label>
-                              <input type="text" value={procForm.procedureDetails || ""} onChange={(e) => setProcForm((f) => ({ ...f, procedureDetails: e.target.value }))} placeholder="e.g., Left shoulder, Right knee" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+                              <label className="block text-sm font-medium text-gray-700 mb-1">{isChronicPainCondition(proc) ? "Condition Details" : "Procedure Details"}</label>
+                              <input type="text" value={procForm.procedureDetails || ""} onChange={(e) => setProcForm((f) => ({ ...f, procedureDetails: e.target.value }))} placeholder={isChronicPainCondition(proc) ? "e.g., Widespread pain, primarily legs" : "e.g., Left shoulder, Right knee"} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
                             </div>
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">Surgery Date</label>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">{isChronicPainCondition(proc) ? "Diagnosis Date" : "Surgery Date"}</label>
                               <input type="date" value={procForm.surgeryDate || ""} onChange={(e) => setProcForm((f) => ({ ...f, surgeryDate: e.target.value }))} max={new Date().toISOString().split("T")[0]} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
                               {procForm.surgeryDate && (
-                                <p className="mt-1 text-sm text-teal-600 font-medium">{getTimeSinceSurgeryLabel(procForm.surgeryDate)}</p>
+                                <p className="mt-1 text-sm text-teal-600 font-medium">{isChronicPainCondition(proc) ? getTimeSinceDiagnosisLabel(procForm.surgeryDate) : getTimeSinceSurgeryLabel(procForm.surgeryDate)}</p>
                               )}
                             </div>
                           </div>
 
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Recovery Goals</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">{isChronicPainCondition(proc) ? "Management Goals" : "Recovery Goals"}</label>
                             <div className="flex flex-wrap gap-2">
-                              {RECOVERY_GOALS.map((g) => (
+                              {(isChronicPainCondition(proc) ? CHRONIC_PAIN_GOALS : RECOVERY_GOALS).map((g) => (
                                 <button key={g} type="button" onClick={() => toggleProcFormGoal(g)} className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${procForm.recoveryGoals?.includes(g) ? "bg-teal-50 border-teal-300 text-teal-700" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}>{g}</button>
                               ))}
                             </div>
@@ -400,7 +402,7 @@ export default function ProceduresSection({ profile, sharedForm, onProfileUpdate
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">Complicating Factors</label>
                             <div className="flex flex-wrap gap-2">
-                              {COMPLICATING_FACTORS.map((f) => (
+                              {(isChronicPainCondition(proc) ? CHRONIC_PAIN_COMPLICATING_FACTORS : COMPLICATING_FACTORS).map((f) => (
                                 <button key={f} type="button" onClick={() => toggleProcFormFactor(f)} className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${procForm.complicatingFactors?.includes(f) ? "bg-orange-50 border-orange-300 text-orange-700" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}>{f}</button>
                               ))}
                             </div>
@@ -416,19 +418,21 @@ export default function ProceduresSection({ profile, sharedForm, onProfileUpdate
                   );
                 })}
 
-                {/* Add another instance */}
-                <div className="px-4 py-2 border-t border-gray-100">
-                  <button
-                    onClick={() => addInstance(proc)}
-                    disabled={saving}
-                    className="text-xs text-teal-600 hover:text-teal-700 font-medium flex items-center gap-1 disabled:opacity-50"
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                    Add another {proc}
-                  </button>
-                </div>
+                {/* Add another instance (only for surgeries — chronic pain conditions can't be duplicated) */}
+                {!isChronicPainCondition(proc) && (
+                  <div className="px-4 py-2 border-t border-gray-100">
+                    <button
+                      onClick={() => addInstance(proc)}
+                      disabled={saving}
+                      className="text-xs text-teal-600 hover:text-teal-700 font-medium flex items-center gap-1 disabled:opacity-50"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      Add another {proc}
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           );
@@ -437,13 +441,20 @@ export default function ProceduresSection({ profile, sharedForm, onProfileUpdate
 
       {showAddProcedure && (
         <div className="border-t border-gray-200 pt-4 mt-4">
-          <h3 className="font-medium text-gray-900 mb-3">Add a Procedure</h3>
+          <h3 className="font-medium text-gray-900 mb-3">Add to Your Health Profile</h3>
           <div className="flex gap-3">
             <select value={newProcedure} onChange={(e) => setNewProcedure(e.target.value)} className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm">
-              <option value="">Select a procedure...</option>
-              {PROCEDURE_TYPES.filter((p) => !procedures.includes(p)).map((p) => (
-                <option key={p} value={p}>{p}</option>
-              ))}
+              <option value="">Choose a surgery or condition...</option>
+              <optgroup label="Surgeries">
+                {getAllConditions().filter((c) => c.category === "SURGERY" && !procedures.includes(c.value)).map((c) => (
+                  <option key={c.value} value={c.value}>{c.label}</option>
+                ))}
+              </optgroup>
+              <optgroup label="Chronic Pain">
+                {getAllConditions().filter((c) => c.category === "CHRONIC_PAIN" && !procedures.includes(c.value)).map((c) => (
+                  <option key={c.value} value={c.value}>{c.label}</option>
+                ))}
+              </optgroup>
             </select>
             <button onClick={addProcedure} disabled={!newProcedure || saving} className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 disabled:opacity-50 text-sm font-medium">{saving ? "Adding..." : "Add"}</button>
             {procedures.length > 0 && (
@@ -454,7 +465,7 @@ export default function ProceduresSection({ profile, sharedForm, onProfileUpdate
       )}
 
       {procedures.length === 0 && !showAddProcedure && (
-        <p className="text-gray-500 text-center py-4">No procedures added yet. Add your first procedure to get started!</p>
+        <p className="text-gray-500 text-center py-4">Nothing added yet. Add your first surgery or condition to get started!</p>
       )}
     </section>
   );

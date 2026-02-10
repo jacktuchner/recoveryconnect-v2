@@ -81,6 +81,10 @@ export async function POST(req: NextRequest) {
       milestones,
       isShared,
       surgeryDate,
+      triggers,
+      isFlare,
+      energyLevel,
+      conditionCategory,
     } = body;
 
     if (!procedureType) {
@@ -124,9 +128,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Compute recoveryWeek from surgeryDate
+    // Compute recoveryWeek from surgeryDate (skip for chronic pain)
     let recoveryWeek: number | null = null;
-    if (surgeryDate) {
+    if (surgeryDate && conditionCategory !== "CHRONIC_PAIN") {
       const surgery = new Date(surgeryDate);
       const now = new Date();
       const diffMs = now.getTime() - surgery.getTime();
@@ -149,6 +153,9 @@ export async function POST(req: NextRequest) {
         mood,
         notes: notes || null,
         milestones: milestones || [],
+        triggers: triggers || [],
+        isFlare: isFlare || false,
+        energyLevel: energyLevel ?? null,
         isShared: shareFlag,
         createdAt: now,
         updatedAt: now,

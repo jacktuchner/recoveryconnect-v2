@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { PROCEDURE_TYPES, AGE_RANGES, ACTIVITY_LEVELS, RECORDING_CATEGORIES } from "@/lib/constants";
+import { PROCEDURE_TYPES, AGE_RANGES, ACTIVITY_LEVELS, RECORDING_CATEGORIES, CHRONIC_PAIN_CONDITIONS } from "@/lib/constants";
 
 interface FilterSidebarProps {
   filters: {
@@ -86,7 +86,8 @@ function FilterSection({
 }
 
 export default function FilterSidebar({ filters, onFilterChange, showCategory = true }: FilterSidebarProps) {
-  const procedureOptions = PROCEDURE_TYPES.map((p) => ({ value: p, label: p }));
+  const surgeryOptions = PROCEDURE_TYPES.map((p) => ({ value: p, label: p }));
+  const chronicPainOptions = CHRONIC_PAIN_CONDITIONS.map((c) => ({ value: c, label: c }));
   const ageOptions = AGE_RANGES.map((a) => ({ value: a, label: a }));
   const activityOptions = ACTIVITY_LEVELS.map((a) => ({ value: a.value, label: a.label }));
   const categoryOptions = RECORDING_CATEGORIES.map((c) => ({ value: c.value, label: c.label }));
@@ -121,10 +122,18 @@ export default function FilterSidebar({ filters, onFilterChange, showCategory = 
       )}
 
       <FilterSection
-        title="Procedure"
-        options={procedureOptions}
+        title="Surgeries"
+        options={surgeryOptions}
         selected={filters.procedures}
         onChange={(values) => onFilterChange("procedures", values)}
+      />
+
+      <FilterSection
+        title="Chronic Pain"
+        options={chronicPainOptions}
+        selected={filters.procedures}
+        onChange={(values) => onFilterChange("procedures", values)}
+        defaultExpanded={false}
       />
 
       <FilterSection

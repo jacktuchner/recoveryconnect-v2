@@ -1,11 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { PROCEDURE_TYPES, AGE_RANGES, ACTIVITY_LEVELS, RECOVERY_GOALS, COMPLICATING_FACTORS, LIFESTYLE_CONTEXTS } from "@/lib/constants";
-import { getTimeSinceSurgery, getTimeSinceSurgeryLabel } from "@/lib/surgeryDate";
+import {
+  PROCEDURE_TYPES, AGE_RANGES, ACTIVITY_LEVELS, RECOVERY_GOALS, COMPLICATING_FACTORS, LIFESTYLE_CONTEXTS,
+  CONDITION_CATEGORIES, CHRONIC_PAIN_CONDITIONS, CHRONIC_PAIN_DETAILS, CHRONIC_PAIN_GOALS, CHRONIC_PAIN_COMPLICATING_FACTORS,
+  PROCEDURE_DETAILS,
+} from "@/lib/constants";
+import { getTimeSinceSurgery, getTimeSinceSurgeryLabel, getTimeSinceDiagnosisLabel } from "@/lib/surgeryDate";
 
 interface ProfileWizardProps {
   initialData?: {
+    conditionCategory?: string;
     procedureType?: string;
     procedureDetails?: string;
     surgeryDate?: string;
@@ -20,13 +25,14 @@ interface ProfileWizardProps {
   error?: string | null;
 }
 
-type Stage = 1 | 2 | 3;
+type Stage = 0 | 1 | 2 | 3;
 
 export default function ProfileWizard({ initialData, onComplete, onCancel, error }: ProfileWizardProps) {
-  const [stage, setStage] = useState<Stage>(1);
+  const [stage, setStage] = useState<Stage>(0);
   const [saving, setSaving] = useState(false);
 
   const [form, setForm] = useState({
+    conditionCategory: initialData?.conditionCategory || "",
     procedureType: initialData?.procedureType || "",
     procedureDetails: initialData?.procedureDetails || "",
     surgeryDate: initialData?.surgeryDate || "",
@@ -37,6 +43,16 @@ export default function ProfileWizard({ initialData, onComplete, onCancel, error
     lifestyleContext: initialData?.lifestyleContext || [],
   });
 
+  const isChronicPain = form.conditionCategory === "CHRONIC_PAIN";
+
+  // Derived options based on condition category
+  const conditionOptions = isChronicPain ? CHRONIC_PAIN_CONDITIONS : PROCEDURE_TYPES;
+  const detailsOptions = isChronicPain
+    ? (CHRONIC_PAIN_DETAILS[form.procedureType] || [])
+    : (PROCEDURE_DETAILS[form.procedureType] || []);
+  const goalsOptions = isChronicPain ? CHRONIC_PAIN_GOALS : RECOVERY_GOALS;
+  const factorsOptions = isChronicPain ? CHRONIC_PAIN_COMPLICATING_FACTORS : COMPLICATING_FACTORS;
+
   function toggleArrayItem(key: "recoveryGoals" | "complicatingFactors" | "lifestyleContext", value: string) {
     setForm((prev) => ({
       ...prev,
@@ -46,6 +62,10 @@ export default function ProfileWizard({ initialData, onComplete, onCancel, error
     }));
   }
 
+  function canProceedFromStage0() {
+    return form.conditionCategory !== "";
+  }
+
   function canProceedFromStage1() {
     return form.procedureType && form.ageRange && form.activityLevel;
   }
@@ -53,7 +73,6 @@ export default function ProfileWizard({ initialData, onComplete, onCancel, error
   async function handleComplete() {
     setSaving(true);
     try {
-      // Compute timeSinceSurgery from surgeryDate
       const dataToSave = {
         ...form,
         timeSinceSurgery: form.surgeryDate ? getTimeSinceSurgery(form.surgeryDate) : null,
@@ -68,7 +87,9 @@ export default function ProfileWizard({ initialData, onComplete, onCancel, error
   }
 
   function handleNext() {
-    if (stage === 1 && canProceedFromStage1()) {
+    if (stage === 0 && canProceedFromStage0()) {
+      setStage(1);
+    } else if (stage === 1 && canProceedFromStage1()) {
       setStage(2);
     } else if (stage === 2) {
       setStage(3);
@@ -78,6 +99,7 @@ export default function ProfileWizard({ initialData, onComplete, onCancel, error
   }
 
   function handleBack() {
+    if (stage === 1) setStage(0);
     if (stage === 2) setStage(1);
     if (stage === 3) setStage(2);
   }
@@ -96,12 +118,12 @@ export default function ProfileWizard({ initialData, onComplete, onCancel, error
       <div className="bg-gradient-to-r from-teal-600 to-cyan-600 px-6 py-4">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-bold text-white">Set Up Your Profile</h2>
-          <span className="text-sm text-teal-100">Step {stage} of 3</span>
+          <span className="text-sm text-teal-100">Step {stage + 1} of 4</span>
         </div>
 
         {/* Progress Bar */}
         <div className="flex gap-2">
-          {[1, 2, 3].map((s) => (
+          {[0, 1, 2, 3].map((s) => (
             <div
               key={s}
               className={`h-1.5 flex-1 rounded-full transition-colors ${
@@ -113,6 +135,9 @@ export default function ProfileWizard({ initialData, onComplete, onCancel, error
 
         {/* Stage Labels */}
         <div className="flex justify-between mt-2">
+          <span className={`text-xs ${stage === 0 ? "text-white font-medium" : "text-teal-200"}`}>
+            Type
+          </span>
           <span className={`text-xs ${stage === 1 ? "text-white font-medium" : "text-teal-200"}`}>
             Basics
           </span>
@@ -127,26 +152,70 @@ export default function ProfileWizard({ initialData, onComplete, onCancel, error
 
       {/* Form Content */}
       <div className="p-6">
+        {/* Stage 0: Condition Category */}
+        {stage === 0 && (
+          <div className="space-y-5">
+            <div>
+              <p className="text-sm text-gray-600 mb-4">
+                What brings you to RecoveryConnect?
+              </p>
+            </div>
+
+            <div className="grid gap-3">
+              {CONDITION_CATEGORIES.map((cat) => (
+                <button
+                  key={cat.value}
+                  type="button"
+                  onClick={() => setForm((f) => ({
+                    ...f,
+                    conditionCategory: cat.value,
+                    procedureType: "",
+                    procedureDetails: "",
+                    recoveryGoals: [],
+                    complicatingFactors: [],
+                  }))}
+                  className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+                    form.conditionCategory === cat.value
+                      ? "border-teal-500 bg-teal-50"
+                      : "border-gray-200 hover:border-gray-300"
+                  }`}
+                >
+                  <p className={`font-semibold ${form.conditionCategory === cat.value ? "text-teal-900" : "text-gray-900"}`}>
+                    {cat.label}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-0.5">
+                    {cat.value === "SURGERY"
+                      ? "Recovering from a surgical procedure"
+                      : "Living with an ongoing pain condition"}
+                  </p>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Stage 1: Basics (Required) */}
         {stage === 1 && (
           <div className="space-y-5">
             <div>
               <p className="text-sm text-gray-600 mb-4">
-                Tell us the basics about your surgery. This helps us match you with relevant content.
+                {isChronicPain
+                  ? "Tell us about your condition. This helps us match you with relevant content."
+                  : "Tell us the basics about your surgery. This helps us match you with relevant content."}
               </p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Procedure Type <span className="text-red-500">*</span>
+                {isChronicPain ? "Condition" : "Procedure Type"} <span className="text-red-500">*</span>
               </label>
               <select
                 value={form.procedureType}
-                onChange={(e) => setForm((f) => ({ ...f, procedureType: e.target.value }))}
+                onChange={(e) => setForm((f) => ({ ...f, procedureType: e.target.value, procedureDetails: "" }))}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
               >
-                <option value="">Select your procedure</option>
-                {PROCEDURE_TYPES.map((p) => (
+                <option value="">{isChronicPain ? "Select your condition" : "Select your procedure"}</option>
+                {conditionOptions.map((p) => (
                   <option key={p} value={p}>{p}</option>
                 ))}
               </select>
@@ -154,20 +223,33 @@ export default function ProfileWizard({ initialData, onComplete, onCancel, error
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Procedure Details <span className="text-gray-400">(optional)</span>
+                {isChronicPain ? "Condition Details" : "Procedure Details"} <span className="text-gray-400">(optional)</span>
               </label>
-              <input
-                type="text"
-                value={form.procedureDetails}
-                onChange={(e) => setForm((f) => ({ ...f, procedureDetails: e.target.value }))}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                placeholder="e.g., Patellar tendon graft, Anterior approach"
-              />
+              {detailsOptions.length > 0 ? (
+                <select
+                  value={form.procedureDetails}
+                  onChange={(e) => setForm((f) => ({ ...f, procedureDetails: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                >
+                  <option value="">Select details...</option>
+                  {detailsOptions.map((d) => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  value={form.procedureDetails}
+                  onChange={(e) => setForm((f) => ({ ...f, procedureDetails: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  placeholder={isChronicPain ? "e.g., Widespread pain, primarily legs" : "e.g., Patellar tendon graft, Anterior approach"}
+                />
+              )}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Surgery Date <span className="text-gray-400">(optional)</span>
+                {isChronicPain ? "Diagnosis Date" : "Surgery Date"} <span className="text-gray-400">(optional)</span>
               </label>
               <input
                 type="date"
@@ -177,11 +259,13 @@ export default function ProfileWizard({ initialData, onComplete, onCancel, error
               />
               {form.surgeryDate && (
                 <p className="mt-1 text-sm text-teal-600 font-medium">
-                  {getTimeSinceSurgeryLabel(form.surgeryDate)}
+                  {isChronicPain ? getTimeSinceDiagnosisLabel(form.surgeryDate) : getTimeSinceSurgeryLabel(form.surgeryDate)}
                 </p>
               )}
               <p className="text-xs text-gray-500 mt-1">
-                We&apos;ll use this to match you with people at a similar recovery stage.
+                {isChronicPain
+                  ? "We'll use this to connect you with people at a similar stage."
+                  : "We'll use this to match you with people at a similar recovery stage."}
               </p>
             </div>
 
@@ -215,7 +299,7 @@ export default function ProfileWizard({ initialData, onComplete, onCancel, error
                 ))}
               </select>
               <p className="text-xs text-gray-500 mt-1">
-                Your typical activity level before surgery
+                {isChronicPain ? "Your typical activity level on a good day" : "Your typical activity level before surgery"}
               </p>
             </div>
           </div>
@@ -226,16 +310,18 @@ export default function ProfileWizard({ initialData, onComplete, onCancel, error
           <div className="space-y-5">
             <div>
               <p className="text-sm text-gray-600 mb-4">
-                What does successful recovery look like for you? Select all that apply.
+                {isChronicPain
+                  ? "What are your goals for managing your condition? Select all that apply."
+                  : "What does successful recovery look like for you? Select all that apply."}
               </p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-3">
-                Recovery Goals
+                {isChronicPain ? "Management Goals" : "Recovery Goals"}
               </label>
               <div className="flex flex-wrap gap-2">
-                {RECOVERY_GOALS.map((g) => (
+                {goalsOptions.map((g) => (
                   <button
                     key={g}
                     type="button"
@@ -276,7 +362,7 @@ export default function ProfileWizard({ initialData, onComplete, onCancel, error
                 Complicating Factors
               </label>
               <div className="flex flex-wrap gap-2">
-                {COMPLICATING_FACTORS.map((f) => (
+                {factorsOptions.map((f) => (
                   <button
                     key={f}
                     type="button"
@@ -333,7 +419,7 @@ export default function ProfileWizard({ initialData, onComplete, onCancel, error
         {/* Navigation Buttons */}
         <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-100">
           <div>
-            {stage === 1 && onCancel && (
+            {stage === 0 && onCancel && (
               <button
                 onClick={onCancel}
                 className="text-sm text-gray-500 hover:text-gray-700 px-4 py-2"
@@ -341,7 +427,7 @@ export default function ProfileWizard({ initialData, onComplete, onCancel, error
                 Cancel
               </button>
             )}
-            {stage > 1 && (
+            {stage > 0 && (
               <button
                 onClick={handleBack}
                 className="text-sm text-gray-500 hover:text-gray-700 px-4 py-2 flex items-center gap-1"
@@ -366,10 +452,10 @@ export default function ProfileWizard({ initialData, onComplete, onCancel, error
 
             <button
               onClick={handleNext}
-              disabled={(stage === 1 && !canProceedFromStage1()) || saving}
+              disabled={(stage === 0 && !canProceedFromStage0()) || (stage === 1 && !canProceedFromStage1()) || saving}
               className={`
                 px-6 py-2.5 rounded-lg font-medium text-sm transition-all
-                ${stage === 1 && !canProceedFromStage1()
+                ${(stage === 0 && !canProceedFromStage0()) || (stage === 1 && !canProceedFromStage1())
                   ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                   : "bg-teal-600 text-white hover:bg-teal-700"
                 }

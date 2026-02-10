@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { RECORDING_CATEGORIES } from "@/lib/constants";
+import { getRecordingCategoriesForCondition } from "@/lib/constants";
 
 interface FaqPrompt {
   id: string;
@@ -14,19 +14,23 @@ interface FaqPrompt {
 interface FaqPromptSelectorProps {
   onSelect: (prompt: FaqPrompt | null, category: string) => void;
   selectedPromptId?: string | null;
+  conditionType?: string;
 }
 
-export default function FaqPromptSelector({ onSelect, selectedPromptId }: FaqPromptSelectorProps) {
+export default function FaqPromptSelector({ onSelect, selectedPromptId, conditionType }: FaqPromptSelectorProps) {
   const [prompts, setPrompts] = useState<FaqPrompt[]>([]);
   const [groupedPrompts, setGroupedPrompts] = useState<Record<string, FaqPrompt[]>>({});
   const [loading, setLoading] = useState(true);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("WEEKLY_TIMELINE");
 
+  const categories = getRecordingCategoriesForCondition(conditionType || "SURGERY");
+
   useEffect(() => {
     async function fetchPrompts() {
       try {
-        const res = await fetch("/api/faq-prompts");
+        const params = conditionType ? `?conditionType=${conditionType}` : "";
+        const res = await fetch(`/api/faq-prompts${params}`);
         if (res.ok) {
           const data = await res.json();
           setPrompts(data.prompts);
@@ -39,15 +43,15 @@ export default function FaqPromptSelector({ onSelect, selectedPromptId }: FaqPro
       }
     }
     fetchPrompts();
-  }, []);
+  }, [conditionType]);
 
   const getCategoryLabel = (categoryValue: string) => {
-    const cat = RECORDING_CATEGORIES.find((c) => c.value === categoryValue);
+    const cat = categories.find((c) => c.value === categoryValue);
     return cat ? cat.label : categoryValue.replace(/_/g, " ");
   };
 
   const getCategoryDescription = (categoryValue: string) => {
-    const cat = RECORDING_CATEGORIES.find((c) => c.value === categoryValue);
+    const cat = categories.find((c) => c.value === categoryValue);
     return cat?.description || "";
   };
 
@@ -87,7 +91,7 @@ export default function FaqPromptSelector({ onSelect, selectedPromptId }: FaqPro
 
       {/* Category selection */}
       <div className="space-y-3">
-        {RECORDING_CATEGORIES.map((category) => {
+        {categories.map((category) => {
           const categoryPrompts = groupedPrompts[category.value] || [];
           const isExpanded = expandedCategory === category.value;
           const isSelected = selectedCategory === category.value;

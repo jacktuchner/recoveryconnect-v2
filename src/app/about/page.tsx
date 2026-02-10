@@ -200,8 +200,8 @@ export default function AboutPage() {
               </div>
               <h3 className="text-xl font-bold mb-2">Meaningful Matches</h3>
               <p className="text-gray-600">
-                Connect with people who match your procedure, age, activity level,
-                and recovery goals. Not random strangers — kindred spirits.
+                Connect with people who match your situation — surgery, condition, age,
+                activity level, and goals. Not random strangers — kindred spirits.
               </p>
             </div>
           </div>

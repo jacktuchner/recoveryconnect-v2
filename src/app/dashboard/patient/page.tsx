@@ -3,8 +3,8 @@
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { PROCEDURE_TYPES, AGE_RANGES, ACTIVITY_LEVELS, RECOVERY_GOALS, COMPLICATING_FACTORS, LIFESTYLE_CONTEXTS, SUBSCRIPTION_MONTHLY_PRICE, SUBSCRIPTION_ANNUAL_PRICE } from "@/lib/constants";
-import { getTimeSinceSurgery, getTimeSinceSurgeryLabel, getCurrentRecoveryWeek } from "@/lib/surgeryDate";
+import { PROCEDURE_TYPES, AGE_RANGES, ACTIVITY_LEVELS, RECOVERY_GOALS, COMPLICATING_FACTORS, LIFESTYLE_CONTEXTS, SUBSCRIPTION_MONTHLY_PRICE, SUBSCRIPTION_ANNUAL_PRICE, CHRONIC_PAIN_CONDITIONS, CHRONIC_PAIN_GOALS, CHRONIC_PAIN_COMPLICATING_FACTORS, isChronicPainCondition, getAllConditions } from "@/lib/constants";
+import { getTimeSinceSurgery, getTimeSinceSurgeryLabel, getTimeSinceDiagnosisLabel, getCurrentRecoveryWeek } from "@/lib/surgeryDate";
 import RecoveryJournal from "@/components/patient/RecoveryJournal";
 import ProfileWizard from "@/components/ProfileWizard";
 import VideoCall from "@/components/VideoCall";
@@ -248,7 +248,7 @@ export default function PatientDashboard() {
     if (instances.length <= 1) {
       return removeProcedure(proc);
     }
-    const label = instances[idx].procedureDetails || `surgery #${idx + 1}`;
+    const label = instances[idx].procedureDetails || (isChronicPainCondition(proc) ? `entry #${idx + 1}` : `surgery #${idx + 1}`);
     if (!confirm(`Remove "${label}" from ${proc}?`)) return;
 
     setSaving(true);
@@ -416,6 +416,7 @@ export default function PatientDashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...data,
+          conditionCategory: data.conditionCategory || "SURGERY",
           procedureTypes: [data.procedureType],
           activeProcedureType: data.procedureType,
           procedureProfiles: initialProfiles,
@@ -556,6 +557,7 @@ export default function PatientDashboard() {
         </div>
         <ProfileWizard
           initialData={profile ? {
+            conditionCategory: profile.conditionCategory,
             procedureType: profile.procedureType,
             procedureDetails: profile.procedureDetails,
             ageRange: profile.ageRange,
@@ -579,9 +581,9 @@ export default function PatientDashboard() {
         <section className="bg-gradient-to-r from-cyan-50 to-teal-50 rounded-xl border border-teal-200 p-5 mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <h3 className="font-semibold text-gray-900">Been through a procedure?</h3>
+              <h3 className="font-semibold text-gray-900">Been through it?</h3>
               <p className="text-sm text-gray-600 mt-0.5">
-                Your experience can help others — become a contributor to share your recovery story and mentor patients.
+                Your experience can help others — become a contributor to share your story and mentor patients.
               </p>
             </div>
             <div className="self-start">
@@ -730,9 +732,9 @@ export default function PatientDashboard() {
       <section className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-xl font-bold">My Procedures</h2>
+            <h2 className="text-xl font-bold">My Health Profile</h2>
             <p className="text-sm text-gray-500 mt-1">
-              Each procedure has its own recovery goals and details
+              Your surgeries and conditions, each with their own goals and details
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -744,7 +746,7 @@ export default function PatientDashboard() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              Add Procedure
+              Add
             </button>
           </div>
         </div>
@@ -787,7 +789,9 @@ export default function PatientDashboard() {
                         )}
                       </div>
                       <p className="text-sm text-gray-500">
-                        {instances.length} {instances.length === 1 ? "surgery" : "surgeries"}
+                        {isChronicPainCondition(proc)
+                          ? null
+                          : `${instances.length} ${instances.length === 1 ? "surgery" : "surgeries"}`}
                       </p>
                     </div>
                   </div>
@@ -799,7 +803,7 @@ export default function PatientDashboard() {
                           removeProcedure(proc);
                         }}
                         className="text-gray-400 hover:text-red-500 p-1"
-                        title="Remove procedure"
+                        title="Remove"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -825,8 +829,8 @@ export default function PatientDashboard() {
                               </p>
                               <p className="text-xs text-gray-500">
                                 {data.surgeryDate
-                                  ? getTimeSinceSurgeryLabel(data.surgeryDate)
-                                  : (data.timeSinceSurgery || "Surgery date not set")}
+                                  ? (isChronicPainCondition(proc) ? getTimeSinceDiagnosisLabel(data.surgeryDate) : getTimeSinceSurgeryLabel(data.surgeryDate))
+                                  : (data.timeSinceSurgery || (isChronicPainCondition(proc) ? "Diagnosis date not set" : "Surgery date not set"))}
                                 {data.recoveryGoals?.length ? ` • ${data.recoveryGoals.length} goals` : ""}
                               </p>
                               {((data.recoveryGoals?.length ?? 0) > 0 || (data.complicatingFactors?.length ?? 0) > 0) && (
@@ -851,7 +855,7 @@ export default function PatientDashboard() {
                                 <button
                                   onClick={() => removeInstance(proc, idx)}
                                   className="text-gray-400 hover:text-red-500 p-1"
-                                  title="Remove this surgery"
+                                  title={isChronicPainCondition(proc) ? "Remove this entry" : "Remove this surgery"}
                                 >
                                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -866,17 +870,17 @@ export default function PatientDashboard() {
                           <div className="p-4 space-y-4 bg-gray-50/50">
                             <div className="grid sm:grid-cols-2 gap-4">
                               <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Procedure Details</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">{isChronicPainCondition(proc) ? "Condition Details" : "Procedure Details"}</label>
                                 <input
                                   type="text"
                                   value={procForm.procedureDetails || ""}
                                   onChange={(e) => setProcForm((f) => ({ ...f, procedureDetails: e.target.value }))}
-                                  placeholder="e.g., Patellar tendon graft"
+                                  placeholder={isChronicPainCondition(proc) ? "e.g., Moderate severity, widespread" : "e.g., Patellar tendon graft"}
                                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
                                 />
                               </div>
                               <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Surgery Date</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">{isChronicPainCondition(proc) ? "Diagnosis Date" : "Surgery Date"}</label>
                                 <input
                                   type="date"
                                   value={procForm.surgeryDate || ""}
@@ -885,16 +889,16 @@ export default function PatientDashboard() {
                                 />
                                 {procForm.surgeryDate && (
                                   <p className="mt-1 text-sm text-teal-600 font-medium">
-                                    {getTimeSinceSurgeryLabel(procForm.surgeryDate)}
+                                    {isChronicPainCondition(proc) ? getTimeSinceDiagnosisLabel(procForm.surgeryDate) : getTimeSinceSurgeryLabel(procForm.surgeryDate)}
                                   </p>
                                 )}
                               </div>
                             </div>
 
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">Recovery Goals for {proc}</label>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">{isChronicPainCondition(proc) ? "Goals" : "Recovery Goals"} for {proc}</label>
                               <div className="flex flex-wrap gap-2">
-                                {RECOVERY_GOALS.map((g) => (
+                                {(isChronicPainCondition(proc) ? CHRONIC_PAIN_GOALS : RECOVERY_GOALS).map((g) => (
                                   <button
                                     key={g}
                                     type="button"
@@ -912,9 +916,9 @@ export default function PatientDashboard() {
                             </div>
 
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">Complicating Factors for {proc}</label>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">{isChronicPainCondition(proc) ? "Complicating Factors" : "Complicating Factors"} for {proc}</label>
                               <div className="flex flex-wrap gap-2">
-                                {COMPLICATING_FACTORS.map((f) => (
+                                {(isChronicPainCondition(proc) ? CHRONIC_PAIN_COMPLICATING_FACTORS : COMPLICATING_FACTORS).map((f) => (
                                   <button
                                     key={f}
                                     type="button"
@@ -953,19 +957,21 @@ export default function PatientDashboard() {
                   })}
                 </div>
 
-                {/* Add another instance */}
-                <div className="border-t border-gray-100 px-4 py-2">
-                  <button
-                    onClick={() => addInstance(proc)}
-                    disabled={saving}
-                    className="text-sm text-teal-600 hover:text-teal-700 font-medium flex items-center gap-1"
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                    Add another {proc}
-                  </button>
-                </div>
+                {/* Add another instance (only for surgeries — chronic pain conditions can't be duplicated) */}
+                {!isChronicPainCondition(proc) && (
+                  <div className="border-t border-gray-100 px-4 py-2">
+                    <button
+                      onClick={() => addInstance(proc)}
+                      disabled={saving}
+                      className="text-sm text-teal-600 hover:text-teal-700 font-medium flex items-center gap-1"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      Add another {proc}
+                    </button>
+                  </div>
+                )}
               </div>
             );
           })}
@@ -974,17 +980,24 @@ export default function PatientDashboard() {
         {/* Add Procedure */}
         {showAddProcedure && (
           <div className="border-t border-gray-200 pt-4 mt-4">
-            <h3 className="font-medium text-gray-900 mb-3">Add Another Procedure</h3>
+            <h3 className="font-medium text-gray-900 mb-3">Add to Your Health Profile</h3>
             <div className="flex gap-3">
               <select
                 value={newProcedure}
                 onChange={(e) => setNewProcedure(e.target.value)}
                 className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm"
               >
-                <option value="">Select a procedure...</option>
-                {PROCEDURE_TYPES.filter((p) => !procedures.includes(p)).map((p) => (
-                  <option key={p} value={p}>{p}</option>
-                ))}
+                <option value="">Choose a surgery or condition...</option>
+                <optgroup label="Surgeries">
+                  {getAllConditions().filter((c) => c.category === "SURGERY" && !procedures.includes(c.value)).map((c) => (
+                    <option key={c.value} value={c.value}>{c.label}</option>
+                  ))}
+                </optgroup>
+                <optgroup label="Chronic Pain">
+                  {getAllConditions().filter((c) => c.category === "CHRONIC_PAIN" && !procedures.includes(c.value)).map((c) => (
+                    <option key={c.value} value={c.value}>{c.label}</option>
+                  ))}
+                </optgroup>
               </select>
               <button
                 onClick={addProcedure}
@@ -1012,7 +1025,7 @@ export default function PatientDashboard() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-xl font-bold">About You</h2>
-            <p className="text-sm text-gray-500">These apply across all your procedures</p>
+            <p className="text-sm text-gray-500">These apply across your entire health profile</p>
           </div>
           <div className="flex items-center gap-3">
             {sharedSaved && <span className="text-sm text-green-600 font-medium">Saved!</span>}
@@ -1138,6 +1151,7 @@ export default function PatientDashboard() {
             surgeryDate={getProcedureData(activeProcedure, 0).surgeryDate || null}
             currentWeek={getCurrentRecoveryWeek(getProcedureData(activeProcedure, 0).surgeryDate || null) ?? undefined}
             isSubscriber={subscription.status === "active"}
+            conditionCategory={isChronicPainCondition(activeProcedure) ? "CHRONIC_PAIN" : "SURGERY"}
           />
         </section>
       )}

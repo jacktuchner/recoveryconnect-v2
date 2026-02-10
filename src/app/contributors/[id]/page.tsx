@@ -6,8 +6,8 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import RecordingCard from "@/components/RecordingCard";
 import MatchScoreTooltip from "@/components/MatchScoreTooltip";
-import { RECOMMENDATION_CATEGORIES } from "@/lib/constants";
-import { getTimeSinceSurgeryLabel } from "@/lib/surgeryDate";
+import { RECOMMENDATION_CATEGORIES, isChronicPainCondition } from "@/lib/constants";
+import { getTimeSinceSurgeryLabel, getTimeSinceDiagnosisLabel } from "@/lib/surgeryDate";
 import MessageButton from "@/components/MessageButton";
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -181,7 +181,9 @@ export default function ContributorDetailPage() {
           {(contributor.profile?.surgeryDate || contributor.profile?.timeSinceSurgery) && (
             <span className="text-sm bg-blue-50 text-blue-600 px-3 py-1 rounded-full">
               {contributor.profile.surgeryDate
-                ? getTimeSinceSurgeryLabel(contributor.profile.surgeryDate)
+                ? (isChronicPainCondition(contributor.profile?.procedureType || contributor.profile?.procedureTypes?.[0] || "")
+                    ? getTimeSinceDiagnosisLabel(contributor.profile.surgeryDate)
+                    : getTimeSinceSurgeryLabel(contributor.profile.surgeryDate))
                 : `${contributor.profile.timeSinceSurgery} post-op`}
             </span>
           )}
@@ -194,7 +196,10 @@ export default function ContributorDetailPage() {
 
         {contributor.profile?.recoveryGoals?.length > 0 && (
           <div className="mb-4">
-            <p className="text-sm text-gray-500 mb-1">Recovery Goals:</p>
+            <p className="text-sm text-gray-500 mb-1">
+              {isChronicPainCondition(contributor.profile?.procedureType || contributor.profile?.procedureTypes?.[0] || "")
+                ? "Goals:" : "Recovery Goals:"}
+            </p>
             <div className="flex flex-wrap gap-1.5">
               {contributor.profile.recoveryGoals.map((g: string) => (
                 <span key={g} className="text-xs bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full">{g}</span>
@@ -243,7 +248,9 @@ export default function ContributorDetailPage() {
         return (
           <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold">Procedure Details</h2>
+              <h2 className="text-lg font-bold">
+                {isChronicPainCondition(activeProc) ? "Condition Details" : "Procedure Details"}
+              </h2>
             </div>
 
             {/* Procedure tabs when multiple procedures */}
@@ -278,7 +285,7 @@ export default function ContributorDetailPage() {
                   <div key={idx} className={instances.length > 1 ? "pb-4 border-b border-gray-100 last:border-0 last:pb-0" : ""}>
                     {instances.length > 1 && (
                       <p className="text-xs text-gray-400 uppercase tracking-wide mb-2">
-                        {details || `Surgery ${idx + 1}`}
+                        {details || (isChronicPainCondition(activeProc) ? `Profile ${idx + 1}` : `Surgery ${idx + 1}`)}
                       </p>
                     )}
                     <div className="grid sm:grid-cols-2 gap-x-6 gap-y-3">
@@ -290,10 +297,14 @@ export default function ContributorDetailPage() {
                       )}
                       {(surgeryDate || timeSinceSurgery) && (
                         <div>
-                          <p className="text-xs text-gray-500 uppercase tracking-wide">Time Since Surgery</p>
+                          <p className="text-xs text-gray-500 uppercase tracking-wide">
+                            {isChronicPainCondition(activeProc) ? "Time Since Diagnosis" : "Time Since Surgery"}
+                          </p>
                           <p className="text-sm text-gray-800">
                             {surgeryDate
-                              ? getTimeSinceSurgeryLabel(surgeryDate)
+                              ? (isChronicPainCondition(activeProc)
+                                  ? getTimeSinceDiagnosisLabel(surgeryDate)
+                                  : getTimeSinceSurgeryLabel(surgeryDate))
                               : timeSinceSurgery}
                           </p>
                         </div>

@@ -3,7 +3,8 @@
 import { useState, useCallback, useEffect } from "react";
 import VoiceRecorder from "./VoiceRecorder";
 import FaqPromptSelector from "./FaqPromptSelector";
-import { getTimeSinceSurgery, getTimeSinceSurgeryLabel } from "@/lib/surgeryDate";
+import { getTimeSinceSurgery, getTimeSinceSurgeryLabel, getTimeSinceDiagnosisLabel } from "@/lib/surgeryDate";
+import { isChronicPainCondition, getRecordingCategoriesForCondition } from "@/lib/constants";
 
 interface FaqPrompt {
   id: string;
@@ -34,6 +35,7 @@ export default function RecordingForm({ onSuccess, onCancel }: RecordingFormProp
   const [procedureProfiles, setProcedureProfiles] = useState<Record<string, any>>({});
   const [timeSinceSurgery, setTimeSinceSurgery] = useState<string>("");
   const [surgeryDate, setSurgeryDate] = useState<string>("");
+  const [conditionCategory, setConditionCategory] = useState<string>("SURGERY");
 
   const TIME_SINCE_OPTIONS = [
     "Less than 1 month",
@@ -67,6 +69,7 @@ export default function RecordingForm({ onSuccess, onCancel }: RecordingFormProp
               : [];
           setProcedureTypes(procedures);
           setProcedureProfiles(profile?.procedureProfiles || {});
+          setConditionCategory(profile?.conditionCategory || "SURGERY");
 
           if (procedures.length > 0) {
             const firstProc = procedures[0];
@@ -89,6 +92,19 @@ export default function RecordingForm({ onSuccess, onCancel }: RecordingFormProp
     }
     loadProfile();
   }, []);
+
+  const handleProcedureChange = useCallback((newProc: string) => {
+    setSelectedProcedure(newProc);
+    // Update surgery date from procedure profile
+    const procProfile = procedureProfiles[newProc];
+    if (procProfile?.surgeryDate) {
+      setSurgeryDate(procProfile.surgeryDate);
+      setTimeSinceSurgery(getTimeSinceSurgery(procProfile.surgeryDate) || "");
+    } else {
+      setSurgeryDate("");
+      setTimeSinceSurgery("");
+    }
+  }, [procedureProfiles]);
 
   const handlePromptSelect = useCallback((prompt: FaqPrompt | null, category: string) => {
     setSelectedPrompt(prompt);
@@ -231,9 +247,28 @@ export default function RecordingForm({ onSuccess, onCancel }: RecordingFormProp
       {/* Step 1: Select prompt */}
       {step === "select-prompt" && (
         <div>
+          {/* Procedure selector — shown first when contributor has multiple procedures */}
+          {procedureTypes.length > 1 && (
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                What is this recording about?
+              </label>
+              <select
+                value={selectedProcedure}
+                onChange={(e) => handleProcedureChange(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              >
+                {procedureTypes.map((proc) => (
+                  <option key={proc} value={proc}>{proc}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <FaqPromptSelector
             onSelect={handlePromptSelect}
             selectedPromptId={selectedPrompt?.id}
+            conditionType={isChronicPainCondition(selectedProcedure) ? "CHRONIC_PAIN" : "SURGERY"}
           />
           <div className="mt-6 flex justify-end">
             <button
@@ -312,23 +347,11 @@ export default function RecordingForm({ onSuccess, onCancel }: RecordingFormProp
           {procedureTypes.length > 1 && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Which procedure is this recording about? *
+                Recording for
               </label>
               <select
                 value={selectedProcedure}
-                onChange={(e) => {
-                  const newProc = e.target.value;
-                  setSelectedProcedure(newProc);
-                  // Update surgery date from procedure profile
-                  const procProfile = procedureProfiles[newProc];
-                  if (procProfile?.surgeryDate) {
-                    setSurgeryDate(procProfile.surgeryDate);
-                    setTimeSinceSurgery(getTimeSinceSurgery(procProfile.surgeryDate) || "");
-                  } else {
-                    setSurgeryDate("");
-                    setTimeSinceSurgery("");
-                  }
-                }}
+                onChange={(e) => handleProcedureChange(e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               >
                 {procedureTypes.map((proc) => (
@@ -338,18 +361,20 @@ export default function RecordingForm({ onSuccess, onCancel }: RecordingFormProp
             </div>
           )}
 
-          {/* Time since surgery for this recording */}
+          {/* Time since surgery/diagnosis for this recording */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Recovery stage when recording
+              {isChronicPainCondition(selectedProcedure) ? "Time with condition" : "Recovery stage when recording"}
             </label>
             {surgeryDate ? (
               <div className="bg-teal-50 border border-teal-200 rounded-lg px-3 py-2">
                 <p className="text-sm font-medium text-teal-700">
-                  {getTimeSinceSurgeryLabel(surgeryDate)}
+                  {isChronicPainCondition(selectedProcedure)
+                    ? getTimeSinceDiagnosisLabel(surgeryDate)
+                    : getTimeSinceSurgeryLabel(surgeryDate)}
                 </p>
                 <p className="text-xs text-teal-600">
-                  Based on your surgery date. This recording will be tagged as &quot;{timeSinceSurgery}&quot;.
+                  Based on your {isChronicPainCondition(selectedProcedure) ? "diagnosis" : "surgery"} date. This recording will be tagged as &quot;{timeSinceSurgery}&quot;.
                 </p>
               </div>
             ) : (
@@ -365,7 +390,7 @@ export default function RecordingForm({ onSuccess, onCancel }: RecordingFormProp
                   ))}
                 </select>
                 <p className="text-xs text-gray-500 mt-1">
-                  Set your surgery date in your profile to auto-calculate this.
+                  Set your {isChronicPainCondition(selectedProcedure) ? "diagnosis" : "surgery"} date in your profile to auto-calculate this.
                 </p>
               </>
             )}
