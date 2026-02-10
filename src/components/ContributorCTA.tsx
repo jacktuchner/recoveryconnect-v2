@@ -5,7 +5,10 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
-export default function ContributorCTA() {
+export default function ContributorCTA({ variant = "dark" }: { variant?: "dark" | "light" }) {
+  const btnClass = variant === "light"
+    ? "inline-flex items-center justify-center bg-teal-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50 text-sm whitespace-nowrap"
+    : "inline-flex items-center justify-center bg-white text-teal-700 font-semibold px-6 py-3 rounded-lg hover:bg-teal-50 transition-colors disabled:opacity-50";
   const { data: session } = useSession();
   const router = useRouter();
   const [upgrading, setUpgrading] = useState(false);
@@ -38,10 +41,7 @@ export default function ContributorCTA() {
   // Already a contributor — link to their dashboard
   if (isAlreadyContributor) {
     return (
-      <Link
-        href="/dashboard/contributor"
-        className="inline-flex items-center justify-center bg-white text-teal-700 font-semibold px-6 py-3 rounded-lg hover:bg-teal-50 transition-colors"
-      >
+      <Link href="/dashboard/contributor" className={btnClass}>
         Go to Contributor Dashboard
       </Link>
     );
@@ -51,10 +51,10 @@ export default function ContributorCTA() {
   if (upgraded) {
     return (
       <div className="flex flex-col items-center gap-3">
-        <p className="text-teal-100 font-medium">You&apos;re now a contributor!</p>
+        <p className={variant === "light" ? "text-teal-700 font-medium text-sm" : "text-teal-100 font-medium"}>You&apos;re now a contributor!</p>
         <button
           onClick={() => { router.push("/dashboard/contributor"); router.refresh(); }}
-          className="inline-flex items-center justify-center bg-white text-teal-700 font-semibold px-6 py-3 rounded-lg hover:bg-teal-50 transition-colors"
+          className={btnClass}
         >
           Go to Contributor Dashboard
         </button>
@@ -66,11 +66,11 @@ export default function ContributorCTA() {
   if (isPatientOnly) {
     return (
       <div className="flex flex-col items-center gap-2">
-        {error && <p className="text-red-200 text-sm">{error}</p>}
+        {error && <p className={variant === "light" ? "text-red-600 text-sm" : "text-red-200 text-sm"}>{error}</p>}
         <button
           onClick={handleUpgrade}
           disabled={upgrading}
-          className="inline-flex items-center justify-center bg-white text-teal-700 font-semibold px-6 py-3 rounded-lg hover:bg-teal-50 transition-colors disabled:opacity-50"
+          className={btnClass}
         >
           {upgrading ? "Setting up..." : "Become a Contributor"}
         </button>
@@ -80,10 +80,7 @@ export default function ContributorCTA() {
 
   // Not logged in — register link
   return (
-    <Link
-      href="/auth/register?role=contributor"
-      className="inline-flex items-center justify-center bg-white text-teal-700 font-semibold px-6 py-3 rounded-lg hover:bg-teal-50 transition-colors"
-    >
+    <Link href="/auth/register?role=contributor" className={btnClass}>
       Become a Contributor
     </Link>
   );

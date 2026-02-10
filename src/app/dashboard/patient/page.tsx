@@ -8,6 +8,7 @@ import { getTimeSinceSurgery, getTimeSinceSurgeryLabel, getCurrentRecoveryWeek }
 import RecoveryJournal from "@/components/patient/RecoveryJournal";
 import ProfileWizard from "@/components/ProfileWizard";
 import VideoCall from "@/components/VideoCall";
+import ContributorCTA from "@/components/ContributorCTA";
 import PurchaseHistory from "@/components/PurchaseHistory";
 import CallReviewForm from "@/components/CallReviewForm";
 
@@ -583,12 +584,9 @@ export default function PatientDashboard() {
                 Your experience can help others — become a contributor to share your recovery story and mentor patients.
               </p>
             </div>
-            <Link
-              href="/dashboard/patient/settings"
-              className="text-sm bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 font-medium whitespace-nowrap self-start"
-            >
-              Learn More
-            </Link>
+            <div className="self-start">
+              <ContributorCTA variant="light" />
+            </div>
           </div>
         </section>
       )}

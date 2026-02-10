@@ -22,11 +22,15 @@ export default function ContributorDashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
 
+  const role = (session?.user as any)?.role;
+  const hasAccess = role === "CONTRIBUTOR" || role === "BOTH" || role === "ADMIN";
+
   useEffect(() => {
     if (status === "unauthenticated") router.push("/auth/signin");
-  }, [status, router]);
+    if (status === "authenticated" && !hasAccess) router.push("/dashboard/patient");
+  }, [status, hasAccess, router]);
 
-  if (status === "loading") {
+  if (status === "loading" || (status === "authenticated" && !hasAccess)) {
     return <div className="max-w-5xl mx-auto px-4 py-8">Loading...</div>;
   }
 

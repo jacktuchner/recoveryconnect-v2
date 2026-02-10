@@ -15,14 +15,17 @@ function RegisterForm() {
   useEffect(() => {
     if (status !== "authenticated" || !session?.user) return;
     const role = (session.user as any)?.role;
-    if (role === "CONTRIBUTOR") {
+    // Patient trying to become contributor — send to settings where upgrade CTA lives
+    if (role === "PATIENT" && defaultRole === "CONTRIBUTOR") {
+      router.push("/dashboard/patient/settings");
+    } else if (role === "CONTRIBUTOR") {
       router.push("/dashboard/contributor");
     } else if (role === "ADMIN") {
       router.push("/admin");
     } else {
       router.push("/dashboard/patient");
     }
-  }, [status, session, router]);
+  }, [status, session, router, defaultRole]);
 
   const [form, setForm] = useState({
     name: "",

@@ -3,6 +3,8 @@ import { PROCEDURE_TYPES, RECORDING_CATEGORIES } from "@/lib/constants";
 import ContentPreviewSection from "@/components/ContentPreviewSection";
 import HeroCTA from "@/components/HeroCTA";
 import ContributorCTA from "@/components/ContributorCTA";
+import FooterContributorLinks from "@/components/FooterContributorLinks";
+import FooterPatientLinks from "@/components/FooterPatientLinks";
 
 export default function HomePage() {
   return (
@@ -231,21 +233,10 @@ export default function HomePage() {
                 Peer recovery guidance from people who have been through it.
               </p>
             </div>
-            <div>
-              <h4 className="text-white font-semibold mb-3">For Patients</h4>
-              <ul className="space-y-2 text-sm">
-                <li><Link href="/watch" className="hover:text-white">Watch Stories</Link></li>
-                <li><Link href="/mentors" className="hover:text-white">Book a Mentor</Link></li>
-                <li><Link href="/how-it-works" className="hover:text-white">How It Works</Link></li>
-                <li><Link href="/auth/register" className="hover:text-white">Create Account</Link></li>
-              </ul>
-            </div>
+            <FooterPatientLinks />
             <div>
               <h4 className="text-white font-semibold mb-3">For Contributors</h4>
-              <ul className="space-y-2 text-sm">
-                <li><Link href="/auth/register?role=contributor" className="hover:text-white">Become a Contributor</Link></li>
-                <li><Link href="/dashboard/contributor" className="hover:text-white">Contributor Dashboard</Link></li>
-              </ul>
+              <FooterContributorLinks />
             </div>
             <div>
               <h4 className="text-white font-semibold mb-3">Company</h4>

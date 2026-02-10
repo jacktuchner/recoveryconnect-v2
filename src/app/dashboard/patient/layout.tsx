@@ -19,11 +19,15 @@ export default function PatientDashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
 
+  const role = (session?.user as any)?.role;
+  const hasAccess = role === "PATIENT" || role === "BOTH" || role === "ADMIN";
+
   useEffect(() => {
     if (status === "unauthenticated") router.push("/auth/signin");
-  }, [status, router]);
+    if (status === "authenticated" && !hasAccess) router.push("/dashboard/contributor");
+  }, [status, hasAccess, router]);
 
-  if (status === "loading") {
+  if (status === "loading" || (status === "authenticated" && !hasAccess)) {
     return <div className="max-w-4xl mx-auto px-4 py-8">Loading...</div>;
   }
 
