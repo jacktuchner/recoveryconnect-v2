@@ -1,14 +1,28 @@
 "use client";
 
-import { useState, Suspense } from "react";
-import { signIn } from "next-auth/react";
+import { useState, useEffect, Suspense } from "react";
+import { signIn, useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 function RegisterForm() {
+  const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
   const defaultRole = searchParams.get("role") === "contributor" ? "CONTRIBUTOR" : "PATIENT";
+
+  // If already logged in, redirect to appropriate dashboard
+  useEffect(() => {
+    if (status !== "authenticated" || !session?.user) return;
+    const role = (session.user as any)?.role;
+    if (role === "CONTRIBUTOR") {
+      router.push("/dashboard/contributor");
+    } else if (role === "ADMIN") {
+      router.push("/admin");
+    } else {
+      router.push("/dashboard/patient");
+    }
+  }, [status, session, router]);
 
   const [form, setForm] = useState({
     name: "",
@@ -19,6 +33,11 @@ function RegisterForm() {
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Show loading while checking session / redirecting
+  if (status === "loading" || status === "authenticated") {
+    return <div className="min-h-[80vh] flex items-center justify-center">Loading...</div>;
+  }
 
   function updateForm(key: string, value: string) {
     setForm((prev) => ({ ...prev, [key]: value }));

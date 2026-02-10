@@ -573,14 +573,25 @@ export default function PatientDashboard() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
-        <Link
-          href="/watch"
-          className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium"
-        >
-          Watch Stories
-        </Link>
-      </div>
+      {/* Become a Contributor CTA */}
+      {(session?.user as any)?.role === "PATIENT" && (
+        <section className="bg-gradient-to-r from-cyan-50 to-teal-50 rounded-xl border border-teal-200 p-5 mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <h3 className="font-semibold text-gray-900">Been through a procedure?</h3>
+              <p className="text-sm text-gray-600 mt-0.5">
+                Your experience can help others — become a contributor to share your recovery story and mentor patients.
+              </p>
+            </div>
+            <Link
+              href="/dashboard/patient/settings"
+              className="text-sm bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 font-medium whitespace-nowrap self-start"
+            >
+              Learn More
+            </Link>
+          </div>
+        </section>
+      )}
 
       {/* Subscription Status */}
       {subscription.status === "active" && !subscription.cancelAtPeriodEnd && (

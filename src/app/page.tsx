@@ -2,6 +2,7 @@ import Link from "next/link";
 import { PROCEDURE_TYPES, RECORDING_CATEGORIES } from "@/lib/constants";
 import ContentPreviewSection from "@/components/ContentPreviewSection";
 import HeroCTA from "@/components/HeroCTA";
+import ContributorCTA from "@/components/ContributorCTA";
 
 export default function HomePage() {
   return (
@@ -197,12 +198,7 @@ export default function HomePage() {
             time, or set up availability for live video calls. Your experience is
             valuable — and someone out there needs to hear it.
           </p>
-          <Link
-            href="/auth/register?role=contributor"
-            className="inline-flex items-center justify-center bg-white text-teal-700 font-semibold px-6 py-3 rounded-lg hover:bg-teal-50 transition-colors"
-          >
-            Become a Contributor
-          </Link>
+          <ContributorCTA />
         </div>
       </section>
 
