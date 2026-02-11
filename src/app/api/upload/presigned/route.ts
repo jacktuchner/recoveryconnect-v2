@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Validate content type for audio/video files
+    // Validate content type for audio/video/image/pdf files
     // Extract base type (without codec info like ";codecs=opus")
     const baseContentType = contentType.split(";")[0].trim();
     const allowedTypes = [
@@ -33,10 +33,15 @@ export async function POST(req: NextRequest) {
       "audio/x-m4a",
       "video/webm",
       "video/mp4",
+      // Document proof uploads (contributor applications)
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "application/pdf",
     ];
     if (!allowedTypes.includes(baseContentType)) {
       return NextResponse.json(
-        { error: `Invalid content type: ${contentType}. Allowed: audio/webm, audio/mp4, audio/mpeg, audio/ogg, audio/wav, video/webm, video/mp4` },
+        { error: `Invalid content type: ${contentType}` },
         { status: 400 }
       );
     }

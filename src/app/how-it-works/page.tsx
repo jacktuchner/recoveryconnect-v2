@@ -361,8 +361,9 @@ export default function HowItWorksPage() {
                 <h3 className="font-semibold text-gray-900 mb-2">Who are the contributors?</h3>
                 <p className="text-gray-600">
                   Contributors are real people who have been through surgery recovery or live with autoimmune conditions themselves.
-                  They share their experiences to help others going through similar situations.
-                  All contributors are verified and share their actual journey.
+                  Every contributor goes through our vetting process — a written application, optional proof documents, and a
+                  video interview with our team — before they can publish content or take calls.
+                  Approved contributors display a Verified badge on their profile.
                 </p>
               </div>
 
@@ -488,10 +489,11 @@ export default function HowItWorksPage() {
                 <div className="bg-teal-600 text-white text-sm font-bold w-8 h-8 rounded-full flex items-center justify-center mx-auto mb-4">
                   1
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">Sign Up & Set Up</h3>
+                <h3 className="text-xl font-bold text-gray-900 mb-3">Apply & Get Verified</h3>
                 <p className="text-gray-600">
-                  Create your contributor profile, add your surgeries or conditions and details,
-                  and connect Stripe so you can get paid.
+                  Submit a short application about your experience, then complete a brief video
+                  interview with our team. Once approved, set up your profile and connect Stripe
+                  to get paid.
                 </p>
               </div>
 

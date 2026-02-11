@@ -45,16 +45,16 @@ const faqPrompts = [
   { question: "How did the first year after diagnosis go?", category: "WEEKLY_TIMELINE", sortOrder: 4, conditionType: "CHRONIC_PAIN" },
 
   // PRACTICAL_TIPS (chronic pain)
-  { question: "What daily routines help you manage your pain?", category: "PRACTICAL_TIPS", sortOrder: 5, conditionType: "CHRONIC_PAIN" },
+  { question: "What daily routines help you manage your symptoms?", category: "PRACTICAL_TIPS", sortOrder: 5, conditionType: "CHRONIC_PAIN" },
   { question: "What tools or aids help you get through the day?", category: "PRACTICAL_TIPS", sortOrder: 6, conditionType: "CHRONIC_PAIN" },
   { question: "How do you pace yourself on bad days?", category: "PRACTICAL_TIPS", sortOrder: 7, conditionType: "CHRONIC_PAIN" },
 
   // WISH_I_KNEW (chronic pain)
   { question: "What do you wish someone told you after your diagnosis?", category: "WISH_I_KNEW", sortOrder: 4, conditionType: "CHRONIC_PAIN" },
-  { question: "What surprised you most about living with chronic pain?", category: "WISH_I_KNEW", sortOrder: 5, conditionType: "CHRONIC_PAIN" },
+  { question: "What surprised you most about living with your condition?", category: "WISH_I_KNEW", sortOrder: 5, conditionType: "CHRONIC_PAIN" },
 
   // RETURN_TO_ACTIVITY (chronic pain)
-  { question: "How do you stay active while managing pain?", category: "RETURN_TO_ACTIVITY", sortOrder: 4, conditionType: "CHRONIC_PAIN" },
+  { question: "How do you stay active while managing your condition?", category: "RETURN_TO_ACTIVITY", sortOrder: 4, conditionType: "CHRONIC_PAIN" },
   { question: "What modifications help you exercise safely?", category: "RETURN_TO_ACTIVITY", sortOrder: 5, conditionType: "CHRONIC_PAIN" },
   { question: "How do you know when to push through vs rest?", category: "RETURN_TO_ACTIVITY", sortOrder: 6, conditionType: "CHRONIC_PAIN" },
 ];

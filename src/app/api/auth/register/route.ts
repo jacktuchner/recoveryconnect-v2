@@ -31,6 +31,9 @@ export async function POST(req: NextRequest) {
 
     const passwordHash = await bcrypt.hash(password, 12);
 
+    const isContributorIntent = role === "CONTRIBUTOR" || role === "BOTH";
+    const effectiveRole = isContributorIntent ? "CONTRIBUTOR" : "PATIENT";
+
     const { data: user, error } = await supabase
       .from("User")
       .insert({
@@ -38,11 +41,12 @@ export async function POST(req: NextRequest) {
         name,
         email,
         passwordHash,
-        role: role || "PATIENT",
+        role: effectiveRole,
+        ...(isContributorIntent && { contributorStatus: "PENDING_REVIEW" }),
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       })
-      .select("id, name, email, role")
+      .select("id, name, email, role, contributorStatus")
       .single();
 
     if (error) {
@@ -56,7 +60,13 @@ export async function POST(req: NextRequest) {
     );
 
     return NextResponse.json(
-      { id: user.id, name: user.name, email: user.email, role: user.role },
+      {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        ...(isContributorIntent && { redirect: "/contributor-application" }),
+      },
       { status: 201 }
     );
   } catch (error) {

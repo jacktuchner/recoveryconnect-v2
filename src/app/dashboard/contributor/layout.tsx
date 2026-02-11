@@ -23,7 +23,10 @@ export default function ContributorDashboardLayout({
   const router = useRouter();
 
   const role = (session?.user as any)?.role;
+  const contributorStatus = (session?.user as any)?.contributorStatus;
   const hasAccess = role === "CONTRIBUTOR" || role === "BOTH" || role === "ADMIN";
+  const isPending = contributorStatus === "PENDING_REVIEW";
+  const needsApplication = hasAccess && role !== "ADMIN" && !contributorStatus;
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/auth/signin");
@@ -47,6 +50,41 @@ export default function ContributorDashboardLayout({
         <h1 className="text-3xl font-bold">Contributor Dashboard</h1>
         <p className="text-gray-600 mt-1">Welcome, {session?.user?.name}</p>
       </div>
+
+      {needsApplication && (
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+          <div className="flex items-start gap-3">
+            <svg className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <div>
+              <p className="font-medium text-blue-800">Complete Your Application</p>
+              <p className="text-sm text-blue-700 mt-0.5">
+                You need to submit a contributor application before you can create content.{" "}
+                <Link href="/contributor-application" className="font-medium underline hover:text-blue-900">
+                  Fill out the application
+                </Link>
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isPending && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+          <div className="flex items-start gap-3">
+            <svg className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <p className="font-medium text-amber-800">Application Under Review</p>
+              <p className="text-sm text-amber-700 mt-0.5">
+                Your contributor application is being reviewed. You can set up your profile while you wait, but content creation will be available once approved.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="mb-8 border-b border-gray-200 overflow-x-auto">
         <nav className="flex gap-0 min-w-max -mb-px">

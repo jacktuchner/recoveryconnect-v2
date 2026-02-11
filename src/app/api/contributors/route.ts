@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
 
     let query = supabase
       .from("User")
-      .select("id, name, displayName, showRealName, bio, role, profile:Profile(*), recordings:Recording(*), reviewsReceived:Review!Review_subjectId_fkey(*)", { count: "exact" })
+      .select("id, name, displayName, showRealName, bio, role, contributorStatus, profile:Profile(*), recordings:Recording(*), reviewsReceived:Review!Review_subjectId_fkey(*)", { count: "exact" })
       .in("role", ["CONTRIBUTOR", "BOTH"]);
 
     const { data: allContributors, count, error } = await query;

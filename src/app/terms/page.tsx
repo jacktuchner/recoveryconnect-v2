@@ -76,7 +76,22 @@ export default function TermsOfServicePage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">7. Payments and Subscriptions</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">7. Contributor Verification</h2>
+            <p className="mb-3">
+              RecoveryConnect takes reasonable steps to verify contributor identities and experiences through an application process that may include document review and video interviews. Contributors who complete this process receive a &ldquo;Verified&rdquo; designation on their profile.
+            </p>
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-3">
+              <p className="font-medium text-amber-800">
+                The &ldquo;Verified&rdquo; designation indicates that a contributor has completed our review process. It does not constitute a guarantee, endorsement, or certification of any contributor&apos;s medical history, qualifications, or the accuracy of their content. We are not liable for any claims, losses, or damages arising from reliance on contributor content, whether or not the contributor is verified.
+              </p>
+            </div>
+            <p>
+              We reserve the right to revoke verification status at any time if we determine a contributor has provided false information or violated our community guidelines.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">8. Payments and Subscriptions</h2>
             <h3 className="font-medium text-gray-900 mt-4 mb-2">Individual Purchases</h3>
             <p>Recording purchases grant you permanent access to that recording. Prices are set by contributors and displayed before purchase.</p>
 
@@ -94,7 +109,7 @@ export default function TermsOfServicePage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">8. Content Ownership</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">9. Content Ownership</h2>
             <ul className="list-disc pl-5 space-y-2">
               <li>Contributors retain ownership of their recorded content.</li>
               <li>By uploading content, contributors grant RecoveryConnect a non-exclusive license to host, display, and distribute the content on the Platform.</li>
@@ -104,7 +119,7 @@ export default function TermsOfServicePage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">9. Prohibited Conduct</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">10. Prohibited Conduct</h2>
             <p className="mb-3">You may not:</p>
             <ul className="list-disc pl-5 space-y-2">
               <li>Use the Platform for any unlawful purpose</li>
@@ -119,14 +134,14 @@ export default function TermsOfServicePage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">10. Reporting and Moderation</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">11. Reporting and Moderation</h2>
             <p>
               Users can report content or behavior that violates these terms. We review reports and may take action including content removal, warnings, or account suspension. We strive to be fair but reserve the right to make final decisions on moderation matters.
             </p>
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">11. Limitation of Liability</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">12. Limitation of Liability</h2>
             <p>
               To the maximum extent permitted by law, RecoveryConnect and its operators shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the Platform. This includes but is not limited to damages arising from: reliance on content shared by contributors, technical issues during live calls, or decisions made based on information obtained through the Platform.
             </p>
@@ -136,28 +151,28 @@ export default function TermsOfServicePage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">12. Disclaimer of Warranties</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">13. Disclaimer of Warranties</h2>
             <p>
               The Platform is provided &quot;as is&quot; and &quot;as available&quot; without warranties of any kind, either express or implied. We do not warrant that the Platform will be uninterrupted, error-free, or that content will be accurate or reliable. We do not endorse or verify the medical accuracy of contributor content.
             </p>
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">13. Changes to Terms</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">14. Changes to Terms</h2>
             <p>
               We may modify these Terms of Service at any time. We will notify users of material changes by posting the updated terms on this page. Continued use of the Platform after changes constitutes acceptance of the modified terms.
             </p>
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">14. Governing Law</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">15. Governing Law</h2>
             <p>
               These terms shall be governed by and construed in accordance with the laws of the United States. Any disputes arising from these terms or use of the Platform shall be resolved through good-faith negotiation, and if necessary, binding arbitration.
             </p>
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">15. Contact</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">16. Contact</h2>
             <p>
               For questions about these Terms of Service, contact us at:
             </p>

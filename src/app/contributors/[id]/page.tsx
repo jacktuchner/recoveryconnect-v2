@@ -9,6 +9,7 @@ import MatchScoreTooltip from "@/components/MatchScoreTooltip";
 import { RECOMMENDATION_CATEGORIES, GENDERS, isChronicPainCondition } from "@/lib/constants";
 import { getTimeSinceSurgeryLabel, getTimeSinceDiagnosisLabel } from "@/lib/surgeryDate";
 import MessageButton from "@/components/MessageButton";
+import VerifiedBadge from "@/components/VerifiedBadge";
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -120,6 +121,7 @@ export default function ContributorDetailPage() {
           <div className="flex-1">
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-2xl font-bold">{contributor.name}</h1>
+              {contributor.contributorStatus === "APPROVED" && <VerifiedBadge />}
               {contributor.matchScore !== undefined && (
                 <div className="flex items-center">
                   <span className={`text-sm font-bold px-2.5 py-1 rounded-full ${
@@ -421,6 +423,7 @@ export default function ContributorDetailPage() {
                     ? rec.reviews.reduce((a: number, r: any) => a + r.rating, 0) / rec.reviews.length
                     : undefined
                 }
+                contributorVerified={contributor.contributorStatus === "APPROVED"}
               />
             ))}
           </div>

@@ -4,7 +4,7 @@ import { useState } from "react";
 import {
   PROCEDURE_TYPES, AGE_RANGES, GENDERS, ACTIVITY_LEVELS, RECOVERY_GOALS, COMPLICATING_FACTORS, LIFESTYLE_CONTEXTS,
   CONDITION_CATEGORIES, CHRONIC_PAIN_CONDITIONS, CHRONIC_PAIN_DETAILS, CHRONIC_PAIN_GOALS, CHRONIC_PAIN_COMPLICATING_FACTORS,
-  PROCEDURE_DETAILS,
+  PROCEDURE_DETAILS, isChronicPainCondition,
 } from "@/lib/constants";
 import { getTimeSinceSurgery, getTimeSinceSurgeryLabel, getTimeSinceDiagnosisLabel } from "@/lib/surgeryDate";
 
@@ -45,10 +45,10 @@ export default function ProfileWizard({ initialData, onComplete, onCancel, error
     lifestyleContext: initialData?.lifestyleContext || [],
   });
 
-  const isChronicPain = form.conditionCategory === "CHRONIC_PAIN";
+  const isChronicPain = form.procedureType
+    ? isChronicPainCondition(form.procedureType)
+    : form.conditionCategory === "CHRONIC_PAIN";
 
-  // Derived options based on condition category
-  const conditionOptions = isChronicPain ? CHRONIC_PAIN_CONDITIONS : PROCEDURE_TYPES;
   const detailsOptions = isChronicPain
     ? (CHRONIC_PAIN_DETAILS[form.procedureType] || [])
     : (PROCEDURE_DETAILS[form.procedureType] || []);
@@ -159,7 +159,7 @@ export default function ProfileWizard({ initialData, onComplete, onCancel, error
           <div className="space-y-5">
             <div>
               <p className="text-sm text-gray-600 mb-4">
-                What brings you to RecoveryConnect?
+                What primarily brings you to RecoveryConnect? You can add additional conditions or procedures later from your dashboard.
               </p>
             </div>
 
@@ -188,7 +188,7 @@ export default function ProfileWizard({ initialData, onComplete, onCancel, error
                   <p className="text-sm text-gray-500 mt-0.5">
                     {cat.value === "SURGERY"
                       ? "Recovering from a surgical procedure"
-                      : "Living with an ongoing pain condition"}
+                      : "Living with an ongoing condition"}
                   </p>
                 </button>
               ))}
@@ -217,7 +217,7 @@ export default function ProfileWizard({ initialData, onComplete, onCancel, error
                 className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
               >
                 <option value="">{isChronicPain ? "Select your condition" : "Select your procedure"}</option>
-                {conditionOptions.map((p) => (
+                {(isChronicPain ? CHRONIC_PAIN_CONDITIONS : PROCEDURE_TYPES).map((p) => (
                   <option key={p} value={p}>{p}</option>
                 ))}
               </select>
@@ -266,8 +266,8 @@ export default function ProfileWizard({ initialData, onComplete, onCancel, error
               )}
               <p className="text-xs text-gray-500 mt-1">
                 {isChronicPain
-                  ? "We'll use this to connect you with people at a similar stage."
-                  : "We'll use this to match you with people at a similar recovery stage."}
+                  ? "This helps us understand where you are in your journey."
+                  : "This helps us understand where you are in your recovery."}
               </p>
             </div>
 

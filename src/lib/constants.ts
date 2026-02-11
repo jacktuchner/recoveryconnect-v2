@@ -173,6 +173,14 @@ export const SUBSCRIPTION_ANNUAL_PRICE = 149.99;
 export const STRIPE_MONTHLY_PRICE_ID = process.env.STRIPE_MONTHLY_PRICE_ID || "";
 export const STRIPE_ANNUAL_PRICE_ID = process.env.STRIPE_ANNUAL_PRICE_ID || "";
 
+// ─── Contributor Vetting ───
+
+export const CONTRIBUTOR_STATUSES = {
+  PENDING_REVIEW: "PENDING_REVIEW",
+  APPROVED: "APPROVED",
+  REJECTED: "REJECTED",
+} as const;
+
 // ─── Condition Categories ───
 
 export const CONDITION_CATEGORIES = [

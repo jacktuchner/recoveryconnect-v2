@@ -11,22 +11,6 @@ function RegisterForm() {
   const searchParams = useSearchParams();
   const defaultRole = searchParams.get("role") === "contributor" ? "CONTRIBUTOR" : "PATIENT";
 
-  // If already logged in, redirect to appropriate dashboard
-  useEffect(() => {
-    if (status !== "authenticated" || !session?.user) return;
-    const role = (session.user as any)?.role;
-    // Patient trying to become contributor — send to settings where upgrade CTA lives
-    if (role === "PATIENT" && defaultRole === "CONTRIBUTOR") {
-      router.push("/dashboard/patient/settings");
-    } else if (role === "CONTRIBUTOR") {
-      router.push("/dashboard/contributor");
-    } else if (role === "ADMIN") {
-      router.push("/admin");
-    } else {
-      router.push("/dashboard/patient");
-    }
-  }, [status, session, router, defaultRole]);
-
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -36,6 +20,25 @@ function RegisterForm() {
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // If already logged in (and not mid-registration), redirect to appropriate dashboard
+  useEffect(() => {
+    if (loading) return; // Don't redirect during form submission — handleSubmit handles it
+    if (status !== "authenticated" || !session?.user) return;
+    const role = (session.user as any)?.role;
+    const cs = (session.user as any)?.contributorStatus;
+    if (role === "ADMIN") {
+      router.push("/admin");
+    } else if (role === "CONTRIBUTOR" || role === "BOTH") {
+      if (cs === "PENDING_REVIEW") {
+        router.push("/contributor-application");
+      } else {
+        router.push("/dashboard/contributor");
+      }
+    } else {
+      router.push("/dashboard/patient");
+    }
+  }, [status, session, router, loading]);
 
   // Show loading while checking session / redirecting
   if (status === "loading" || status === "authenticated") {
@@ -94,8 +97,8 @@ function RegisterForm() {
         return;
       }
 
-      router.push(form.role === "CONTRIBUTOR" ? "/dashboard/contributor" : "/dashboard/patient");
-      router.refresh();
+      // Hard redirect to avoid race with session useEffect
+      window.location.href = form.role === "CONTRIBUTOR" ? "/contributor-application" : "/dashboard/patient";
     } catch {
       setError("Something went wrong. Please try again.");
       setLoading(false);

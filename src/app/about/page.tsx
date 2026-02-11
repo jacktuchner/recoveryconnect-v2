@@ -34,8 +34,8 @@ export default function AboutPage() {
 
             <p>
               In March 2021, I had my first shoulder SLAP repair. Two years later, in
-              April 2023, I went through it again on the other side. In 2017, I was hit
-              by a car and broke all five metatarsals in my foot. And as I write this,
+              April 2023, I went through it again on the other side. In 2017, my foot
+              got run over by a car and I broke all five metatarsals. And as I write this,
               I&apos;m preparing for another surgery in March 2026 — a rhomboid repair with
               trapezius advancement.
             </p>

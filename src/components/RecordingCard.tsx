@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import VerifiedBadge from "@/components/VerifiedBadge";
 
 interface RecordingCardProps {
   id: string;
@@ -19,6 +20,7 @@ interface RecordingCardProps {
   matchScore?: number;
   matchBreakdown?: { attribute: string; matched: boolean; weight: number }[];
   isSubscriber?: boolean;
+  contributorVerified?: boolean;
 }
 
 const categoryLabels: Record<string, string> = {
@@ -85,6 +87,7 @@ function MatchScoreTooltip({ breakdown }: { breakdown: { attribute: string; matc
 export default function RecordingCard({
   id, title, contributorName, procedureType, ageRange, activityLevel,
   category, durationSeconds, isVideo, price, viewCount, averageRating, matchScore, matchBreakdown, isSubscriber,
+  contributorVerified,
 }: RecordingCardProps) {
   return (
     <Link href={`/recordings/${id}`} className="block group h-full">
@@ -123,7 +126,10 @@ export default function RecordingCard({
           <h3 className="font-semibold text-gray-900 group-hover:text-teal-700 transition-colors line-clamp-2 mb-1 min-h-[2.75rem]">
             {title}
           </h3>
-          <p className="text-sm text-gray-500 mb-3">{contributorName}</p>
+          <div className="flex items-center gap-1.5 mb-3">
+            <p className="text-sm text-gray-500">{contributorName}</p>
+            {contributorVerified && <VerifiedBadge />}
+          </div>
 
           <div className="flex flex-wrap gap-1.5 mb-3 min-h-[3.25rem]">
             <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full h-fit">{procedureType}</span>

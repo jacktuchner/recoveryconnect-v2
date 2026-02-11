@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
 
     let query = supabase
       .from("Recording")
-      .select("*, contributor:User!Recording_contributorId_fkey(id, name, displayName, showRealName, bio, profile:Profile(*)), reviews:Review(*)", { count: "exact" })
+      .select("*, contributor:User!Recording_contributorId_fkey(id, name, displayName, showRealName, bio, contributorStatus, profile:Profile(*)), reviews:Review(*)", { count: "exact" })
       .eq("status", "PUBLISHED");
 
     if (procedure) query = query.eq("procedureType", procedure);
@@ -144,6 +144,14 @@ export async function POST(req: NextRequest) {
     if (!["CONTRIBUTOR", "BOTH", "ADMIN"].includes(user.role)) {
       return NextResponse.json(
         { error: "Only contributors can create recordings" },
+        { status: 403 }
+      );
+    }
+
+    // Gate content creation: require approved contributor status
+    if (user.role !== "ADMIN" && user.contributorStatus !== "APPROVED") {
+      return NextResponse.json(
+        { error: "Your contributor application must be approved before creating content" },
         { status: 403 }
       );
     }

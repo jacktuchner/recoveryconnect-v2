@@ -1,45 +1,20 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 
 export default function ContributorCTA({ variant = "dark" }: { variant?: "dark" | "light" }) {
   const btnClass = variant === "light"
     ? "inline-flex items-center justify-center bg-teal-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50 text-sm whitespace-nowrap"
     : "inline-flex items-center justify-center bg-white text-teal-700 font-semibold px-6 py-3 rounded-lg hover:bg-teal-50 transition-colors disabled:opacity-50";
   const { data: session } = useSession();
-  const router = useRouter();
-  const [upgrading, setUpgrading] = useState(false);
-  const [upgraded, setUpgraded] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const role = (session?.user as any)?.role;
-  const isPatientOnly = role === "PATIENT";
+  const contributorStatus = (session?.user as any)?.contributorStatus;
   const isAlreadyContributor = role === "CONTRIBUTOR" || role === "BOTH" || role === "ADMIN";
 
-  async function handleUpgrade() {
-    if (!confirm("Would you like to become a contributor? You'll be able to share your recovery experience and help other patients.")) return;
-    setUpgrading(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/user/upgrade-role", { method: "POST" });
-      if (res.ok) {
-        setUpgraded(true);
-      } else {
-        const data = await res.json();
-        setError(data.error || "Failed to upgrade role");
-      }
-    } catch {
-      setError("Something went wrong. Please try again.");
-    } finally {
-      setUpgrading(false);
-    }
-  }
-
-  // Already a contributor — link to their dashboard
-  if (isAlreadyContributor) {
+  // Approved contributor — link to dashboard
+  if (isAlreadyContributor && contributorStatus === "APPROVED") {
     return (
       <Link href="/dashboard/contributor" className={btnClass}>
         Go to Contributor Dashboard
@@ -47,34 +22,49 @@ export default function ContributorCTA({ variant = "dark" }: { variant?: "dark" 
     );
   }
 
-  // Just upgraded
-  if (upgraded) {
+  // Admin — always has access
+  if (role === "ADMIN") {
     return (
-      <div className="flex flex-col items-center gap-3">
-        <p className={variant === "light" ? "text-teal-700 font-medium text-sm" : "text-teal-100 font-medium"}>You&apos;re now a contributor!</p>
-        <button
-          onClick={() => { router.push("/dashboard/contributor"); router.refresh(); }}
-          className={btnClass}
-        >
-          Go to Contributor Dashboard
-        </button>
+      <Link href="/dashboard/contributor" className={btnClass}>
+        Go to Contributor Dashboard
+      </Link>
+    );
+  }
+
+  // Pending review — show status message
+  if (contributorStatus === "PENDING_REVIEW") {
+    return (
+      <div className="flex flex-col items-center gap-2">
+        <p className={variant === "light" ? "text-amber-700 font-medium text-sm" : "text-amber-200 font-medium text-sm"}>
+          Application under review
+        </p>
+        <Link href="/contributor-application" className={btnClass}>
+          View Application Status
+        </Link>
       </div>
     );
   }
 
-  // Logged in as patient — upgrade button
-  if (isPatientOnly) {
+  // Rejected — show rejection notice with reapply
+  if (contributorStatus === "REJECTED") {
     return (
       <div className="flex flex-col items-center gap-2">
-        {error && <p className={variant === "light" ? "text-red-600 text-sm" : "text-red-200 text-sm"}>{error}</p>}
-        <button
-          onClick={handleUpgrade}
-          disabled={upgrading}
-          className={btnClass}
-        >
-          {upgrading ? "Setting up..." : "Become a Contributor"}
-        </button>
+        <p className={variant === "light" ? "text-red-600 text-sm" : "text-red-200 text-sm"}>
+          Application not approved
+        </p>
+        <Link href="/contributor-application" className={btnClass}>
+          Reapply as Contributor
+        </Link>
       </div>
+    );
+  }
+
+  // Patient — link to application form
+  if (role === "PATIENT") {
+    return (
+      <Link href="/contributor-application" className={btnClass}>
+        Become a Contributor
+      </Link>
     );
   }
 

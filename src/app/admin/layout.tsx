@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
@@ -12,12 +12,33 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
 
   const userRole = (session?.user as any)?.role;
+  const [navCounts, setNavCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (status === "loading") return;
     if (!session || userRole !== "ADMIN") {
       router.push("/");
+      return;
     }
+
+    // Fetch counts for nav badges
+    async function fetchCounts() {
+      try {
+        const [appsRes, usersRes] = await Promise.all([
+          fetch("/api/admin/applications?status=PENDING_REVIEW&limit=1"),
+          fetch("/api/admin/users?limit=1"),
+        ]);
+        const appsData = appsRes.ok ? await appsRes.json() : null;
+        const usersData = usersRes.ok ? await usersRes.json() : null;
+        setNavCounts({
+          applications: appsData?.pagination?.total || 0,
+          users: usersData?.pagination?.total || 0,
+        });
+      } catch {
+        // Silently fail — counts are just nice-to-have
+      }
+    }
+    fetchCounts();
   }, [session, status, userRole, router]);
 
   if (status === "loading") {
@@ -33,11 +54,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   const navItems = [
-    { href: "/admin", label: "Overview", icon: "📊" },
-    { href: "/admin/recordings", label: "Recordings", icon: "🎙️" },
-    { href: "/admin/users", label: "Users", icon: "👥" },
-    { href: "/admin/reports", label: "Reports", icon: "🚩" },
-    { href: "/admin/payments", label: "Payments", icon: "💰" },
+    { href: "/admin", label: "Overview", icon: "📊", countKey: "" },
+    { href: "/admin/applications", label: "Applications", icon: "📋", countKey: "applications" },
+    { href: "/admin/recordings", label: "Recordings", icon: "🎙️", countKey: "" },
+    { href: "/admin/users", label: "Users", icon: "👥", countKey: "users" },
+    { href: "/admin/reports", label: "Reports", icon: "🚩", countKey: "" },
+    { href: "/admin/payments", label: "Payments", icon: "💰", countKey: "" },
   ];
 
   return (
@@ -61,7 +83,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 }`}
               >
                 <span>{item.icon}</span>
-                {item.label}
+                <span className="flex-1">{item.label}</span>
+                {item.countKey && navCounts[item.countKey] != null && (
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${
+                    item.countKey === "applications" && navCounts[item.countKey] > 0
+                      ? "bg-amber-100 text-amber-700 font-medium"
+                      : "bg-gray-100 text-gray-500"
+                  }`}>
+                    {navCounts[item.countKey]}
+                  </span>
+                )}
               </Link>
             ))}
           </nav>

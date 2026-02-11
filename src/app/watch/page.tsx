@@ -487,6 +487,7 @@ function WatchContent() {
                       matchScore={rec.matchScore}
                       matchBreakdown={rec.matchBreakdown}
                       isSubscriber={subscription.status === "active"}
+                      contributorVerified={rec.contributor?.contributorStatus === "APPROVED"}
                     />
                   ))}
                 </div>

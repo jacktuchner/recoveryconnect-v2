@@ -2,6 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import RecordingsSection from "@/components/contributor/RecordingsSection";
 import SeriesSection from "@/components/contributor/SeriesSection";
 import GroupSessionsSection from "@/components/contributor/GroupSessionsSection";
@@ -16,8 +17,13 @@ export default function ContributorContentPage() {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  const contributorStatus = (session?.user as any)?.contributorStatus;
+  const role = (session?.user as any)?.role;
+  const isApproved = contributorStatus === "APPROVED" || role === "ADMIN";
+
   useEffect(() => {
     if (!session?.user) return;
+    if (!isApproved) { setLoading(false); return; }
     const userId = (session.user as any).id;
     async function load() {
       try {
@@ -43,10 +49,34 @@ export default function ContributorContentPage() {
       }
     }
     load();
-  }, [session]);
+  }, [session, isApproved]);
 
   if (loading) {
     return <div>Loading...</div>;
+  }
+
+  if (!isApproved) {
+    return (
+      <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 text-center">
+        <svg className="w-12 h-12 text-amber-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <h2 className="text-lg font-bold text-amber-800 mb-2">Content Creation Locked</h2>
+        <p className="text-amber-700 text-sm max-w-md mx-auto">
+          {contributorStatus === "PENDING_REVIEW"
+            ? "Your application is under review. Once approved, you'll be able to create recordings, series, group sessions, and recommendations."
+            : (
+              <>
+                You need to be an approved contributor to create content.{" "}
+                <Link href="/contributor-application" className="text-teal-600 hover:text-teal-700 font-medium underline">
+                  Complete your application
+                </Link>{" "}
+                to get started.
+              </>
+            )}
+        </p>
+      </div>
+    );
   }
 
   return (

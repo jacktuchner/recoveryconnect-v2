@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { supabase } from "@/lib/supabase";
 
 export async function POST() {
   const session = await getServerSession(authOptions);
@@ -10,29 +9,19 @@ export async function POST() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const userId = (session.user as any).id;
   const currentRole = (session.user as any).role;
 
-  // Only allow upgrade from CONTRIBUTOR or PATIENT to BOTH
-  if (currentRole !== "CONTRIBUTOR" && currentRole !== "PATIENT") {
+  // Only allow from PATIENT role
+  if (currentRole !== "PATIENT") {
     return NextResponse.json(
-      { error: "Already have full access" },
+      { error: "Already have contributor access" },
       { status: 400 }
     );
   }
 
-  const { error } = await supabase
-    .from("User")
-    .update({ role: "BOTH" })
-    .eq("id", userId);
-
-  if (error) {
-    console.error("Failed to upgrade role:", error);
-    return NextResponse.json(
-      { error: "Failed to upgrade role" },
-      { status: 500 }
-    );
-  }
-
-  return NextResponse.json({ success: true, newRole: "BOTH" });
+  // Instead of instant upgrade, redirect to application form
+  return NextResponse.json({
+    redirect: "/contributor-application",
+    message: "Please complete the contributor application",
+  });
 }

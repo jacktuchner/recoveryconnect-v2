@@ -16,7 +16,7 @@ export const authOptions: NextAuthOptions = {
 
         const { data: user, error } = await supabase
           .from("User")
-          .select("id, email, name, passwordHash, role, image, subscriptionStatus")
+          .select("id, email, name, passwordHash, role, image, subscriptionStatus, contributorStatus")
           .eq("email", credentials.email)
           .single();
 
@@ -36,6 +36,7 @@ export const authOptions: NextAuthOptions = {
           role: user.role,
           image: user.image,
           subscriptionStatus: user.subscriptionStatus,
+          contributorStatus: user.contributorStatus,
         };
       },
     }),
@@ -47,17 +48,19 @@ export const authOptions: NextAuthOptions = {
         token.role = (user as any).role;
         token.id = user.id;
         token.subscriptionStatus = (user as any).subscriptionStatus;
+        token.contributorStatus = (user as any).contributorStatus;
       }
-      // Refresh role and subscription status from DB on each request
+      // Refresh role, subscription status, and contributor status from DB on each request
       if (token.id) {
         const { data: dbUser } = await supabase
           .from("User")
-          .select("role, subscriptionStatus")
+          .select("role, subscriptionStatus, contributorStatus")
           .eq("id", token.id)
           .single();
         if (dbUser) {
           token.role = dbUser.role;
           token.subscriptionStatus = dbUser.subscriptionStatus;
+          token.contributorStatus = dbUser.contributorStatus;
         }
       }
       return token;
@@ -67,6 +70,7 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).role = token.role;
         (session.user as any).id = token.id;
         (session.user as any).subscriptionStatus = token.subscriptionStatus;
+        (session.user as any).contributorStatus = token.contributorStatus;
       }
       return session;
     },

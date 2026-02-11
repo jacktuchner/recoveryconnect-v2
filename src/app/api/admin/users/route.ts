@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
 
     let query = supabase
       .from("User")
-      .select("id, name, displayName, showRealName, email, role, createdAt", { count: "exact" });
+      .select("id, name, displayName, showRealName, email, role, contributorStatus, createdAt", { count: "exact" });
 
     if (role) {
       query = query.eq("role", role);

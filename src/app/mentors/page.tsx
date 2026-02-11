@@ -9,6 +9,7 @@ import DisclaimerBanner from "@/components/DisclaimerBanner";
 import MatchScoreTooltip from "@/components/MatchScoreTooltip";
 import { GENDERS } from "@/lib/constants";
 import { getTimeSinceSurgeryLabel } from "@/lib/surgeryDate";
+import VerifiedBadge from "@/components/VerifiedBadge";
 
 const activityLabels: Record<string, string> = {
   SEDENTARY: "Sedentary",
@@ -43,6 +44,7 @@ interface Contributor {
     hourlyRate?: number;
     isAvailableForCalls?: boolean;
   };
+  contributorStatus?: string;
   reviewsReceived?: { rating: number }[];
   matchScore?: number;
   matchBreakdown?: { attribute: string; matched: boolean; weight: number }[];
@@ -65,9 +67,12 @@ function MentorCard({ contributor }: { contributor: Contributor }) {
             </span>
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-gray-900 group-hover:text-cyan-700 transition-colors text-lg">
-              {contributor.name}
-            </h3>
+            <div className="flex items-center gap-1.5">
+              <h3 className="font-semibold text-gray-900 group-hover:text-cyan-700 transition-colors text-lg">
+                {contributor.name}
+              </h3>
+              {contributor.contributorStatus === "APPROVED" && <VerifiedBadge />}
+            </div>
             <div className="flex flex-wrap gap-1 mt-0.5">
               {(profile.procedureTypes?.length ? profile.procedureTypes : (profile.procedureType ? [profile.procedureType] : [])).map((proc: string) => (
                 <span key={proc} className="text-xs bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full">{proc}</span>

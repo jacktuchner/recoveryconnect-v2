@@ -450,7 +450,7 @@ export default function ProceduresSection({ profile, sharedForm, onProfileUpdate
                   <option key={c.value} value={c.value}>{c.label}</option>
                 ))}
               </optgroup>
-              <optgroup label="Chronic Pain">
+              <optgroup label="Autoimmune">
                 {getAllConditions().filter((c) => c.category === "CHRONIC_PAIN" && !procedures.includes(c.value)).map((c) => (
                   <option key={c.value} value={c.value}>{c.label}</option>
                 ))}

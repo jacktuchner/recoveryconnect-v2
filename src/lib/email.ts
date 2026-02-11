@@ -608,6 +608,110 @@ export async function sendNewMessageEmail(
   }
 }
 
+// New contributor application submitted - sent to admin
+export async function sendApplicationReceivedEmail(
+  adminEmail: string,
+  adminName: string,
+  applicantName: string,
+  applicantEmail: string
+) {
+  const content = `
+    <h1 style="color: #0d9488; font-size: 24px; margin-bottom: 20px;">New Contributor Application</h1>
+    <p>Hi ${adminName},</p>
+    <p><strong>${applicantName}</strong> (${applicantEmail}) has submitted a contributor application and is waiting for review.</p>
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${process.env.NEXT_PUBLIC_APP_URL}/admin/applications"
+         style="display: inline-block; background: #0d9488; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600;">
+        Review Applications
+      </a>
+    </div>
+    <p style="color: #6b7280; font-size: 14px;">Please review and schedule a Zoom call with the applicant.</p>
+  `;
+
+  try {
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to: adminEmail,
+      subject: `New contributor application from ${applicantName}`,
+      html: baseTemplate(content),
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to send application received email:", error);
+    return { success: false, error };
+  }
+}
+
+// Contributor application approved - sent to applicant
+export async function sendApplicationApprovedEmail(to: string, name: string) {
+  const content = `
+    <h1 style="color: #0d9488; font-size: 24px; margin-bottom: 20px;">You're Approved!</h1>
+    <p>Hi ${name},</p>
+    <p>Great news! Your contributor application has been approved. You now have full access to share your recovery experience on RecoveryConnect.</p>
+    <div style="background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 8px; padding: 20px; margin: 20px 0;">
+      <p style="margin: 0 0 10px 0;"><strong>What you can do now:</strong></p>
+      <ul style="margin: 0; padding-left: 20px;">
+        <li>Record and publish recovery stories</li>
+        <li>Set up your availability for mentoring calls</li>
+        <li>Connect your Stripe account for payouts</li>
+        <li>Create group sessions</li>
+      </ul>
+    </div>
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/contributor"
+         style="display: inline-block; background: #0d9488; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600;">
+        Go to Contributor Dashboard
+      </a>
+    </div>
+    <p>Thank you for being part of our community and helping others through their recovery.</p>
+    <p>Best,<br>The RecoveryConnect Team</p>
+  `;
+
+  try {
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to,
+      subject: "Your RecoveryConnect contributor application is approved!",
+      html: baseTemplate(content),
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to send application approved email:", error);
+    return { success: false, error };
+  }
+}
+
+// Contributor application rejected - sent to applicant
+export async function sendApplicationRejectedEmail(to: string, name: string) {
+  const content = `
+    <h1 style="color: #374151; font-size: 24px; margin-bottom: 20px;">Application Update</h1>
+    <p>Hi ${name},</p>
+    <p>Thank you for your interest in becoming a contributor on RecoveryConnect. After reviewing your application, we're unable to approve it at this time.</p>
+    <p>This doesn't reflect on your recovery experience — we may need additional information or documentation. You're welcome to reapply in the future.</p>
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/patient"
+         style="display: inline-block; background: #0d9488; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600;">
+        Go to Dashboard
+      </a>
+    </div>
+    <p>If you have any questions, feel free to reach out.</p>
+    <p>Best,<br>The RecoveryConnect Team</p>
+  `;
+
+  try {
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to,
+      subject: "Update on your RecoveryConnect contributor application",
+      html: baseTemplate(content),
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to send application rejected email:", error);
+    return { success: false, error };
+  }
+}
+
 // Call reminder - sent to both parties (1 day before and 1 hour before)
 export async function sendCallReminderEmail(
   recipientEmail: string,
