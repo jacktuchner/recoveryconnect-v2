@@ -3,6 +3,7 @@ interface ProfileAttributes {
   procedureTypes?: string[];
   procedureDetails?: string | null;
   ageRange: string;
+  gender?: string | null;
   activityLevel: string;
   recoveryGoals: string[];
   timeSinceSurgery?: string | null;
@@ -22,9 +23,10 @@ interface MatchResult {
 const WEIGHTS = {
   procedureType: 30,
   procedureDetails: 10,
-  ageRange: 15,
+  ageRange: 10,
+  gender: 10,
   activityLevel: 15,
-  recoveryGoals: 20,
+  recoveryGoals: 15,
   complicatingFactors: 5,
   lifestyleContext: 5,
 };
@@ -96,6 +98,17 @@ export function calculateMatchScore(
     weight: WEIGHTS.activityLevel,
   });
 
+  // Gender
+  const seekerGender = seeker.gender;
+  const contributorGender = contributor.gender;
+  const genderNeutral = !seekerGender || !contributorGender || seekerGender === "OTHER" || contributorGender === "OTHER";
+  const genderScore = genderNeutral ? 0.5 : seekerGender === contributorGender ? 1.0 : 0.0;
+  breakdown.push({
+    attribute: "Gender",
+    matched: genderScore >= 0.5,
+    weight: WEIGHTS.gender,
+  });
+
   // Recovery goals
   const goalsOverlap = arrayOverlap(
     seeker.recoveryGoals,
@@ -135,6 +148,7 @@ export function calculateMatchScore(
     (procMatch ? WEIGHTS.procedureType : 0) +
     (detailMatch ? WEIGHTS.procedureDetails : 0) +
     ageScore * WEIGHTS.ageRange +
+    genderScore * WEIGHTS.gender +
     (activityMatch ? WEIGHTS.activityLevel : 0) +
     goalsOverlap * WEIGHTS.recoveryGoals +
     complicationsOverlap * WEIGHTS.complicatingFactors +

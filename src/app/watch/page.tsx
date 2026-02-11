@@ -67,6 +67,7 @@ function WatchContent() {
   const [filters, setFilters] = useState({
     procedures: [] as string[],
     ageRanges: [] as string[],
+    genders: [] as string[],
     activityLevels: [] as string[],
     categories: [] as string[],
   });
@@ -145,6 +146,11 @@ function WatchContent() {
       return false;
     }
 
+    // Gender filter
+    if (filters.genders.length > 0 && !filters.genders.includes(rec.gender)) {
+      return false;
+    }
+
     // Category filter
     if (filters.categories.length > 0 && !filters.categories.includes(rec.category)) {
       return false;
@@ -202,6 +208,7 @@ function WatchContent() {
   const totalActiveFilters =
     filters.procedures.length +
     filters.ageRanges.length +
+    filters.genders.length +
     filters.activityLevels.length +
     filters.categories.length;
 

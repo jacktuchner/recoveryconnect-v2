@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import RecordingCard from "@/components/RecordingCard";
 import MatchScoreTooltip from "@/components/MatchScoreTooltip";
-import { RECOMMENDATION_CATEGORIES, isChronicPainCondition } from "@/lib/constants";
+import { RECOMMENDATION_CATEGORIES, GENDERS, isChronicPainCondition } from "@/lib/constants";
 import { getTimeSinceSurgeryLabel, getTimeSinceDiagnosisLabel } from "@/lib/surgeryDate";
 import MessageButton from "@/components/MessageButton";
 
@@ -175,6 +175,11 @@ export default function ContributorDetailPage() {
           <span className="text-sm bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
             {contributor.profile?.ageRange}
           </span>
+          {contributor.profile?.gender && (
+            <span className="text-sm bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
+              {GENDERS.find((g) => g.value === contributor.profile.gender)?.label || contributor.profile.gender}
+            </span>
+          )}
           <span className="text-sm bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
             {activityLabels[contributor.profile?.activityLevel] || contributor.profile?.activityLevel}
           </span>

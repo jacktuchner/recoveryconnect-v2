@@ -95,6 +95,7 @@ export async function POST(req: NextRequest) {
         conditionCategory: body.conditionCategory || "SURGERY",
         // Profile-wide fields
         ageRange: body.ageRange,
+        gender: body.gender || null,
         activityLevel: body.activityLevel || "RECREATIONAL",
         lifestyleContext: body.lifestyleContext || [],
         hourlyRate: body.hourlyRate || null,
@@ -140,6 +141,7 @@ export async function PUT(req: NextRequest) {
       procedureTypes: procedureTypes,
       // Profile-wide fields
       ageRange: body.ageRange,
+      gender: body.gender || null,
       activityLevel: body.activityLevel || "RECREATIONAL",
       lifestyleContext: body.lifestyleContext || [],
       hourlyRate: body.hourlyRate || null,

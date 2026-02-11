@@ -1,17 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { AGE_RANGES, ACTIVITY_LEVELS, MIN_CALL_RATE, MAX_CALL_RATE } from "@/lib/constants";
+import { AGE_RANGES, GENDERS, ACTIVITY_LEVELS, MIN_CALL_RATE, MAX_CALL_RATE } from "@/lib/constants";
 
 interface SharedProfileSectionProps {
   profile: any;
   sharedForm: {
     ageRange: string;
+    gender: string;
     activityLevel: string;
     hourlyRate: number;
     isAvailableForCalls: boolean;
   };
-  onSharedFormChange: (form: { ageRange: string; activityLevel: string; hourlyRate: number; isAvailableForCalls: boolean }) => void;
+  onSharedFormChange: (form: { ageRange: string; gender: string; activityLevel: string; hourlyRate: number; isAvailableForCalls: boolean }) => void;
   onProfileUpdate: (updated: any) => void;
 }
 
@@ -69,12 +70,19 @@ export default function SharedProfileSection({ profile, sharedForm, onSharedForm
 
       {editingShared ? (
         <div className="space-y-4">
-          <div className="grid sm:grid-cols-2 gap-4">
+          <div className="grid sm:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Age Range *</label>
               <select value={sharedForm.ageRange} onChange={(e) => onSharedFormChange({ ...sharedForm, ageRange: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
                 <option value="">Select...</option>
                 {AGE_RANGES.map((a) => (<option key={a} value={a}>{a}</option>))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+              <select value={sharedForm.gender} onChange={(e) => onSharedFormChange({ ...sharedForm, gender: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                <option value="">Select...</option>
+                {GENDERS.map((g) => (<option key={g.value} value={g.value}>{g.label}</option>))}
               </select>
             </div>
             <div>
@@ -119,6 +127,7 @@ export default function SharedProfileSection({ profile, sharedForm, onSharedForm
               setEditingShared(false);
               onSharedFormChange({
                 ageRange: profile?.ageRange || "",
+                gender: profile?.gender || "",
                 activityLevel: profile?.activityLevel || "RECREATIONAL",
                 hourlyRate: profile?.hourlyRate || 50,
                 isAvailableForCalls: profile?.isAvailableForCalls || false,
@@ -128,10 +137,14 @@ export default function SharedProfileSection({ profile, sharedForm, onSharedForm
         </div>
       ) : profile ? (
         <div className="space-y-3">
-          <div className="grid sm:grid-cols-3 gap-4">
+          <div className="grid sm:grid-cols-4 gap-4">
             <div>
               <p className="text-xs text-gray-500">Age Range</p>
               <p className="font-medium">{profile.ageRange || "Not set"}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">Gender</p>
+              <p className="font-medium">{GENDERS.find((g: any) => g.value === profile.gender)?.label || "Not set"}</p>
             </div>
             <div>
               <p className="text-xs text-gray-500">Activity Level</p>

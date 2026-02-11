@@ -12,6 +12,7 @@ export default function ContributorProfilePage() {
   const [profile, setProfile] = useState<any>(null);
   const [sharedForm, setSharedForm] = useState({
     ageRange: "",
+    gender: "",
     activityLevel: "RECREATIONAL",
     hourlyRate: 50,
     isAvailableForCalls: false,
@@ -35,6 +36,7 @@ export default function ContributorProfilePage() {
             setProfile(p);
             setSharedForm({
               ageRange: p.ageRange || "",
+              gender: p.gender || "",
               activityLevel: p.activityLevel || "RECREATIONAL",
               hourlyRate: p.hourlyRate || 50,
               isAvailableForCalls: p.isAvailableForCalls || false,

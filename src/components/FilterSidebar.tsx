@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { PROCEDURE_TYPES, AGE_RANGES, ACTIVITY_LEVELS, RECORDING_CATEGORIES, CHRONIC_PAIN_CONDITIONS } from "@/lib/constants";
+import { PROCEDURE_TYPES, AGE_RANGES, GENDERS, ACTIVITY_LEVELS, RECORDING_CATEGORIES, CHRONIC_PAIN_CONDITIONS } from "@/lib/constants";
 
 interface FilterSidebarProps {
   filters: {
     procedures: string[];
     ageRanges: string[];
+    genders: string[];
     activityLevels: string[];
     categories: string[];
   };
@@ -89,18 +90,21 @@ export default function FilterSidebar({ filters, onFilterChange, showCategory = 
   const surgeryOptions = PROCEDURE_TYPES.map((p) => ({ value: p, label: p }));
   const chronicPainOptions = CHRONIC_PAIN_CONDITIONS.map((c) => ({ value: c, label: c }));
   const ageOptions = AGE_RANGES.map((a) => ({ value: a, label: a }));
+  const genderOptions = GENDERS.map((g) => ({ value: g.value, label: g.label }));
   const activityOptions = ACTIVITY_LEVELS.map((a) => ({ value: a.value, label: a.label }));
   const categoryOptions = RECORDING_CATEGORIES.map((c) => ({ value: c.value, label: c.label }));
 
   const totalFilters =
     filters.procedures.length +
     filters.ageRanges.length +
+    filters.genders.length +
     filters.activityLevels.length +
     filters.categories.length;
 
   const clearAll = () => {
     onFilterChange("procedures", []);
     onFilterChange("ageRanges", []);
+    onFilterChange("genders", []);
     onFilterChange("activityLevels", []);
     onFilterChange("categories", []);
   };
@@ -129,7 +133,7 @@ export default function FilterSidebar({ filters, onFilterChange, showCategory = 
       />
 
       <FilterSection
-        title="Chronic Pain"
+        title="Autoimmune"
         options={chronicPainOptions}
         selected={filters.procedures}
         onChange={(values) => onFilterChange("procedures", values)}
@@ -141,6 +145,13 @@ export default function FilterSidebar({ filters, onFilterChange, showCategory = 
         options={ageOptions}
         selected={filters.ageRanges}
         onChange={(values) => onFilterChange("ageRanges", values)}
+      />
+
+      <FilterSection
+        title="Gender"
+        options={genderOptions}
+        selected={filters.genders}
+        onChange={(values) => onFilterChange("genders", values)}
       />
 
       <FilterSection

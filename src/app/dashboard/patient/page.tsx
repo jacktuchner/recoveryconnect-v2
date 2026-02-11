@@ -3,7 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { PROCEDURE_TYPES, AGE_RANGES, ACTIVITY_LEVELS, RECOVERY_GOALS, COMPLICATING_FACTORS, LIFESTYLE_CONTEXTS, SUBSCRIPTION_MONTHLY_PRICE, SUBSCRIPTION_ANNUAL_PRICE, CHRONIC_PAIN_CONDITIONS, CHRONIC_PAIN_GOALS, CHRONIC_PAIN_COMPLICATING_FACTORS, isChronicPainCondition, getAllConditions } from "@/lib/constants";
+import { PROCEDURE_TYPES, AGE_RANGES, GENDERS, ACTIVITY_LEVELS, RECOVERY_GOALS, COMPLICATING_FACTORS, LIFESTYLE_CONTEXTS, SUBSCRIPTION_MONTHLY_PRICE, SUBSCRIPTION_ANNUAL_PRICE, CHRONIC_PAIN_CONDITIONS, CHRONIC_PAIN_GOALS, CHRONIC_PAIN_COMPLICATING_FACTORS, isChronicPainCondition, getAllConditions } from "@/lib/constants";
 import { getTimeSinceSurgery, getTimeSinceSurgeryLabel, getTimeSinceDiagnosisLabel, getCurrentRecoveryWeek } from "@/lib/surgeryDate";
 import RecoveryJournal from "@/components/patient/RecoveryJournal";
 import ProfileWizard from "@/components/ProfileWizard";
@@ -77,6 +77,7 @@ export default function PatientDashboard() {
   // Shared profile fields
   const [sharedForm, setSharedForm] = useState({
     ageRange: "",
+    gender: "",
     activityLevel: "RECREATIONAL",
     lifestyleContext: [] as string[],
   });
@@ -120,6 +121,7 @@ export default function PatientDashboard() {
             setProfile(p);
             setSharedForm({
               ageRange: p.ageRange || "",
+              gender: p.gender || "",
               activityLevel: p.activityLevel || "RECREATIONAL",
               lifestyleContext: p.lifestyleContext || [],
             });
@@ -427,6 +429,7 @@ export default function PatientDashboard() {
         setProfile(savedProfile);
         setSharedForm({
           ageRange: data.ageRange,
+          gender: data.gender || "",
           activityLevel: data.activityLevel,
           lifestyleContext: data.lifestyleContext || [],
         });
@@ -993,7 +996,7 @@ export default function PatientDashboard() {
                     <option key={c.value} value={c.value}>{c.label}</option>
                   ))}
                 </optgroup>
-                <optgroup label="Chronic Pain">
+                <optgroup label="Autoimmune">
                   {getAllConditions().filter((c) => c.category === "CHRONIC_PAIN" && !procedures.includes(c.value)).map((c) => (
                     <option key={c.value} value={c.value}>{c.label}</option>
                   ))}
@@ -1042,7 +1045,7 @@ export default function PatientDashboard() {
 
         {editingShared ? (
           <div className="space-y-4">
-            <div className="grid sm:grid-cols-2 gap-4">
+            <div className="grid sm:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Age Range</label>
                 <select
@@ -1053,6 +1056,19 @@ export default function PatientDashboard() {
                   <option value="">Select...</option>
                   {AGE_RANGES.map((a) => (
                     <option key={a} value={a}>{a}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                <select
+                  value={sharedForm.gender}
+                  onChange={(e) => setSharedForm((f) => ({ ...f, gender: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                >
+                  <option value="">Select...</option>
+                  {GENDERS.map((g) => (
+                    <option key={g.value} value={g.value}>{g.label}</option>
                   ))}
                 </select>
               </div>
@@ -1103,6 +1119,7 @@ export default function PatientDashboard() {
                   setEditingShared(false);
                   setSharedForm({
                     ageRange: profile?.ageRange || "",
+                    gender: profile?.gender || "",
                     activityLevel: profile?.activityLevel || "RECREATIONAL",
                     lifestyleContext: profile?.lifestyleContext || [],
                   });
@@ -1115,10 +1132,14 @@ export default function PatientDashboard() {
           </div>
         ) : (
           <div className="space-y-3">
-            <div className="grid sm:grid-cols-2 gap-4">
+            <div className="grid sm:grid-cols-3 gap-4">
               <div>
                 <p className="text-xs text-gray-500">Age Range</p>
                 <p className="font-medium">{profile?.ageRange || "Not set"}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">Gender</p>
+                <p className="font-medium">{GENDERS.find((g) => g.value === profile?.gender)?.label || "Not set"}</p>
               </div>
               <div>
                 <p className="text-xs text-gray-500">Activity Level</p>

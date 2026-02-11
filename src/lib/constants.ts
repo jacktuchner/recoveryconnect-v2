@@ -1,18 +1,18 @@
 export const PROCEDURE_TYPES = [
   "ACL Reconstruction",
+  "Ankle Reconstruction",
+  "Carpal Tunnel Release",
+  "Gallbladder Removal",
+  "Hernia Repair",
+  "Hysterectomy",
+  "Laminectomy",
+  "Meniscus Repair",
+  "Rotator Cuff Repair",
+  "Shoulder Labrum Repair",
+  "Spinal Fusion",
   "Total Hip Replacement",
   "Total Knee Replacement",
   "Total Shoulder Replacement",
-  "Spinal Fusion",
-  "Laminectomy",
-  "Rotator Cuff Repair",
-  "Meniscus Repair",
-  "Shoulder Labrum Repair",
-  "Ankle Reconstruction",
-  "Carpal Tunnel Release",
-  "Hernia Repair",
-  "Gallbladder Removal",
-  "Hysterectomy",
 ] as const;
 
 export const PROCEDURE_DETAILS: Record<string, string[]> = {
@@ -64,6 +64,12 @@ export const AGE_RANGES = [
   "50s",
   "60s",
   "70s+",
+] as const;
+
+export const GENDERS = [
+  { value: "MALE", label: "Male" },
+  { value: "FEMALE", label: "Female" },
+  { value: "OTHER", label: "Other" },
 ] as const;
 
 export const ACTIVITY_LEVELS = [
@@ -171,42 +177,66 @@ export const STRIPE_ANNUAL_PRICE_ID = process.env.STRIPE_ANNUAL_PRICE_ID || "";
 
 export const CONDITION_CATEGORIES = [
   { value: "SURGERY", label: "Surgery Recovery" },
-  { value: "CHRONIC_PAIN", label: "Chronic Pain" },
+  { value: "CHRONIC_PAIN", label: "Autoimmune" },
 ] as const;
 
 export const CHRONIC_PAIN_CONDITIONS = [
+  "Celiac Disease",
   "Fibromyalgia",
-  "Chronic Lower Back Pain",
-  "CRPS (Complex Regional Pain Syndrome)",
+  "Graves' Disease",
+  "Hashimoto's Thyroiditis",
+  "Inflammatory Bowel Disease (Crohn's & Colitis)",
+  "Lupus (SLE)",
+  "Multiple Sclerosis",
+  "Psoriasis / Psoriatic Arthritis",
   "Rheumatoid Arthritis",
-  "Osteoarthritis",
-  "Chronic Migraine",
-  "Neuropathic Pain",
-  "Endometriosis",
-  "Chronic Fatigue Syndrome",
-  "Vulvodynia",
-  "TMJ Disorder",
-  "Interstitial Cystitis",
+  "Sjögren's Syndrome",
+  "Tinnitus",
+  "Type 1 Diabetes",
 ] as const;
 
 export const CHRONIC_PAIN_DETAILS: Record<string, string[]> = {
-  "Fibromyalgia": [
-    "Widespread pain dominant",
-    "Fibro fog / cognitive issues",
-    "Fatigue dominant",
-    "IBS co-occurrence",
+  "Tinnitus": [
+    "Subjective (only you hear it)",
+    "Objective (others can detect it)",
+    "Pulsatile (rhythmic / heartbeat-like)",
+    "Noise-induced",
   ],
-  "Chronic Lower Back Pain": [
-    "Disc-related (herniation/degeneration)",
-    "Spinal stenosis",
-    "Non-specific / muscular",
-    "Sciatica",
+  "Hashimoto's Thyroiditis": [
+    "Hypothyroid (underactive)",
+    "Hashitoxicosis (temporary hyperthyroid)",
+    "With goiter",
+    "Post-thyroidectomy",
   ],
-  "CRPS (Complex Regional Pain Syndrome)": [
-    "Type I (without nerve injury)",
-    "Type II (with nerve injury)",
-    "Upper extremity",
-    "Lower extremity",
+  "Type 1 Diabetes": [
+    "Insulin pump user",
+    "Multiple daily injections (MDI)",
+    "CGM (continuous glucose monitor)",
+    "Late-onset / LADA",
+  ],
+  "Lupus (SLE)": [
+    "Skin & joint dominant",
+    "Kidney involvement (lupus nephritis)",
+    "CNS / neuropsychiatric lupus",
+    "Mild / limited disease",
+  ],
+  "Celiac Disease": [
+    "Classic GI symptoms",
+    "Non-classic / silent celiac",
+    "Refractory celiac",
+    "Dermatitis herpetiformis",
+  ],
+  "Sjögren's Syndrome": [
+    "Primary (standalone)",
+    "Secondary (with another autoimmune)",
+    "Dry eyes dominant",
+    "Dry mouth dominant",
+  ],
+  "Psoriasis / Psoriatic Arthritis": [
+    "Plaque psoriasis",
+    "Psoriatic arthritis (joints)",
+    "Guttate psoriasis",
+    "Scalp / nail involvement",
   ],
   "Rheumatoid Arthritis": [
     "Seropositive",
@@ -214,17 +244,29 @@ export const CHRONIC_PAIN_DETAILS: Record<string, string[]> = {
     "Early-stage",
     "Advanced/erosive",
   ],
-  "Chronic Migraine": [
-    "With aura",
-    "Without aura",
-    "Vestibular migraine",
-    "Menstrual migraine",
+  "Multiple Sclerosis": [
+    "Relapsing-remitting (RRMS)",
+    "Secondary progressive (SPMS)",
+    "Primary progressive (PPMS)",
+    "Clinically isolated syndrome (CIS)",
   ],
-  "Endometriosis": [
-    "Stage I-II (minimal/mild)",
-    "Stage III-IV (moderate/severe)",
-    "Deep infiltrating",
-    "Post-surgical recurrence",
+  "Inflammatory Bowel Disease (Crohn's & Colitis)": [
+    "Crohn's disease",
+    "Ulcerative colitis",
+    "Indeterminate colitis",
+    "Post-surgical / ostomy",
+  ],
+  "Graves' Disease": [
+    "Hyperthyroid (overactive)",
+    "Graves' eye disease (TED)",
+    "Post-RAI / post-thyroidectomy",
+    "In remission on medication",
+  ],
+  "Fibromyalgia": [
+    "Widespread pain dominant",
+    "Fibro fog / cognitive issues",
+    "Fatigue dominant",
+    "IBS co-occurrence",
   ],
 };
 
@@ -238,49 +280,49 @@ export const TIME_SINCE_DIAGNOSIS = [
 ] as const;
 
 export const CHRONIC_PAIN_GOALS = [
-  "Reduce daily pain levels",
+  "Manage symptoms effectively",
+  "Reduce flare frequency",
+  "Maintain energy levels",
   "Improve sleep quality",
-  "Manage flare-ups better",
-  "Reduce medication reliance",
+  "Find effective treatments",
   "Maintain employment/career",
-  "Return to exercise",
   "Improve mental health",
   "Better daily functioning",
-  "Find effective treatments",
   "Build a support system",
+  "Reduce medication side effects",
 ] as const;
 
 export const CHRONIC_PAIN_COMPLICATING_FACTORS = [
-  "Multiple pain conditions",
+  "Multiple autoimmune conditions",
   "Anxiety or depression",
   "Medication sensitivity",
-  "Sleep disorder",
-  "Autoimmune comorbidity",
+  "Fatigue / energy issues",
+  "Dietary restrictions",
+  "Brain fog / cognitive issues",
   "Limited mobility",
-  "Central sensitization",
-  "Opioid history",
+  "Undiagnosed for years",
 ] as const;
 
 export const RECORDING_CATEGORIES_CHRONIC_PAIN = [
-  { value: "WEEKLY_TIMELINE", label: "My Condition Journey", description: "Your story living with chronic pain over time" },
+  { value: "WEEKLY_TIMELINE", label: "My Condition Journey", description: "Your story living with an autoimmune condition over time" },
   { value: "WISH_I_KNEW", label: "Things I Wish I Knew", description: "What you wish someone told you after diagnosis" },
   { value: "PRACTICAL_TIPS", label: "Daily Management Tips", description: "Pacing, routines, tools, and strategies that help" },
-  { value: "MENTAL_HEALTH", label: "Mental & Emotional Health", description: "Coping mentally and emotionally with chronic pain" },
+  { value: "MENTAL_HEALTH", label: "Mental & Emotional Health", description: "Coping mentally and emotionally with your condition" },
   { value: "RETURN_TO_ACTIVITY", label: "Activity & Pacing", description: "Staying active, pacing strategies, and setbacks" },
   { value: "MISTAKES_AND_LESSONS", label: "Mistakes & Lessons", description: "What you would do differently knowing what you know now" },
 ] as const;
 
 export const JOURNAL_MILESTONE_PRESETS_CHRONIC_PAIN = [
-  "Low-pain day", "Exercised without a flare", "Slept through the night",
+  "Low-symptom day", "Exercised without a flare", "Slept through the night",
   "Reduced medication", "Worked a full day", "Tried a new treatment",
   "Cooked a meal", "Went for a walk", "Socialized without crashing",
-  "Managed a flare well",
+  "Found a trigger food",
 ] as const;
 
 export const JOURNAL_TRIGGER_PRESETS = [
   "Weather change", "Poor sleep", "Stress", "Overexertion",
-  "Certain foods", "Hormonal cycle", "Travel", "Sitting too long",
-  "Cold exposure", "Emotional upset",
+  "Gluten/dairy", "Hormonal cycle", "Travel", "Sitting too long",
+  "Infection/illness", "Emotional upset",
 ] as const;
 
 // ─── Helpers ───

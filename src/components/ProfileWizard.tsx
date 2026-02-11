@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import {
-  PROCEDURE_TYPES, AGE_RANGES, ACTIVITY_LEVELS, RECOVERY_GOALS, COMPLICATING_FACTORS, LIFESTYLE_CONTEXTS,
+  PROCEDURE_TYPES, AGE_RANGES, GENDERS, ACTIVITY_LEVELS, RECOVERY_GOALS, COMPLICATING_FACTORS, LIFESTYLE_CONTEXTS,
   CONDITION_CATEGORIES, CHRONIC_PAIN_CONDITIONS, CHRONIC_PAIN_DETAILS, CHRONIC_PAIN_GOALS, CHRONIC_PAIN_COMPLICATING_FACTORS,
   PROCEDURE_DETAILS,
 } from "@/lib/constants";
@@ -15,6 +15,7 @@ interface ProfileWizardProps {
     procedureDetails?: string;
     surgeryDate?: string;
     ageRange?: string;
+    gender?: string;
     activityLevel?: string;
     recoveryGoals?: string[];
     complicatingFactors?: string[];
@@ -37,6 +38,7 @@ export default function ProfileWizard({ initialData, onComplete, onCancel, error
     procedureDetails: initialData?.procedureDetails || "",
     surgeryDate: initialData?.surgeryDate || "",
     ageRange: initialData?.ageRange || "",
+    gender: initialData?.gender || "",
     activityLevel: initialData?.activityLevel || "RECREATIONAL",
     recoveryGoals: initialData?.recoveryGoals || [],
     complicatingFactors: initialData?.complicatingFactors || [],
@@ -67,7 +69,7 @@ export default function ProfileWizard({ initialData, onComplete, onCancel, error
   }
 
   function canProceedFromStage1() {
-    return form.procedureType && form.ageRange && form.activityLevel;
+    return form.procedureType && form.ageRange && form.gender && form.activityLevel;
   }
 
   async function handleComplete() {
@@ -281,6 +283,22 @@ export default function ProfileWizard({ initialData, onComplete, onCancel, error
                 <option value="">Select your age range</option>
                 {AGE_RANGES.map((a) => (
                   <option key={a} value={a}>{a}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Gender <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={form.gender}
+                onChange={(e) => setForm((f) => ({ ...f, gender: e.target.value }))}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+              >
+                <option value="">Select your gender</option>
+                {GENDERS.map((g) => (
+                  <option key={g.value} value={g.value}>{g.label}</option>
                 ))}
               </select>
             </div>

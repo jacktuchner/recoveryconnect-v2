@@ -7,6 +7,7 @@ import FilterSidebar from "@/components/FilterSidebar";
 import ContentAcknowledgmentModal from "@/components/ContentAcknowledgmentModal";
 import DisclaimerBanner from "@/components/DisclaimerBanner";
 import MatchScoreTooltip from "@/components/MatchScoreTooltip";
+import { GENDERS } from "@/lib/constants";
 import { getTimeSinceSurgeryLabel } from "@/lib/surgeryDate";
 
 const activityLabels: Record<string, string> = {
@@ -34,6 +35,7 @@ interface Contributor {
     procedureType?: string;
     procedureTypes?: string[];
     ageRange?: string;
+    gender?: string;
     activityLevel?: string;
     recoveryGoals?: string[];
     surgeryDate?: string;
@@ -107,6 +109,11 @@ function MentorCard({ contributor }: { contributor: Contributor }) {
           {profile.ageRange && (
             <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{profile.ageRange}</span>
           )}
+          {profile.gender && (
+            <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+              {GENDERS.find((g) => g.value === profile.gender)?.label || profile.gender}
+            </span>
+          )}
           {profile.activityLevel && (
             <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
               {activityLabels[profile.activityLevel] || profile.activityLevel}
@@ -167,6 +174,7 @@ function MentorsContent() {
   const [filters, setFilters] = useState({
     procedures: [] as string[],
     ageRanges: [] as string[],
+    genders: [] as string[],
     activityLevels: [] as string[],
     categories: [] as string[],
   });
@@ -235,6 +243,11 @@ function MentorsContent() {
       return false;
     }
 
+    // Gender filter
+    if (filters.genders.length > 0 && !filters.genders.includes(c.profile?.gender || "")) {
+      return false;
+    }
+
     return true;
   });
 
@@ -265,6 +278,7 @@ function MentorsContent() {
   const totalActiveFilters =
     filters.procedures.length +
     filters.ageRanges.length +
+    filters.genders.length +
     filters.activityLevels.length;
 
   return (

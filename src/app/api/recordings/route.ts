@@ -11,6 +11,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const procedure = searchParams.get("procedure");
     const ageRange = searchParams.get("ageRange");
+    const gender = searchParams.get("gender");
     const activityLevel = searchParams.get("activityLevel");
     const category = searchParams.get("category");
     const page = parseInt(searchParams.get("page") || "1");
@@ -23,6 +24,7 @@ export async function GET(req: NextRequest) {
 
     if (procedure) query = query.eq("procedureType", procedure);
     if (ageRange) query = query.eq("ageRange", ageRange);
+    if (gender) query = query.eq("gender", gender);
     if (activityLevel) query = query.eq("activityLevel", activityLevel);
     if (category) query = query.eq("category", category);
 
@@ -63,6 +65,7 @@ export async function GET(req: NextRequest) {
                 procedureType: activeProc,
                 procedureDetails: seekerDetails,
                 ageRange: userProfile.ageRange,
+                gender: userProfile.gender,
                 activityLevel: userProfile.activityLevel,
                 recoveryGoals: seekerGoals,
                 complicatingFactors: seekerFactors,
@@ -71,6 +74,7 @@ export async function GET(req: NextRequest) {
               {
                 procedureType: rec.procedureType,
                 ageRange: rec.ageRange,
+                gender: rec.gender || rec.contributor?.profile?.gender,
                 activityLevel: rec.activityLevel,
                 recoveryGoals: rec.recoveryGoals,
                 complicatingFactors: rec.contributor?.profile?.complicatingFactors || [],
@@ -194,6 +198,7 @@ export async function POST(req: NextRequest) {
         procedureType: recordingProcedure,
         timeSinceSurgery: timeSinceSurgery || null,
         ageRange: user.profile.ageRange,
+        gender: user.profile.gender || null,
         activityLevel: user.profile.activityLevel,
         recoveryGoals: user.profile.recoveryGoals,
         status: "PENDING_REVIEW",

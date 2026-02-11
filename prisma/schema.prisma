@@ -129,6 +129,7 @@ model Profile {
   conditionCategory String?       @default("SURGERY") // "SURGERY" or "CHRONIC_PAIN"
   procedureDetails  String?       // e.g., "Patellar tendon graft"
   ageRange          String        // e.g., "20s", "30s", "40s"
+  gender            String?       // "MALE", "FEMALE", "OTHER"
   activityLevel     ActivityLevel
   recoveryGoals     String[]      // e.g., ["Return to competitive sport"]
   timeSinceSurgery  String?       // e.g., "3 months", "1 year" (contributors only)
@@ -208,6 +209,7 @@ model Recording {
   // Denormalized from contributor profile for search
   procedureType   String
   ageRange        String
+  gender          String?
   activityLevel   ActivityLevel
   recoveryGoals   String[]
 
