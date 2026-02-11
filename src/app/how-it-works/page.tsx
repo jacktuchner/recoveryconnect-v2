@@ -58,7 +58,7 @@ export default function HowItWorksPage() {
           <p className="text-lg sm:text-xl text-teal-100 max-w-2xl mx-auto">
             {activeTab === "patient"
               ? "Get matched with real people who\u2019ve been through the same thing. Learn from their experience through recordings or live calls."
-              : "Share your story, help others heal, and earn money doing it. Set your own prices and schedule."}
+              : "Sharing your story is powerful — for you and for others. Many contributors find it deeply meaningful. Set your own prices and schedule."}
           </p>
         </div>
       </div>
@@ -360,7 +360,7 @@ export default function HowItWorksPage() {
               <div className="bg-white rounded-xl border border-gray-200 p-6">
                 <h3 className="font-semibold text-gray-900 mb-2">Who are the contributors?</h3>
                 <p className="text-gray-600">
-                  Contributors are real people who have been through surgery recovery or live with chronic pain themselves.
+                  Contributors are real people who have been through surgery recovery or live with autoimmune conditions themselves.
                   They share their experiences to help others going through similar situations.
                   All contributors are verified and share their actual journey.
                 </p>
@@ -510,8 +510,9 @@ export default function HowItWorksPage() {
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-3">Share Your Story</h3>
                 <p className="text-gray-600">
-                  Record audio or video about your experience. Create series, recommend products
-                  and providers, and set your availability for live calls.
+                  Record audio or video about your experience — many contributors say it feels
+                  almost therapeutic. Create series, recommend products and providers, and set
+                  your availability for live calls.
                 </p>
               </div>
 
@@ -690,7 +691,7 @@ export default function HowItWorksPage() {
               <p className="text-lg text-teal-100 mb-8">
                 {session
                   ? "Head to your contributor dashboard to start recording, set up calls, and manage your profile."
-                  : "Sign up as a contributor and start helping others while earning money from your experience."}
+                  : "Your experience matters — to others and to you. Many contributors say sharing their story helps them process their own recovery. Sign up and start making a difference."}
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 {session ? (

@@ -150,7 +150,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">Supported Conditions</h2>
-            <p className="text-gray-600">Surgery recovery and chronic pain conditions, expanding based on demand.</p>
+            <p className="text-gray-600">Surgery recovery and autoimmune conditions, expanding based on demand.</p>
           </div>
 
           <div className="max-w-4xl mx-auto space-y-8">
@@ -170,7 +170,7 @@ export default function HomePage() {
             </div>
 
             <div>
-              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 text-center">Chronic Pain</h3>
+              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 text-center">Autoimmune</h3>
               <div className="flex flex-wrap justify-center gap-3">
                 {CHRONIC_PAIN_CONDITIONS.map((cond) => (
                   <Link
@@ -218,10 +218,10 @@ export default function HomePage() {
             Been through it? Help others navigate it.
           </h2>
           <p className="text-cyan-100 max-w-2xl mx-auto mb-8">
-            Get paid to share your experience. Record content on your own
-            time, or set up availability for live video calls. Whether you&apos;ve
-            recovered from surgery or manage chronic pain — someone out there needs
-            to hear your story.
+            Many contributors say that sharing their story is one of the most meaningful
+            parts of their recovery — almost therapeutic. Get paid to record content on your
+            own time or take live video calls. Whether you&apos;ve recovered from surgery or
+            manage an autoimmune condition, someone out there needs to hear your story.
           </p>
           <ContributorCTA />
         </div>

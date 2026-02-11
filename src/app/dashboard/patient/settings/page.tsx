@@ -197,7 +197,7 @@ export default function PatientSettingsPage() {
             <div>
               <h2 className="text-lg font-semibold text-gray-900">Been through it?</h2>
               <p className="text-sm text-gray-600 mt-1">
-                Your experience can help others. Become a contributor to share your story, recommend products, and mentor patients who are just starting out.
+                Sharing your story helps others and can be deeply meaningful for you too. Many contributors say it feels almost therapeutic. Become a contributor to share your experience, recommend products, and mentor patients who are just starting out.
               </p>
             </div>
             {upgradeSuccess ? (

@@ -12,7 +12,7 @@ export default function AboutPage() {
               Our Story
             </h1>
             <p className="text-lg sm:text-xl text-teal-100 leading-relaxed">
-              Recovery Connect was born from years of surgeries, chronic pain, and the
+              Recovery Connect was born from years of surgeries, autoimmune conditions, and the
               realization that sometimes the people who understand you best are strangers
               who have walked the same path.
             </p>
@@ -27,7 +27,7 @@ export default function AboutPage() {
 
           <div className="prose prose-lg text-gray-600 space-y-6">
             <p>
-              I&apos;m 26 now, and I&apos;ve been living with chronic pain since I was 15. What started
+              I&apos;m 26 now, and I&apos;ve been living with autoimmune issues since I was 15. What started
               as something I thought I could push through became a defining part of my life,
               leading me through years of rheumatology appointments and multiple surgeries.
             </p>
@@ -216,9 +216,14 @@ export default function AboutPage() {
             Recovery is possible. The pain you&apos;re feeling right now? It gets better.
             The isolation? It doesn&apos;t have to be this way.
           </p>
-          <p className="text-teal-100 text-lg mb-8">
+          <p className="text-teal-100 text-lg mb-4">
             There&apos;s a whole community of people who have walked this road before you,
             and they&apos;re ready to walk it with you.
+          </p>
+          <p className="text-teal-100 text-lg mb-8">
+            And if you&apos;re further along in your journey, sharing your story can be
+            one of the most rewarding things you do. Contributors often say it
+            feels almost therapeutic — a way to make meaning out of what they went through.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link

@@ -586,7 +586,7 @@ export default function PatientDashboard() {
             <div>
               <h3 className="font-semibold text-gray-900">Been through it?</h3>
               <p className="text-sm text-gray-600 mt-0.5">
-                Your experience can help others — become a contributor to share your story and mentor patients.
+                Sharing your story can be just as meaningful for you as it is for others. Many contributors say it feels almost therapeutic. Become a contributor to share your experience and mentor patients.
               </p>
             </div>
             <div className="self-start">
