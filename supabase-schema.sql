@@ -1,4 +1,4 @@
--- Recovery Connect Database Schema
+-- PeerHeal Database Schema
 -- Run this in Supabase SQL Editor: https://supabase.com/dashboard/project/uindledccnosavkwyeft/sql
 
 -- Create ENUMs

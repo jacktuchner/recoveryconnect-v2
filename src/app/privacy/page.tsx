@@ -15,7 +15,7 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-3">1. Introduction</h2>
             <p>
-              RecoveryConnect (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;) operates the RecoveryConnect platform, which connects surgical recovery patients with contributors who share their personal recovery experiences through recordings and live video calls. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our platform.
+              PeerHeal (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;) operates the PeerHeal platform, which connects surgical recovery patients with contributors who share their personal recovery experiences through recordings and live video calls. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our platform.
             </p>
           </section>
 
@@ -64,7 +64,7 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-3">5. Health Information</h2>
             <p>
-              The health-related information you provide (procedure type, surgery details, recovery goals) is voluntarily shared by you for the purpose of matching with relevant content and contributors. RecoveryConnect is not a healthcare provider and is not subject to HIPAA. However, we treat all health-related information with care and apply the same security measures as other personal data.
+              The health-related information you provide (procedure type, surgery details, recovery goals) is voluntarily shared by you for the purpose of matching with relevant content and contributors. PeerHeal is not a healthcare provider and is not subject to HIPAA. However, we treat all health-related information with care and apply the same security measures as other personal data.
             </p>
           </section>
 
@@ -105,7 +105,7 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-3">10. Children&apos;s Privacy</h2>
             <p>
-              RecoveryConnect is not intended for individuals under the age of 18. We do not knowingly collect personal information from children. If you believe we have collected information from a child, please contact us immediately.
+              PeerHeal is not intended for individuals under the age of 18. We do not knowingly collect personal information from children. If you believe we have collected information from a child, please contact us immediately.
             </p>
           </section>
 

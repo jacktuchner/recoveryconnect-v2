@@ -110,7 +110,7 @@ function RegisterForm() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold">Create your account</h1>
-          <p className="text-gray-600 mt-2">Join RecoveryConnect to get started</p>
+          <p className="text-gray-600 mt-2">Join PeerHeal to get started</p>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-gray-200 p-8 space-y-5">

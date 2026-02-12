@@ -1,8 +1,8 @@
-# RecoveryConnect
+# PeerHeal
 
 ## Project Stack
 
-This project (RecoveryConnect) is a Next.js app using TypeScript, Supabase (JS client, NOT Prisma), and Stripe for payments. The dev environment is Windows ARM64 (Snapdragon). Never suggest Prisma-based solutions or x64-specific binary fixes.
+This project (PeerHeal) is a Next.js app using TypeScript, Supabase (JS client, NOT Prisma), and Stripe for payments. The dev environment is Windows ARM64 (Snapdragon). Never suggest Prisma-based solutions or x64-specific binary fixes.
 
 ## Code Editing Rules
 

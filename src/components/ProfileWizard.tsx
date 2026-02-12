@@ -159,7 +159,7 @@ export default function ProfileWizard({ initialData, onComplete, onCancel, error
           <div className="space-y-5">
             <div>
               <p className="text-sm text-gray-600 mb-4">
-                What primarily brings you to RecoveryConnect? You can add additional conditions or procedures later from your dashboard.
+                What primarily brings you to PeerHeal? You can add additional conditions or procedures later from your dashboard.
               </p>
             </div>
 

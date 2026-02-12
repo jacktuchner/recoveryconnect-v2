@@ -53,7 +53,7 @@ export default function HowItWorksPage() {
       <div className="bg-gradient-to-br from-teal-600 via-teal-700 to-cyan-700 text-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 text-center">
           <h1 className="text-4xl sm:text-5xl font-bold mb-4">
-            How RecoveryConnect Works
+            How PeerHeal Works
           </h1>
           <p className="text-lg sm:text-xl text-teal-100 max-w-2xl mx-auto">
             {activeTab === "patient"
@@ -370,7 +370,7 @@ export default function HowItWorksPage() {
               <div className="bg-white rounded-xl border border-gray-200 p-6">
                 <h3 className="font-semibold text-gray-900 mb-2">Is this medical advice?</h3>
                 <p className="text-gray-600">
-                  No. RecoveryConnect provides peer support, not medical advice. Contributors share
+                  No. PeerHeal provides peer support, not medical advice. Contributors share
                   their personal experiences and what worked for them, but you should always follow
                   your doctor&apos;s instructions and consult healthcare professionals for medical decisions.
                 </p>
@@ -396,7 +396,7 @@ export default function HowItWorksPage() {
               <div className="bg-white rounded-xl border border-gray-200 p-6">
                 <h3 className="font-semibold text-gray-900 mb-2">How does the subscription work?</h3>
                 <p className="text-gray-600">
-                  A subscription gives you unlimited access to all recordings on RecoveryConnect.
+                  A subscription gives you unlimited access to all recordings on PeerHeal.
                   Watch as many recovery stories as you want, anytime. You can cancel at any time
                   and keep access until the end of your billing period. Live calls are priced separately.
                 </p>

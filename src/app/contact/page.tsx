@@ -11,7 +11,7 @@ export default function ContactPage() {
     e.preventDefault();
     // For now, open mailto link with the form data
     const mailtoBody = `Name: ${form.name}\nEmail: ${form.email}\n\n${form.message}`;
-    window.location.href = `mailto:jacktuchner@me.com?subject=${encodeURIComponent(form.subject || "RecoveryConnect Contact")}&body=${encodeURIComponent(mailtoBody)}`;
+    window.location.href = `mailto:jacktuchner@me.com?subject=${encodeURIComponent(form.subject || "PeerHeal Contact")}&body=${encodeURIComponent(mailtoBody)}`;
     setSubmitted(true);
   }
 

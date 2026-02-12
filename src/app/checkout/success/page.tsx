@@ -184,7 +184,7 @@ function CheckoutSuccessContent() {
       </h1>
       <p className="text-gray-600 mb-6">
         {isSubscription
-          ? "Welcome! You now have unlimited access to all recordings on RecoveryConnect."
+          ? "Welcome! You now have unlimited access to all recordings on PeerHeal."
           : isGroupSession
           ? "You're registered for the group session. We'll send you a reminder before it starts."
           : "Thank you for your purchase. Your access has been granted."}

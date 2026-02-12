@@ -2,9 +2,9 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Use Resend's test domain until recoveryconnect.com is verified
-// Change to "RecoveryConnect <noreply@recoveryconnect.com>" after domain verification
-const FROM_EMAIL = process.env.EMAIL_FROM || "RecoveryConnect <onboarding@resend.dev>";
+// Use Resend's test domain until peerheal.com is verified
+// Change to "PeerHeal <noreply@peerheal.com>" after domain verification
+const FROM_EMAIL = process.env.EMAIL_FROM || "PeerHeal <onboarding@resend.dev>";
 
 // Email templates
 function baseTemplate(content: string) {
@@ -14,18 +14,18 @@ function baseTemplate(content: string) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RecoveryConnect</title>
+  <title>PeerHeal</title>
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #374151; max-width: 600px; margin: 0 auto; padding: 20px;">
   <div style="text-align: center; margin-bottom: 30px;">
     <div style="display: inline-block; background: #0d9488; color: white; font-weight: bold; padding: 10px 15px; border-radius: 8px; font-size: 18px;">
-      Recovery<span style="color: #a5f3fc;">Connect</span>
+      Peer<span style="color: #a5f3fc;">Heal</span>
     </div>
   </div>
   ${content}
   <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center; color: #9ca3af; font-size: 14px;">
-    <p>RecoveryConnect - Peer support for your recovery journey</p>
-    <p style="font-size: 12px;">This email was sent by RecoveryConnect. If you didn't expect this email, you can ignore it.</p>
+    <p>PeerHeal - Peer support for your recovery journey</p>
+    <p style="font-size: 12px;">This email was sent by PeerHeal. If you didn't expect this email, you can ignore it.</p>
   </div>
 </body>
 </html>
@@ -38,7 +38,7 @@ export async function sendWelcomeEmail(to: string, name: string, role: string) {
   const isContributor = role === "CONTRIBUTOR";
 
   const content = `
-    <h1 style="color: #0d9488; font-size: 24px; margin-bottom: 20px;">Welcome to RecoveryConnect, ${name}!</h1>
+    <h1 style="color: #0d9488; font-size: 24px; margin-bottom: 20px;">Welcome to PeerHeal, ${name}!</h1>
     <p>Thank you for joining our community. ${
       isContributor
         ? "We're excited to have you share your recovery experience with others."
@@ -68,7 +68,7 @@ export async function sendWelcomeEmail(to: string, name: string, role: string) {
       </a>
     </div>
     <p>If you have any questions, we're here to help.</p>
-    <p>Best,<br>The RecoveryConnect Team</p>
+    <p>Best,<br>The PeerHeal Team</p>
   `;
 
   try {
@@ -76,7 +76,7 @@ export async function sendWelcomeEmail(to: string, name: string, role: string) {
     const result = await resend.emails.send({
       from: FROM_EMAIL,
       to,
-      subject: `Welcome to RecoveryConnect, ${name}!`,
+      subject: `Welcome to PeerHeal, ${name}!`,
       html: baseTemplate(content),
     });
     console.log("[EMAIL] Send result:", result);
@@ -275,7 +275,7 @@ export async function sendCallCancelledEmail(
 export async function sendPasswordResetEmail(to: string, resetUrl: string) {
   const content = `
     <h1 style="color: #0d9488; font-size: 24px; margin-bottom: 20px;">Reset Your Password</h1>
-    <p>We received a request to reset your password for your RecoveryConnect account.</p>
+    <p>We received a request to reset your password for your PeerHeal account.</p>
     <p>Click the button below to create a new password. This link will expire in 1 hour.</p>
     <div style="text-align: center; margin: 30px 0;">
       <a href="${resetUrl}"
@@ -294,7 +294,7 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string) {
     await resend.emails.send({
       from: FROM_EMAIL,
       to,
-      subject: "Reset your RecoveryConnect password",
+      subject: "Reset your PeerHeal password",
       html: baseTemplate(content),
     });
     return { success: true };
@@ -309,9 +309,9 @@ export async function sendSubscriptionConfirmationEmail(to: string, name: string
   const planLabel = plan === "annual" ? "Annual" : "Monthly";
 
   const content = `
-    <h1 style="color: #0d9488; font-size: 24px; margin-bottom: 20px;">Welcome to RecoveryConnect!</h1>
+    <h1 style="color: #0d9488; font-size: 24px; margin-bottom: 20px;">Welcome to PeerHeal!</h1>
     <p>Hi ${name},</p>
-    <p>Your <strong>${planLabel}</strong> subscription is now active. You have unlimited access to all recovery recordings on RecoveryConnect.</p>
+    <p>Your <strong>${planLabel}</strong> subscription is now active. You have unlimited access to all recovery recordings on PeerHeal.</p>
     <div style="background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 8px; padding: 20px; margin: 20px 0;">
       <p style="margin: 0 0 10px 0;"><strong>Plan:</strong> ${planLabel}</p>
       <p style="margin: 0;"><strong>Access:</strong> Unlimited recordings</p>
@@ -324,14 +324,14 @@ export async function sendSubscriptionConfirmationEmail(to: string, name: string
       </a>
     </div>
     <p>You can manage your subscription anytime from your dashboard.</p>
-    <p>Best,<br>The RecoveryConnect Team</p>
+    <p>Best,<br>The PeerHeal Team</p>
   `;
 
   try {
     await resend.emails.send({
       from: FROM_EMAIL,
       to,
-      subject: `Your RecoveryConnect subscription is active!`,
+      subject: `Your PeerHeal subscription is active!`,
       html: baseTemplate(content),
     });
     return { success: true };
@@ -346,7 +346,7 @@ export async function sendSubscriptionCancelledEmail(to: string, name: string, a
   const content = `
     <h1 style="color: #dc2626; font-size: 24px; margin-bottom: 20px;">Subscription Cancelled</h1>
     <p>Hi ${name},</p>
-    <p>Your RecoveryConnect subscription has been cancelled.</p>
+    <p>Your PeerHeal subscription has been cancelled.</p>
     <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 20px; margin: 20px 0;">
       <p style="margin: 0;"><strong>Access until:</strong> ${accessEndsDate}</p>
     </div>
@@ -359,14 +359,14 @@ export async function sendSubscriptionCancelledEmail(to: string, name: string, a
       </a>
     </div>
     <p>We hope to see you back soon.</p>
-    <p>Best,<br>The RecoveryConnect Team</p>
+    <p>Best,<br>The PeerHeal Team</p>
   `;
 
   try {
     await resend.emails.send({
       from: FROM_EMAIL,
       to,
-      subject: "Your RecoveryConnect subscription has been cancelled",
+      subject: "Your PeerHeal subscription has been cancelled",
       html: baseTemplate(content),
     });
     return { success: true };
@@ -647,7 +647,7 @@ export async function sendApplicationApprovedEmail(to: string, name: string) {
   const content = `
     <h1 style="color: #0d9488; font-size: 24px; margin-bottom: 20px;">You're Approved!</h1>
     <p>Hi ${name},</p>
-    <p>Great news! Your contributor application has been approved. You now have full access to share your recovery experience on RecoveryConnect.</p>
+    <p>Great news! Your contributor application has been approved. You now have full access to share your recovery experience on PeerHeal.</p>
     <div style="background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 8px; padding: 20px; margin: 20px 0;">
       <p style="margin: 0 0 10px 0;"><strong>What you can do now:</strong></p>
       <ul style="margin: 0; padding-left: 20px;">
@@ -664,14 +664,14 @@ export async function sendApplicationApprovedEmail(to: string, name: string) {
       </a>
     </div>
     <p>Thank you for being part of our community and helping others through their recovery.</p>
-    <p>Best,<br>The RecoveryConnect Team</p>
+    <p>Best,<br>The PeerHeal Team</p>
   `;
 
   try {
     await resend.emails.send({
       from: FROM_EMAIL,
       to,
-      subject: "Your RecoveryConnect contributor application is approved!",
+      subject: "Your PeerHeal contributor application is approved!",
       html: baseTemplate(content),
     });
     return { success: true };
@@ -686,7 +686,7 @@ export async function sendApplicationRejectedEmail(to: string, name: string) {
   const content = `
     <h1 style="color: #374151; font-size: 24px; margin-bottom: 20px;">Application Update</h1>
     <p>Hi ${name},</p>
-    <p>Thank you for your interest in becoming a contributor on RecoveryConnect. After reviewing your application, we're unable to approve it at this time.</p>
+    <p>Thank you for your interest in becoming a contributor on PeerHeal. After reviewing your application, we're unable to approve it at this time.</p>
     <p>This doesn't reflect on your recovery experience — we may need additional information or documentation. You're welcome to reapply in the future.</p>
     <div style="text-align: center; margin: 30px 0;">
       <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/patient"
@@ -695,14 +695,14 @@ export async function sendApplicationRejectedEmail(to: string, name: string) {
       </a>
     </div>
     <p>If you have any questions, feel free to reach out.</p>
-    <p>Best,<br>The RecoveryConnect Team</p>
+    <p>Best,<br>The PeerHeal Team</p>
   `;
 
   try {
     await resend.emails.send({
       from: FROM_EMAIL,
       to,
-      subject: "Update on your RecoveryConnect contributor application",
+      subject: "Update on your PeerHeal contributor application",
       html: baseTemplate(content),
     });
     return { success: true };

@@ -555,7 +555,7 @@ export default function PatientDashboard() {
     return (
       <div>
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Welcome to RecoveryConnect</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Welcome to PeerHeal</h2>
           <p className="text-gray-600 mt-1">Let&apos;s set up your profile to find the best matches.</p>
         </div>
         <ProfileWizard
@@ -600,7 +600,7 @@ export default function PatientDashboard() {
       {subscription.status === "active" && !subscription.cancelAtPeriodEnd && (
         <section className="bg-green-50 border border-green-200 rounded-xl p-4 mb-8 flex items-center justify-between">
           <div>
-            <p className="font-semibold text-green-800">RecoveryConnect Subscriber</p>
+            <p className="font-semibold text-green-800">PeerHeal Subscriber</p>
             <p className="text-sm text-green-700">
               {subscription.plan === "annual" ? "Annual" : "Monthly"} plan
               {subscription.currentPeriodEnd && (

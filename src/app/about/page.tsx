@@ -12,7 +12,7 @@ export default function AboutPage() {
               Our Story
             </h1>
             <p className="text-lg sm:text-xl text-teal-100 leading-relaxed">
-              Recovery Connect was born from years of surgeries, autoimmune conditions, and the
+              PeerHeal was born from years of surgeries, autoimmune conditions, and the
               realization that sometimes the people who understand you best are strangers
               who have walked the same path.
             </p>
@@ -129,7 +129,7 @@ export default function AboutPage() {
       {/* The Why */}
       <section className="py-20">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold mb-8">Why Recovery Connect Exists</h2>
+          <h2 className="text-3xl font-bold mb-8">Why PeerHeal Exists</h2>
 
           <div className="prose prose-lg text-gray-600 space-y-6">
             <p>
@@ -146,7 +146,7 @@ export default function AboutPage() {
             </p>
 
             <p>
-              That&apos;s why I built Recovery Connect. To create the community I wish
+              That&apos;s why I built PeerHeal. To create the community I wish
               existed when I was lying in that hospital bed, scrolling through forums
               at 2 AM, desperate to find someone who understood.
             </p>

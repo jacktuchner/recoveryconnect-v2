@@ -191,7 +191,7 @@ async function sendCallConfirmedEmailWithRoom(
   // Import Resend dynamically to avoid circular imports
   const { Resend } = await import("resend");
   const resend = new Resend(process.env.RESEND_API_KEY);
-  const FROM_EMAIL = process.env.EMAIL_FROM || "RecoveryConnect <onboarding@resend.dev>";
+  const FROM_EMAIL = process.env.EMAIL_FROM || "PeerHeal <onboarding@resend.dev>";
 
   const dateStr = scheduledAt.toLocaleDateString("en-US", {
     weekday: "long",
@@ -214,7 +214,7 @@ async function sendCallConfirmedEmailWithRoom(
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #374151; max-width: 600px; margin: 0 auto; padding: 20px;">
   <div style="text-align: center; margin-bottom: 30px;">
     <div style="display: inline-block; background: #0d9488; color: white; font-weight: bold; padding: 10px 15px; border-radius: 8px; font-size: 18px;">
-      Recovery<span style="color: #a5f3fc;">Connect</span>
+      Peer<span style="color: #a5f3fc;">Heal</span>
     </div>
   </div>
 
@@ -251,7 +251,7 @@ async function sendCallConfirmedEmailWithRoom(
   <p>We'll send you a reminder before your call.</p>
 
   <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center; color: #9ca3af; font-size: 14px;">
-    <p>RecoveryConnect - Peer support for your recovery journey</p>
+    <p>PeerHeal - Peer support for your recovery journey</p>
   </div>
 </body>
 </html>

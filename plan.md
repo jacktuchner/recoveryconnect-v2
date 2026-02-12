@@ -1,8 +1,8 @@
-# RecoveryConnect — Project Plan
+# PeerHeal — Project Plan
 
 ## Overview
 
-RecoveryConnect is a peer-to-peer surgical recovery support platform connecting patients with recovery mentors (contributors) who've been through similar procedures. Built with Next.js 16, TypeScript, Supabase, and Stripe.
+PeerHeal is a peer-to-peer surgical recovery support platform connecting patients with recovery mentors (contributors) who've been through similar procedures. Built with Next.js 16, TypeScript, Supabase, and Stripe.
 
 ---
 

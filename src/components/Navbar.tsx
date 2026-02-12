@@ -129,10 +129,10 @@ export default function Navbar() {
         <div className="flex justify-between h-16 items-center">
           <Link href="/" className="flex items-center gap-2">
             <div className="w-8 h-8 bg-teal-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">RC</span>
+              <span className="text-white font-bold text-sm">PH</span>
             </div>
             <span className="text-xl font-bold text-gray-900">
-              Recovery<span className="text-teal-600">Connect</span>
+              Peer<span className="text-teal-600">Heal</span>
             </span>
           </Link>
 

@@ -31,7 +31,7 @@ export default function HomePage() {
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold mb-4">How RecoveryConnect Works</h2>
+            <h2 className="text-3xl font-bold mb-4">How PeerHeal Works</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
               Two tiers of peer support, designed to give you exactly the
               guidance you need.
@@ -274,7 +274,7 @@ export default function HomePage() {
       <section className="py-12">
         <div className="max-w-3xl mx-auto px-4 text-center">
           <p className="text-xs text-gray-400 leading-relaxed">
-            RecoveryConnect provides peer-to-peer recovery experiences and is not a
+            PeerHeal provides peer-to-peer recovery experiences and is not a
             medical service. Content shared by contributors reflects personal
             experience and should not be considered medical advice. Always consult
             your healthcare provider for medical decisions. By using this platform,
@@ -291,9 +291,9 @@ export default function HomePage() {
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-8 h-8 bg-teal-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">RC</span>
+                  <span className="text-white font-bold text-sm">PH</span>
                 </div>
-                <span className="text-white font-bold">RecoveryConnect</span>
+                <span className="text-white font-bold">PeerHeal</span>
               </div>
               <p className="text-sm">
                 Peer recovery guidance from people who have been through it.
@@ -315,7 +315,7 @@ export default function HomePage() {
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-sm text-center">
-            &copy; {new Date().getFullYear()} RecoveryConnect. All rights reserved.
+            &copy; {new Date().getFullYear()} PeerHeal. All rights reserved.
           </div>
         </div>
       </footer>

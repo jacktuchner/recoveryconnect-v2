@@ -55,7 +55,7 @@ export default function ContentAcknowledgmentModal({ children }: ContentAcknowle
           {/* Content */}
           <div className="text-gray-600 space-y-4 mb-6">
             <p>
-              <strong className="text-gray-900">Recovery Connect</strong> is a peer support community where
+              <strong className="text-gray-900">PeerHeal</strong> is a peer support community where
               people share their personal recovery journeys and emotional experiences.
             </p>
 
@@ -89,7 +89,7 @@ export default function ContentAcknowledgmentModal({ children }: ContentAcknowle
               className="mt-1 w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
             />
             <span className="text-sm text-gray-700">
-              I understand that content on Recovery Connect reflects personal experiences and is not
+              I understand that content on PeerHeal reflects personal experiences and is not
               a substitute for professional medical advice. I will always consult my healthcare
               provider for medical decisions.
             </span>

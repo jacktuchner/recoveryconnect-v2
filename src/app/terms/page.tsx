@@ -15,14 +15,14 @@ export default function TermsOfServicePage() {
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-3">1. Acceptance of Terms</h2>
             <p>
-              By accessing or using RecoveryConnect (&quot;the Platform&quot;), you agree to be bound by these Terms of Service. If you do not agree to these terms, do not use the Platform. RecoveryConnect is operated by Jack Tuchner (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;).
+              By accessing or using PeerHeal (&quot;the Platform&quot;), you agree to be bound by these Terms of Service. If you do not agree to these terms, do not use the Platform. PeerHeal is operated by Jack Tuchner (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;).
             </p>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-3">2. Platform Description</h2>
             <p>
-              RecoveryConnect is a peer support platform that connects surgical recovery patients with contributors who share their personal recovery experiences. The Platform facilitates two types of connections: pre-recorded audio/video content and live 1-on-1 video calls. RecoveryConnect is not a healthcare provider and does not offer medical advice, diagnosis, or treatment.
+              PeerHeal is a peer support platform that connects surgical recovery patients with contributors who share their personal recovery experiences. The Platform facilitates two types of connections: pre-recorded audio/video content and live 1-on-1 video calls. PeerHeal is not a healthcare provider and does not offer medical advice, diagnosis, or treatment.
             </p>
           </section>
 
@@ -30,7 +30,7 @@ export default function TermsOfServicePage() {
             <h2 className="text-lg font-semibold text-gray-900 mb-3">3. Not Medical Advice</h2>
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-3">
               <p className="font-medium text-amber-800">
-                All content on RecoveryConnect reflects personal experiences of individual contributors and is NOT medical advice. Always follow your doctor&apos;s instructions and consult qualified healthcare professionals for medical decisions.
+                All content on PeerHeal reflects personal experiences of individual contributors and is NOT medical advice. Always follow your doctor&apos;s instructions and consult qualified healthcare professionals for medical decisions.
               </p>
             </div>
             <p>
@@ -78,7 +78,7 @@ export default function TermsOfServicePage() {
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-3">7. Contributor Verification</h2>
             <p className="mb-3">
-              RecoveryConnect takes reasonable steps to verify contributor identities and experiences through an application process that may include document review and video interviews. Contributors who complete this process receive a &ldquo;Verified&rdquo; designation on their profile.
+              PeerHeal takes reasonable steps to verify contributor identities and experiences through an application process that may include document review and video interviews. Contributors who complete this process receive a &ldquo;Verified&rdquo; designation on their profile.
             </p>
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-3">
               <p className="font-medium text-amber-800">
@@ -112,7 +112,7 @@ export default function TermsOfServicePage() {
             <h2 className="text-lg font-semibold text-gray-900 mb-3">9. Content Ownership</h2>
             <ul className="list-disc pl-5 space-y-2">
               <li>Contributors retain ownership of their recorded content.</li>
-              <li>By uploading content, contributors grant RecoveryConnect a non-exclusive license to host, display, and distribute the content on the Platform.</li>
+              <li>By uploading content, contributors grant PeerHeal a non-exclusive license to host, display, and distribute the content on the Platform.</li>
               <li>Purchased content is licensed for personal, non-commercial use only. You may not redistribute, resell, or publicly display purchased content.</li>
               <li>We may remove content that violates these terms or our community guidelines.</li>
             </ul>
@@ -143,7 +143,7 @@ export default function TermsOfServicePage() {
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-3">12. Limitation of Liability</h2>
             <p>
-              To the maximum extent permitted by law, RecoveryConnect and its operators shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the Platform. This includes but is not limited to damages arising from: reliance on content shared by contributors, technical issues during live calls, or decisions made based on information obtained through the Platform.
+              To the maximum extent permitted by law, PeerHeal and its operators shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the Platform. This includes but is not limited to damages arising from: reliance on content shared by contributors, technical issues during live calls, or decisions made based on information obtained through the Platform.
             </p>
             <p className="mt-3">
               Our total liability for any claim arising from or related to these terms shall not exceed the amount you paid to us in the 12 months preceding the claim.
