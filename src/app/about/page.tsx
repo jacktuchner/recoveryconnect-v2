@@ -12,7 +12,7 @@ export default function AboutPage() {
               Our Story
             </h1>
             <p className="text-lg sm:text-xl text-teal-100 leading-relaxed">
-              PeerHeal was born from years of surgeries, autoimmune conditions, and the
+              Kizu was born from years of surgeries, autoimmune conditions, and the
               realization that sometimes the people who understand you best are strangers
               who have walked the same path.
             </p>
@@ -129,7 +129,7 @@ export default function AboutPage() {
       {/* The Why */}
       <section className="py-20">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold mb-8">Why PeerHeal Exists</h2>
+          <h2 className="text-3xl font-bold mb-8">Why Kizu Exists</h2>
 
           <div className="prose prose-lg text-gray-600 space-y-6">
             <p>
@@ -146,7 +146,7 @@ export default function AboutPage() {
             </p>
 
             <p>
-              That&apos;s why I built PeerHeal. To create the community I wish
+              That&apos;s why I built Kizu. To create the community I wish
               existed when I was lying in that hospital bed, scrolling through forums
               at 2 AM, desperate to find someone who understood.
             </p>
@@ -154,8 +154,36 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Mission */}
+      {/* The Name */}
       <section className="bg-gradient-to-br from-gray-50 to-gray-100 py-20">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold mb-8">Why &quot;Kizu&quot;?</h2>
+          <div className="prose prose-lg text-gray-600 space-y-6">
+            <p>
+              <strong className="text-gray-900">Kizu</strong> (傷) is the Japanese word for
+              wound or scar — a word that acknowledges what you&apos;ve been through,
+              whether physical or mental, leaves a mark.
+            </p>
+            <p>
+              Kizu is also the root of
+              <strong className="text-gray-900"> Kizuna</strong> (絆), meaning a deep,
+              unbreakable bond — the kind forged through shared experience
+              and mutual understanding.
+            </p>
+            <p>
+              That&apos;s what this platform is about. Your scars — surgical,
+              emotional, invisible — aren&apos;t just marks of what you endured. They&apos;re
+              the bridges that connect you to someone who truly understands.
+            </p>
+            <p className="text-gray-900 font-medium italic">
+              Scars that become bonds.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Mission */}
+      <section className="bg-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">Our Mission</h2>
@@ -222,7 +250,7 @@ export default function AboutPage() {
           </p>
           <p className="text-teal-100 text-lg mb-8">
             And if you&apos;re further along in your journey, sharing your story can be
-            one of the most rewarding things you do. Contributors often say it
+            one of the most rewarding things you do. Guides often say it
             feels almost therapeutic — a way to make meaning out of what they went through.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -233,7 +261,7 @@ export default function AboutPage() {
               Join the Community
             </Link>
             <Link
-              href="/auth/register?role=contributor"
+              href="/auth/register?role=guide"
               className="inline-flex items-center justify-center border-2 border-teal-300 text-white font-semibold px-6 py-3 rounded-lg hover:bg-teal-600 transition-colors"
             >
               Share Your Story

@@ -20,7 +20,7 @@ export default function HowItWorksPage() {
   const [subscribing, setSubscribing] = useState<string | null>(null);
 
   const userRole = (session?.user as any)?.role;
-  const isContributorRole = userRole === "CONTRIBUTOR";
+  const isContributorRole = userRole === "GUIDE";
   const defaultTab = isContributorRole ? "contributor" : "patient";
   const [activeTab, setActiveTab] = useState<"patient" | "contributor">(defaultTab);
 
@@ -53,12 +53,12 @@ export default function HowItWorksPage() {
       <div className="bg-gradient-to-br from-teal-600 via-teal-700 to-cyan-700 text-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 text-center">
           <h1 className="text-4xl sm:text-5xl font-bold mb-4">
-            How PeerHeal Works
+            How Kizu Works
           </h1>
           <p className="text-lg sm:text-xl text-teal-100 max-w-2xl mx-auto">
             {activeTab === "patient"
               ? "Get matched with real people who\u2019ve been through the same thing. Learn from their experience through recordings or live calls."
-              : "Sharing your story is powerful — for you and for others. Many contributors find it deeply meaningful. Set your own prices and schedule."}
+              : "Sharing your story is powerful — for you and for others. Many guides find it deeply meaningful. Set your own prices and schedule."}
           </p>
         </div>
       </div>
@@ -75,7 +75,7 @@ export default function HowItWorksPage() {
                   : "text-gray-600 hover:text-gray-900"
               }`}
             >
-              For Patients
+              For Seekers
             </button>
             <button
               onClick={() => setActiveTab("contributor")}
@@ -85,7 +85,7 @@ export default function HowItWorksPage() {
                   : "text-gray-600 hover:text-gray-900"
               }`}
             >
-              For Contributors
+              For Guides
             </button>
           </div>
         </div>
@@ -113,7 +113,7 @@ export default function HowItWorksPage() {
                 <h3 className="text-xl font-bold text-gray-900 mb-3">Create Your Profile</h3>
                 <p className="text-gray-600">
                   Tell us about your surgery or condition, age, activity level, and goals.
-                  This helps us match you with contributors who truly understand your situation.
+                  This helps us match you with guides who truly understand your situation.
                 </p>
               </div>
 
@@ -132,7 +132,7 @@ export default function HowItWorksPage() {
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-3">Find Your Match</h3>
                 <p className="text-gray-600">
-                  Browse contributors who&apos;ve been through the same thing. Filter by surgery or condition, age,
+                  Browse guides who&apos;ve been through the same thing. Filter by surgery or condition, age,
                   activity level, and see match scores showing how similar their situation is to yours.
                 </p>
               </div>
@@ -173,7 +173,7 @@ export default function HowItWorksPage() {
                   </div>
                   <h3 className="text-2xl font-bold text-gray-900 mb-3">Watch Real Stories</h3>
                   <p className="text-gray-600 mb-6">
-                    Pre-recorded audio and video from contributors sharing their journey.
+                    Pre-recorded audio and video from guides sharing their journey.
                     Buy once, watch anytime.
                   </p>
                   <ul className="space-y-3 mb-8">
@@ -236,7 +236,7 @@ export default function HowItWorksPage() {
                     </li>
                   </ul>
                   <Link
-                    href="/mentors"
+                    href="/guides"
                     className="inline-flex items-center gap-2 bg-cyan-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-cyan-700 transition-colors"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -346,7 +346,7 @@ export default function HowItWorksPage() {
             </div>
 
             <p className="text-center text-sm text-gray-500 mt-8">
-              Live calls are priced per session, set by each contributor.
+              Live calls are priced per session, set by each guide.
             </p>
           </div>
 
@@ -358,19 +358,19 @@ export default function HowItWorksPage() {
 
             <div className="space-y-6">
               <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h3 className="font-semibold text-gray-900 mb-2">Who are the contributors?</h3>
+                <h3 className="font-semibold text-gray-900 mb-2">Who are the guides?</h3>
                 <p className="text-gray-600">
-                  Contributors are real people who have been through surgery recovery or live with autoimmune conditions themselves.
-                  Every contributor goes through our vetting process — a written application, optional proof documents, and a
+                  Guides are real people who have been through surgery recovery or live with autoimmune conditions themselves.
+                  Every guide goes through our vetting process — a written application, optional proof documents, and a
                   video interview with our team — before they can publish content or take calls.
-                  Approved contributors display a Verified badge on their profile.
+                  Approved guides display a Verified badge on their profile.
                 </p>
               </div>
 
               <div className="bg-white rounded-xl border border-gray-200 p-6">
                 <h3 className="font-semibold text-gray-900 mb-2">Is this medical advice?</h3>
                 <p className="text-gray-600">
-                  No. PeerHeal provides peer support, not medical advice. Contributors share
+                  No. Kizu provides peer support, not medical advice. Guides share
                   their personal experiences and what worked for them, but you should always follow
                   your doctor&apos;s instructions and consult healthcare professionals for medical decisions.
                 </p>
@@ -381,7 +381,7 @@ export default function HowItWorksPage() {
                 <p className="text-gray-600">
                   We match you based on your surgery or condition, age range, activity level, and goals.
                   The more complete your profile, the better your matches. Match scores show you how
-                  similar a contributor&apos;s situation is to yours.
+                  similar a guide&apos;s situation is to yours.
                 </p>
               </div>
 
@@ -396,18 +396,18 @@ export default function HowItWorksPage() {
               <div className="bg-white rounded-xl border border-gray-200 p-6">
                 <h3 className="font-semibold text-gray-900 mb-2">How does the subscription work?</h3>
                 <p className="text-gray-600">
-                  A subscription gives you unlimited access to all recordings on PeerHeal.
+                  A subscription gives you unlimited access to all recordings on Kizu.
                   Watch as many recovery stories as you want, anytime. You can cancel at any time
                   and keep access until the end of your billing period. Live calls are priced separately.
                 </p>
               </div>
 
               <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h3 className="font-semibold text-gray-900 mb-2">Do contributors still get paid with subscriptions?</h3>
+                <h3 className="font-semibold text-gray-900 mb-2">Do guides still get paid with subscriptions?</h3>
                 <p className="text-gray-600">
-                  Yes! Subscription revenue is distributed to contributors based on how much their content
-                  is watched by subscribers. Contributors with popular, helpful content earn more. This ensures
-                  contributors are fairly compensated while keeping access affordable for patients.
+                  Yes! Subscription revenue is distributed to guides based on how much their content
+                  is watched by subscribers. Guides with popular, helpful content earn more. This ensures
+                  guides are fairly compensated while keeping access affordable for seekers.
                 </p>
               </div>
 
@@ -428,14 +428,14 @@ export default function HowItWorksPage() {
               <h2 className="text-3xl font-bold mb-4">Ready to Get Started?</h2>
               <p className="text-lg text-teal-100 mb-8">
                 {session
-                  ? "Browse recordings and find contributors who understand your situation."
-                  : "Create your free profile and get matched with contributors who understand your situation."}
+                  ? "Browse recordings and find guides who understand your situation."
+                  : "Create your free profile and get matched with guides who understand your situation."}
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 {session ? (
                   <>
                     <Link
-                      href="/dashboard/patient"
+                      href="/dashboard/seeker"
                       className="inline-flex items-center justify-center gap-2 bg-white text-teal-700 px-8 py-3 rounded-lg font-semibold hover:bg-teal-50 transition-colors"
                     >
                       Go to Dashboard
@@ -512,7 +512,7 @@ export default function HowItWorksPage() {
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-3">Share Your Story</h3>
                 <p className="text-gray-600">
-                  Record audio or video about your experience — many contributors say it feels
+                  Record audio or video about your experience — many guides say it feels
                   almost therapeutic. Create series, recommend products and providers, and set
                   your availability for live calls.
                 </p>
@@ -530,7 +530,7 @@ export default function HowItWorksPage() {
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-3">Earn & Help</h3>
                 <p className="text-gray-600">
-                  Get paid when patients watch your recordings, buy your series, or book calls with you.
+                  Get paid when seekers watch your recordings, buy your series, or book calls with you.
                   You earn 75% of every sale.
                 </p>
               </div>
@@ -582,7 +582,7 @@ export default function HowItWorksPage() {
                   </div>
                   <h3 className="text-xl font-bold text-gray-900 mb-3">Live Calls</h3>
                   <p className="text-gray-600 mb-4">
-                    Set your hourly rate and availability. Patients book 30 or 60 minute
+                    Set your hourly rate and availability. Seekers book 30 or 60 minute
                     video calls. You earn 75% of each booking.
                   </p>
                   <ul className="space-y-2">
@@ -610,7 +610,7 @@ export default function HowItWorksPage() {
                   </div>
                   <h3 className="text-xl font-bold text-gray-900 mb-3">Group Sessions</h3>
                   <p className="text-gray-600 mb-4">
-                    Host group sessions for multiple patients at once.
+                    Host group sessions for multiple seekers at once.
                     You set the price and max capacity.
                   </p>
                   <ul className="space-y-2">
@@ -635,7 +635,7 @@ export default function HowItWorksPage() {
           {/* Contributor FAQ */}
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
             <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
-              Contributor FAQ
+              Guide FAQ
             </h2>
 
             <div className="space-y-6">
@@ -645,7 +645,7 @@ export default function HowItWorksPage() {
                   We use Stripe Connect for all payouts. You earn 75% of every individual sale &mdash; recordings,
                   series, calls, and group sessions. For subscribers who watch your content, subscription
                   revenue is distributed based on how much your recordings are watched relative to other
-                  contributors. The more patients engage with your content, the more you earn. Payouts are
+                  guides. The more seekers engage with your content, the more you earn. Payouts are
                   processed automatically to your connected bank account.
                 </p>
               </div>
@@ -654,7 +654,7 @@ export default function HowItWorksPage() {
                 <h3 className="font-semibold text-gray-900 mb-2">What do I need to record?</h3>
                 <p className="text-gray-600">
                   Share your timeline, practical tips, mental health strategies &mdash; whatever
-                  helped you through it. Patients are looking for real, honest experiences
+                  helped you through it. Seekers are looking for real, honest experiences
                   from someone who&apos;s been in their shoes.
                 </p>
               </div>
@@ -671,7 +671,7 @@ export default function HowItWorksPage() {
                 <h3 className="font-semibold text-gray-900 mb-2">What about recommendations?</h3>
                 <p className="text-gray-600">
                   You can recommend products, providers, and services that helped you.
-                  Multiple endorsements from different contributors boost visibility, helping patients
+                  Multiple endorsements from different guides boost visibility, helping seekers
                   find the most trusted recommendations.
                 </p>
               </div>
@@ -692,13 +692,13 @@ export default function HowItWorksPage() {
               <h2 className="text-3xl font-bold mb-4">Ready to Share Your Story?</h2>
               <p className="text-lg text-teal-100 mb-8">
                 {session
-                  ? "Head to your contributor dashboard to start recording, set up calls, and manage your profile."
-                  : "Your experience matters — to others and to you. Many contributors say sharing their story helps them process their own recovery. Sign up and start making a difference."}
+                  ? "Head to your guide dashboard to start recording, set up calls, and manage your profile."
+                  : "Your experience matters — to others and to you. Many guides say sharing their story helps them process their own recovery. Sign up and start making a difference."}
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 {session ? (
                   <Link
-                    href="/dashboard/contributor"
+                    href="/dashboard/guide"
                     className="inline-flex items-center justify-center gap-2 bg-white text-teal-700 px-8 py-3 rounded-lg font-semibold hover:bg-teal-50 transition-colors"
                   >
                     Go to Dashboard
@@ -708,7 +708,7 @@ export default function HowItWorksPage() {
                     href="/auth/register"
                     className="inline-flex items-center justify-center gap-2 bg-white text-teal-700 px-8 py-3 rounded-lg font-semibold hover:bg-teal-50 transition-colors"
                   >
-                    Become a Contributor
+                    Become a Guide
                   </Link>
                 )}
               </div>

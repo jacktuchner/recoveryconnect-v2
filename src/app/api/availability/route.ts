@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     const userRole = (session.user as any).role;
 
     // Only contributors can set availability
-    if (userRole !== "CONTRIBUTOR" && userRole !== "BOTH" && userRole !== "ADMIN") {
+    if (userRole !== "GUIDE" && userRole !== "BOTH" && userRole !== "ADMIN") {
       return NextResponse.json(
         { error: "Only contributors can set availability" },
         { status: 403 }

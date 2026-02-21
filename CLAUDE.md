@@ -1,16 +1,16 @@
-# PeerHeal
+# Kizu (formerly PeerHeal)
 
 ## Project Stack
 
-This project (PeerHeal) is a Next.js app using TypeScript, Supabase (JS client, NOT Prisma), and Stripe for payments. The dev environment is Windows ARM64 (Snapdragon). Never suggest Prisma-based solutions or x64-specific binary fixes.
+This project (Kizu) is a Next.js app using TypeScript, Supabase (JS client, NOT Prisma), and Stripe for payments. The dev environment is Windows ARM64 (Snapdragon). Never suggest Prisma-based solutions or x64-specific binary fixes.
 
 ## Code Editing Rules
 
-When editing files, always confirm the correct file path before making changes. This app has separate dashboards for different roles (patient/seeker, contributor, admin). Do NOT edit contributor dashboard files when asked to change patient dashboard files, and vice versa.
+When editing files, always confirm the correct file path before making changes. This app has separate dashboards for different roles (seeker, guide, admin). Do NOT edit guide dashboard files when asked to change seeker dashboard files, and vice versa.
 
 ## Domain Logic / Business Rules
 
-This app has multi-procedure support. Contributors can have multiple procedures; all should be visible and filterable. The 'set as main procedure' feature is contributor-side, not viewer-side. Do not add viewer-side procedure tabs unless explicitly asked.
+This app has multi-procedure support. Guides can have multiple procedures; all should be visible and filterable. The 'set as main procedure' feature is guide-side, not viewer-side. Do not add viewer-side procedure tabs unless explicitly asked.
 
 ## Debugging Guidelines
 

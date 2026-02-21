@@ -69,7 +69,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <aside className="w-64 bg-white border-r border-gray-200 min-h-screen fixed">
           <div className="p-6 border-b border-gray-200">
             <h1 className="text-xl font-bold text-gray-900">Admin Dashboard</h1>
-            <p className="text-sm text-gray-500 mt-1">PeerHeal</p>
+            <p className="text-sm text-gray-500 mt-1">Kizu</p>
           </div>
           <nav className="p-4">
             {navItems.map((item) => (
@@ -98,7 +98,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </nav>
           <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
             <Link
-              href="/dashboard/contributor"
+              href="/dashboard/guide"
               className="text-sm text-gray-500 hover:text-teal-600"
             >
               ← Back to Dashboard

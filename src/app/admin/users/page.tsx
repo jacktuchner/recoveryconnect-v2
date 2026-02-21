@@ -115,12 +115,13 @@ export default function AdminUsersPage() {
           className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
         >
           <option value="">All Roles</option>
-          <option value="PATIENT">Patient</option>
-          <option value="CONTRIBUTOR">Contributor</option>
+          <option value="SEEKER">Seeker</option>
+          <option value="GUIDE">Guide</option>
           <option value="BOTH">Both</option>
           <option value="ADMIN">Admin</option>
         </select>
       </div>
+
 
       {loading ? (
         <div className="flex items-center justify-center h-64">
@@ -164,7 +165,7 @@ export default function AdminUsersPage() {
                         className={`text-xs font-medium px-2.5 py-1 rounded-full ${
                           user.role === "ADMIN"
                             ? "bg-purple-100 text-purple-700"
-                            : user.role === "CONTRIBUTOR"
+                            : user.role === "GUIDE"
                             ? "bg-teal-100 text-teal-700"
                             : user.role === "BOTH"
                             ? "bg-blue-100 text-blue-700"
@@ -175,7 +176,7 @@ export default function AdminUsersPage() {
                       </span>
                       {user.contributorStatus === "PENDING_REVIEW" && (
                         <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-amber-100 text-amber-700">
-                          Contributor Pending
+                          Guide Pending
                         </span>
                       )}
                       {user.contributorStatus === "APPROVED" && (
@@ -201,8 +202,8 @@ export default function AdminUsersPage() {
                         disabled={actionLoading === user.id}
                         className="border border-gray-300 rounded-lg px-2 py-1 text-sm disabled:opacity-50"
                       >
-                        <option value="PATIENT">Patient</option>
-                        <option value="CONTRIBUTOR">Contributor</option>
+                        <option value="SEEKER">Seeker</option>
+                        <option value="GUIDE">Guide</option>
                         <option value="BOTH">Both</option>
                         <option value="ADMIN">Admin</option>
                       </select>

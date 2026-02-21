@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
 
     if (!contributorId || !scheduledAt) {
       return NextResponse.json(
-        { error: "Contributor ID and scheduled time are required" },
+        { error: "Guide ID and scheduled time are required" },
         { status: 400 }
       );
     }
@@ -31,13 +31,30 @@ export async function POST(req: NextRequest) {
 
     if (contribError || !contributor?.profile?.isAvailableForCalls) {
       return NextResponse.json(
-        { error: "This contributor is not available for calls" },
+        { error: "This guide is not available for calls" },
         { status: 400 }
       );
     }
 
     const scheduledDate = new Date(scheduledAt);
     const duration = durationMinutes || 30;
+
+    // Reject past dates
+    if (scheduledDate.getTime() <= Date.now()) {
+      return NextResponse.json(
+        { error: "Cannot book a call in the past. Please choose a future date and time." },
+        { status: 400 }
+      );
+    }
+
+    // Reject times not on 15-min intervals
+    const minutes = scheduledDate.getMinutes();
+    if (![0, 15, 30, 45].includes(minutes)) {
+      return NextResponse.json(
+        { error: "Call times must be on 15-minute intervals (e.g., 9:00, 9:15, 9:30, 9:45)." },
+        { status: 400 }
+      );
+    }
 
     // Validate against contributor's availability
     const { data: availabilitySlots } = await supabase
@@ -74,13 +91,29 @@ export async function POST(req: NextRequest) {
       if (!matchingSlot) {
         return NextResponse.json(
           {
-            error: "The selected time is outside the contributor's available hours. Please choose a different time.",
+            error: "The selected time is outside the guide's available hours. Please choose a different time.",
           },
           { status: 400 }
         );
       }
     }
     // If no availability slots are set, allow any time (backward compatibility)
+
+    // Check if the date is blocked (guide's time off)
+    const requestedDateStr = scheduledDate.toISOString().split("T")[0];
+    const { data: blockedDate } = await supabase
+      .from("BlockedDate")
+      .select("id")
+      .eq("contributorId", contributorId)
+      .eq("date", requestedDateStr)
+      .maybeSingle();
+
+    if (blockedDate) {
+      return NextResponse.json(
+        { error: "The guide is unavailable on this date. Please choose a different day." },
+        { status: 400 }
+      );
+    }
 
     // Check for conflicting calls
     const callStartTime = scheduledDate.toISOString();
@@ -137,7 +170,7 @@ export async function POST(req: NextRequest) {
           price_data: {
             currency: "usd",
             product_data: {
-              name: `${duration}-minute call with ${contributor.name || "Contributor"}`,
+              name: `${duration}-minute call with ${contributor.name || "Guide"}`,
               description: `Scheduled for ${formattedDate}`,
               metadata: {
                 contributorId,

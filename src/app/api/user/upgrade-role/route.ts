@@ -12,7 +12,7 @@ export async function POST() {
   const currentRole = (session.user as any).role;
 
   // Only allow from PATIENT role
-  if (currentRole !== "PATIENT") {
+  if (currentRole !== "SEEKER") {
     return NextResponse.json(
       { error: "Already have contributor access" },
       { status: 400 }
@@ -21,7 +21,7 @@ export async function POST() {
 
   // Instead of instant upgrade, redirect to application form
   return NextResponse.json({
-    redirect: "/contributor-application",
+    redirect: "/guide-application",
     message: "Please complete the contributor application",
   });
 }

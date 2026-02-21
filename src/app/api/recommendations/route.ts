@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
     const session = await getServerSession(authOptions);
     const userId = session?.user ? (session.user as Record<string, string>).id : null;
     const userRole = (session?.user as any)?.role;
-    const isContributor = userRole === "CONTRIBUTOR" || userRole === "BOTH" || userRole === "ADMIN";
+    const isContributor = userRole === "GUIDE" || userRole === "BOTH" || userRole === "ADMIN";
     const isSubscriber = (session?.user as any)?.subscriptionStatus === "active";
 
     if (!isContributor && !isSubscriber) {
@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
     const userId = (session.user as Record<string, string>).id;
     const userRole = (session.user as any).role;
 
-    if (userRole !== "CONTRIBUTOR" && userRole !== "BOTH" && userRole !== "ADMIN") {
+    if (userRole !== "GUIDE" && userRole !== "BOTH" && userRole !== "ADMIN") {
       return NextResponse.json({ error: "Only contributors can add recommendations" }, { status: 403 });
     }
 

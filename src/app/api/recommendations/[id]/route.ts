@@ -13,7 +13,7 @@ export async function GET(
     const session = await getServerSession(authOptions);
     const userId = session?.user ? (session.user as Record<string, string>).id : null;
     const userRole = (session?.user as any)?.role;
-    const isContributor = userRole === "CONTRIBUTOR" || userRole === "BOTH" || userRole === "ADMIN";
+    const isContributor = userRole === "GUIDE" || userRole === "BOTH" || userRole === "ADMIN";
     const isSubscriber = (session?.user as any)?.subscriptionStatus === "active";
 
     if (!isContributor && !isSubscriber) {

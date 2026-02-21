@@ -9,7 +9,8 @@ function RegisterForm() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const defaultRole = searchParams.get("role") === "contributor" ? "CONTRIBUTOR" : "PATIENT";
+  const roleParam = searchParams.get("role");
+  const defaultRole = (roleParam === "guide" || roleParam === "contributor") ? "GUIDE" : "SEEKER";
 
   const [form, setForm] = useState({
     name: "",
@@ -29,14 +30,14 @@ function RegisterForm() {
     const cs = (session.user as any)?.contributorStatus;
     if (role === "ADMIN") {
       router.push("/admin");
-    } else if (role === "CONTRIBUTOR" || role === "BOTH") {
+    } else if (role === "GUIDE" || role === "BOTH") {
       if (cs === "PENDING_REVIEW") {
-        router.push("/contributor-application");
+        router.push("/guide-application");
       } else {
-        router.push("/dashboard/contributor");
+        router.push("/dashboard/guide");
       }
     } else {
-      router.push("/dashboard/patient");
+      router.push("/dashboard/seeker");
     }
   }, [status, session, router, loading]);
 
@@ -98,7 +99,7 @@ function RegisterForm() {
       }
 
       // Hard redirect to avoid race with session useEffect
-      window.location.href = form.role === "CONTRIBUTOR" ? "/contributor-application" : "/dashboard/patient";
+      window.location.href = form.role === "GUIDE" ? "/guide-application" : "/dashboard/seeker";
     } catch {
       setError("Something went wrong. Please try again.");
       setLoading(false);
@@ -110,7 +111,7 @@ function RegisterForm() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold">Create your account</h1>
-          <p className="text-gray-600 mt-2">Join PeerHeal to get started</p>
+          <p className="text-gray-600 mt-2">Join Kizu to get started</p>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-gray-200 p-8 space-y-5">
@@ -123,9 +124,9 @@ function RegisterForm() {
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
-                onClick={() => updateForm("role", "PATIENT")}
+                onClick={() => updateForm("role", "SEEKER")}
                 className={`p-3 rounded-lg border-2 text-sm font-medium transition-colors ${
-                  form.role === "PATIENT"
+                  form.role === "SEEKER"
                     ? "border-teal-500 bg-teal-50 text-teal-700"
                     : "border-gray-200 text-gray-600 hover:border-gray-300"
                 }`}
@@ -134,9 +135,9 @@ function RegisterForm() {
               </button>
               <button
                 type="button"
-                onClick={() => updateForm("role", "CONTRIBUTOR")}
+                onClick={() => updateForm("role", "GUIDE")}
                 className={`p-3 rounded-lg border-2 text-sm font-medium transition-colors ${
-                  form.role === "CONTRIBUTOR"
+                  form.role === "GUIDE"
                     ? "border-teal-500 bg-teal-50 text-teal-700"
                     : "border-gray-200 text-gray-600 hover:border-gray-300"
                 }`}

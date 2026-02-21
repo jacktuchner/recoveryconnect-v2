@@ -24,7 +24,7 @@ function BrowseRedirect() {
     const queryString = params.toString();
 
     if (tab === "contributors") {
-      router.replace(`/mentors${queryString ? `?${queryString}` : ""}`);
+      router.replace(`/guides${queryString ? `?${queryString}` : ""}`);
     } else {
       router.replace(`/watch${queryString ? `?${queryString}` : ""}`);
     }

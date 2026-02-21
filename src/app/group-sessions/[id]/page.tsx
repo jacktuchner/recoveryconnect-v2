@@ -209,7 +209,7 @@ export default function GroupSessionDetailPage() {
             </div>
             <div>
               <Link
-                href={`/contributors/${groupSession.contributor?.id}`}
+                href={`/guides/${groupSession.contributor?.id}`}
                 className="font-medium text-gray-900 hover:text-teal-600"
               >
                 {groupSession.contributor?.name || "Mentor"}

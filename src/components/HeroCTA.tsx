@@ -9,11 +9,11 @@ export default function HeroCTA() {
   if (session) {
     const role = (session.user as any)?.role;
     const dashboardHref =
-      role === "CONTRIBUTOR"
-        ? "/dashboard/contributor"
+      role === "GUIDE"
+        ? "/dashboard/guide"
         : role === "ADMIN"
           ? "/admin"
-          : "/dashboard/patient";
+          : "/dashboard/seeker";
 
     return (
       <div className="flex flex-col sm:flex-row gap-4">

@@ -177,7 +177,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    if (!["CONTRIBUTOR", "BOTH", "ADMIN"].includes(user.role)) {
+    if (!["GUIDE", "BOTH", "ADMIN"].includes(user.role)) {
       return NextResponse.json(
         { error: "Only contributors can create series" },
         { status: 403 }

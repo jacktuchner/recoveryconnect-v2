@@ -9,20 +9,20 @@ export default function TermsOfServicePage() {
         </Link>
 
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Terms of Service</h1>
-        <p className="text-sm text-gray-500 mb-8">Last updated: February 6, 2026</p>
+        <p className="text-sm text-gray-500 mb-8">Last updated: February 12, 2026</p>
 
         <div className="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 space-y-8 text-gray-700 text-sm leading-relaxed">
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-3">1. Acceptance of Terms</h2>
             <p>
-              By accessing or using PeerHeal (&quot;the Platform&quot;), you agree to be bound by these Terms of Service. If you do not agree to these terms, do not use the Platform. PeerHeal is operated by Jack Tuchner (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;).
+              By accessing or using Kizu (&quot;the Platform&quot;), you agree to be bound by these Terms of Service. If you do not agree to these terms, do not use the Platform. Kizu is operated by Jack Tuchner (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;).
             </p>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-3">2. Platform Description</h2>
             <p>
-              PeerHeal is a peer support platform that connects surgical recovery patients with contributors who share their personal recovery experiences. The Platform facilitates two types of connections: pre-recorded audio/video content and live 1-on-1 video calls. PeerHeal is not a healthcare provider and does not offer medical advice, diagnosis, or treatment.
+              Kizu is a peer support platform that connects surgical recovery seekers with guides who share their personal recovery experiences. The Platform facilitates two types of connections: pre-recorded audio/video content and live 1-on-1 video calls. Kizu is not a healthcare provider and does not offer medical advice, diagnosis, or treatment.
             </p>
           </section>
 
@@ -30,11 +30,11 @@ export default function TermsOfServicePage() {
             <h2 className="text-lg font-semibold text-gray-900 mb-3">3. Not Medical Advice</h2>
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-3">
               <p className="font-medium text-amber-800">
-                All content on PeerHeal reflects personal experiences of individual contributors and is NOT medical advice. Always follow your doctor&apos;s instructions and consult qualified healthcare professionals for medical decisions.
+                All content on Kizu reflects personal experiences of individual guides and is NOT medical advice. Always follow your doctor&apos;s instructions and consult qualified healthcare professionals for medical decisions.
               </p>
             </div>
             <p>
-              Contributors share their personal recovery journey. Individual results vary significantly based on health, procedure specifics, and other factors. You should never delay seeking medical advice, disregard medical advice, or discontinue medical treatment because of information on this Platform.
+              Guides share their personal recovery journey. Individual results vary significantly based on health, procedure specifics, and other factors. You should never delay seeking medical advice, disregard medical advice, or discontinue medical treatment because of information on this Platform.
             </p>
           </section>
 
@@ -50,20 +50,20 @@ export default function TermsOfServicePage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">5. Patients</h2>
-            <p className="mb-3">As a patient user, you agree to:</p>
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">5. Seekers</h2>
+            <p className="mb-3">As a seeker, you agree to:</p>
             <ul className="list-disc pl-5 space-y-2">
               <li>Provide truthful profile information for accurate matching</li>
-              <li>Treat contributors with respect during calls</li>
+              <li>Treat guides with respect during calls</li>
               <li>Not record, redistribute, or share purchased content without permission</li>
               <li>Understand that content reflects personal experiences and is not medical advice</li>
-              <li>Not solicit medical advice from contributors</li>
+              <li>Not solicit medical advice from guides</li>
             </ul>
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">6. Contributors</h2>
-            <p className="mb-3">As a contributor, you agree to:</p>
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">6. Guides</h2>
+            <p className="mb-3">As a guide, you agree to:</p>
             <ul className="list-disc pl-5 space-y-2">
               <li>Share only your own genuine recovery experiences</li>
               <li>Not provide medical advice, diagnoses, or treatment recommendations</li>
@@ -73,36 +73,52 @@ export default function TermsOfServicePage() {
               <li>Not upload content that is misleading, harmful, or violates others&apos; rights</li>
               <li>Comply with Stripe&apos;s terms of service for receiving payouts</li>
             </ul>
+
+            <h3 className="font-medium text-gray-900 mt-4 mb-2">Anti-Solicitation Policy</h3>
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+              <p className="font-medium text-amber-800 mb-2">
+                Guides are strictly prohibited from:
+              </p>
+              <ul className="list-disc pl-5 space-y-1.5 text-amber-800">
+                <li>Sharing personal contact information (phone number, email, social media handles) with seekers</li>
+                <li>Soliciting or encouraging seekers to communicate outside of the Kizu platform</li>
+                <li>Bypassing the platform for payments, including offering private paid sessions or accepting direct payments</li>
+                <li>Providing medical advice, diagnoses, or treatment recommendations in any form</li>
+              </ul>
+              <p className="font-medium text-amber-800 mt-3">
+                Violations of this policy may result in immediate account termination and forfeiture of all pending earnings. By accepting the Guide Agreement, guides acknowledge and accept these terms.
+              </p>
+            </div>
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">7. Contributor Verification</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">7. Guide Verification</h2>
             <p className="mb-3">
-              PeerHeal takes reasonable steps to verify contributor identities and experiences through an application process that may include document review and video interviews. Contributors who complete this process receive a &ldquo;Verified&rdquo; designation on their profile.
+              Kizu takes reasonable steps to verify guide identities and experiences through an application process that may include document review and video interviews. Guides who complete this process receive a &ldquo;Verified&rdquo; designation on their profile.
             </p>
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-3">
               <p className="font-medium text-amber-800">
-                The &ldquo;Verified&rdquo; designation indicates that a contributor has completed our review process. It does not constitute a guarantee, endorsement, or certification of any contributor&apos;s medical history, qualifications, or the accuracy of their content. We are not liable for any claims, losses, or damages arising from reliance on contributor content, whether or not the contributor is verified.
+                The &ldquo;Verified&rdquo; designation indicates that a guide has completed our review process. It does not constitute a guarantee, endorsement, or certification of any guide&apos;s medical history, qualifications, or the accuracy of their content. We are not liable for any claims, losses, or damages arising from reliance on guide content, whether or not the guide is verified.
               </p>
             </div>
             <p>
-              We reserve the right to revoke verification status at any time if we determine a contributor has provided false information or violated our community guidelines.
+              We reserve the right to revoke verification status at any time if we determine a guide has provided false information or violated our community guidelines.
             </p>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-3">8. Payments and Subscriptions</h2>
             <h3 className="font-medium text-gray-900 mt-4 mb-2">Individual Purchases</h3>
-            <p>Recording purchases grant you permanent access to that recording. Prices are set by contributors and displayed before purchase.</p>
+            <p>Recording purchases grant you permanent access to that recording. Prices are set by guides and displayed before purchase.</p>
 
             <h3 className="font-medium text-gray-900 mt-4 mb-2">Subscriptions</h3>
             <p>Subscriptions provide unlimited access to all recordings for the duration of your subscription. Subscriptions auto-renew at the end of each billing period (monthly or annually) unless cancelled. You can cancel anytime through the subscription management portal, and you will retain access until the end of your current billing period.</p>
 
             <h3 className="font-medium text-gray-900 mt-4 mb-2">Live Calls</h3>
-            <p>Call payments are separate from subscriptions and recording purchases. Pricing is based on the contributor&apos;s hourly rate and session duration.</p>
+            <p>Call payments are separate from subscriptions and recording purchases. Pricing is based on the guide&apos;s hourly rate and session duration.</p>
 
-            <h3 className="font-medium text-gray-900 mt-4 mb-2">Contributor Payouts</h3>
-            <p>Contributors receive 75% of individual recording purchases and series sales. For subscriptions, 75% of subscription revenue is pooled monthly and distributed proportionally based on unique subscriber views of each contributor&apos;s content. Call payouts are based on the session price minus the platform fee.</p>
+            <h3 className="font-medium text-gray-900 mt-4 mb-2">Guide Payouts</h3>
+            <p>Guides receive 75% of individual recording purchases and series sales. For subscriptions, 75% of subscription revenue is pooled monthly and distributed proportionally based on unique subscriber views of each guide&apos;s content. Call payouts are based on the session price minus the platform fee.</p>
 
             <h3 className="font-medium text-gray-900 mt-4 mb-2">Refunds</h3>
             <p>If you are unsatisfied with a purchase, contact us to discuss your situation. Refund requests are handled on a case-by-case basis. Subscription refunds are generally not provided for partial billing periods.</p>
@@ -111,8 +127,8 @@ export default function TermsOfServicePage() {
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-3">9. Content Ownership</h2>
             <ul className="list-disc pl-5 space-y-2">
-              <li>Contributors retain ownership of their recorded content.</li>
-              <li>By uploading content, contributors grant PeerHeal a non-exclusive license to host, display, and distribute the content on the Platform.</li>
+              <li>Guides retain ownership of their recorded content.</li>
+              <li>By uploading content, guides grant Kizu a non-exclusive license to host, display, and distribute the content on the Platform.</li>
               <li>Purchased content is licensed for personal, non-commercial use only. You may not redistribute, resell, or publicly display purchased content.</li>
               <li>We may remove content that violates these terms or our community guidelines.</li>
             </ul>
@@ -128,8 +144,11 @@ export default function TermsOfServicePage() {
               <li>Upload malicious software or attempt to compromise Platform security</li>
               <li>Scrape, crawl, or automatically collect data from the Platform</li>
               <li>Circumvent payment systems or access content without authorization</li>
-              <li>Provide medical advice while posing as a peer support contributor</li>
+              <li>Provide medical advice while posing as a peer support guide</li>
               <li>Share other users&apos; personal information without their consent</li>
+              <li>Share personal contact information with seekers for off-platform communication (guides)</li>
+              <li>Solicit or encourage users to communicate or transact outside of Kizu</li>
+              <li>Offer or accept payments for services outside the Platform that bypass Kizu&apos;s payment system</li>
             </ul>
           </section>
 
@@ -143,7 +162,7 @@ export default function TermsOfServicePage() {
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-3">12. Limitation of Liability</h2>
             <p>
-              To the maximum extent permitted by law, PeerHeal and its operators shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the Platform. This includes but is not limited to damages arising from: reliance on content shared by contributors, technical issues during live calls, or decisions made based on information obtained through the Platform.
+              To the maximum extent permitted by law, Kizu and its operators shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the Platform. This includes but is not limited to damages arising from: reliance on content shared by guides, technical issues during live calls, or decisions made based on information obtained through the Platform.
             </p>
             <p className="mt-3">
               Our total liability for any claim arising from or related to these terms shall not exceed the amount you paid to us in the 12 months preceding the claim.
@@ -153,7 +172,7 @@ export default function TermsOfServicePage() {
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-3">13. Disclaimer of Warranties</h2>
             <p>
-              The Platform is provided &quot;as is&quot; and &quot;as available&quot; without warranties of any kind, either express or implied. We do not warrant that the Platform will be uninterrupted, error-free, or that content will be accurate or reliable. We do not endorse or verify the medical accuracy of contributor content.
+              The Platform is provided &quot;as is&quot; and &quot;as available&quot; without warranties of any kind, either express or implied. We do not warrant that the Platform will be uninterrupted, error-free, or that content will be accurate or reliable. We do not endorse or verify the medical accuracy of guide content.
             </p>
           </section>
 

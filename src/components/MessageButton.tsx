@@ -17,7 +17,7 @@ export default function MessageButton({ contributorId }: MessageButtonProps) {
   const isSubscriber =
     user?.subscriptionStatus === "active" ||
     user?.subscriptionStatus === "trialing";
-  const isPatient = user?.role === "PATIENT";
+  const isPatient = user?.role === "SEEKER";
   const needsSubscription = isPatient && !isSubscriber;
 
   async function handleClick() {
@@ -27,7 +27,7 @@ export default function MessageButton({ contributorId }: MessageButtonProps) {
     }
 
     if (needsSubscription) {
-      router.push("/dashboard/patient?tab=subscription");
+      router.push("/dashboard/seeker?tab=subscription");
       return;
     }
 

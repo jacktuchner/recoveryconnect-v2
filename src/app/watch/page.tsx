@@ -273,7 +273,7 @@ function WatchContent() {
                 <p className="text-sm text-cyan-700">Book a 1-on-1 video call with a recovery mentor.</p>
               </div>
               <Link
-                href="/mentors"
+                href="/guides"
                 className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors text-sm font-medium whitespace-nowrap"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

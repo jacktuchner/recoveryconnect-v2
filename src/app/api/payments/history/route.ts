@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
     if (role === "patient") {
       query = query.in("type", ["RECORDING_PURCHASE", "CALL_PAYMENT", "SUBSCRIPTION", "GROUP_SESSION_PAYMENT"]);
     } else {
-      query = query.eq("type", "CONTRIBUTOR_PAYOUT");
+      query = query.eq("type", "GUIDE_PAYOUT");
     }
 
     const { data: payments, error, count } = await query;

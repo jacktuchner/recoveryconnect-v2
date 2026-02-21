@@ -48,8 +48,8 @@ model VerificationToken {
 // ─── Users & Profiles ───
 
 enum UserRole {
-  PATIENT
-  CONTRIBUTOR
+  SEEKER
+  GUIDE
   BOTH
   ADMIN
 }
@@ -69,7 +69,7 @@ model User {
   emailVerified  DateTime?
   image          String?
   passwordHash   String?
-  role           UserRole  @default(PATIENT)
+  role           UserRole  @default(SEEKER)
   bio            String?   @db.Text
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
@@ -99,6 +99,7 @@ model User {
   reviewsGiven   Review[]   @relation("ReviewAuthor")
   reviewsReceived Review[]  @relation("ReviewSubject")
   availability   Availability[]
+  blockedDates   BlockedDate[]  @relation("BlockedDates")
   payments       Payment[]
   recordingAccess RecordingAccess[]
   reportsSubmitted Report[] @relation("ReportsSubmitted")
@@ -276,6 +277,19 @@ model Availability {
   createdAt       DateTime @default(now())
 }
 
+model BlockedDate {
+  id              String   @id @default(cuid())
+  contributorId   String
+  contributor     User     @relation("BlockedDates", fields: [contributorId], references: [id])
+
+  date            String   // "2026-03-05" YYYY-MM-DD format
+  reason          String?  // Optional: "Vacation", "Personal", etc.
+
+  createdAt       DateTime @default(now())
+
+  @@unique([contributorId, date])
+}
+
 model Call {
   id              String     @id @default(cuid())
   patientId       String
@@ -333,7 +347,7 @@ model Review {
 enum PaymentType {
   RECORDING_PURCHASE
   CALL_PAYMENT
-  CONTRIBUTOR_PAYOUT
+  GUIDE_PAYOUT
   SUBSCRIPTION
   GROUP_SESSION_PAYMENT
 }

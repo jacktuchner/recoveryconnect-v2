@@ -185,7 +185,7 @@ export default function RecordingDetailPage() {
     <ContentAcknowledgmentModal>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Link
-          href={isContributor ? "/dashboard/contributor" : "/watch"}
+          href={isContributor ? "/dashboard/guide" : "/watch"}
           className="text-sm text-teal-600 hover:text-teal-700 mb-4 inline-block"
         >
           &larr; {isContributor ? "Back to Dashboard" : "Back to Stories"}
@@ -303,7 +303,7 @@ export default function RecordingDetailPage() {
                   </span>
                 </div>
                 <div>
-                  <Link href={`/contributors/${recording.contributorId}`} className="font-semibold hover:text-teal-700">
+                  <Link href={`/guides/${recording.contributorId}`} className="font-semibold hover:text-teal-700">
                     {recording.contributor?.name || "Anonymous"}
                   </Link>
                   {avgRating && (

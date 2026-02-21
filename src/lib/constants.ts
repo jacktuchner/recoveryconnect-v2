@@ -173,9 +173,9 @@ export const SUBSCRIPTION_ANNUAL_PRICE = 149.99;
 export const STRIPE_MONTHLY_PRICE_ID = process.env.STRIPE_MONTHLY_PRICE_ID || "";
 export const STRIPE_ANNUAL_PRICE_ID = process.env.STRIPE_ANNUAL_PRICE_ID || "";
 
-// ─── Contributor Vetting ───
+// ─── Guide Vetting ───
 
-export const CONTRIBUTOR_STATUSES = {
+export const GUIDE_STATUSES = {
   PENDING_REVIEW: "PENDING_REVIEW",
   APPROVED: "APPROVED",
   REJECTED: "REJECTED",
@@ -331,6 +331,19 @@ export const JOURNAL_TRIGGER_PRESETS = [
   "Weather change", "Poor sleep", "Stress", "Overexertion",
   "Gluten/dairy", "Hormonal cycle", "Travel", "Sitting too long",
   "Infection/illness", "Emotional upset",
+] as const;
+
+// ─── Guide Agreement ───
+
+export const GUIDE_AGREEMENT_VERSION = "2026-02-20-v3";
+
+export const GUIDE_AGREEMENT_CLAUSES = [
+  "All interactions with seekers must remain on the Kizu platform",
+  "I will not share my personal contact information (phone, email, social media) with seekers",
+  "I will not solicit or encourage seekers to communicate with me outside of Kizu",
+  "I will not bypass the platform for payments or offer paid services outside Kizu",
+  "I will not provide medical advice, diagnoses, or treatment recommendations",
+  "I understand that violations may result in immediate termination and forfeiture of pending earnings",
 ] as const;
 
 // ─── Helpers ───

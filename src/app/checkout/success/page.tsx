@@ -15,13 +15,15 @@ function SuccessContent() {
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [subStatus, setSubStatus] = useState<"verifying" | "activated" | "error">("verifying");
+  const [callStatus, setCallStatus] = useState<"verifying" | "confirmed" | "error">("verifying");
 
   const isSubscription = type === "subscription";
   const isGroupSession = type === "group_session";
+  const isCall = type === "call";
   const groupSessionId = searchParams.get("groupSessionId");
 
   function loadPurchaseInfo() {
-    if (!sessionId || isSubscription || isGroupSession) return;
+    if (!sessionId || isSubscription || isGroupSession || isCall) return;
     setError(null);
     fetch(`/api/checkout/session?session_id=${sessionId}`)
       .then((res) => {
@@ -55,6 +57,55 @@ function SuccessContent() {
       .catch(() => setSubStatus("error"));
   }, [isSubscription, sessionId]);
 
+  // Verify call checkout and create the call record if webhook hasn't
+  useEffect(() => {
+    if (!isCall || !sessionId) return;
+    fetch("/api/checkout/call/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionId }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.status === "created" || data.status === "already_created") {
+          setCallStatus("confirmed");
+        } else {
+          setCallStatus("error");
+        }
+      })
+      .catch(() => setCallStatus("error"));
+  }, [isCall, sessionId]);
+
+  if (isCall) {
+    return (
+      <div className="flex flex-col items-center gap-4">
+        {callStatus === "verifying" && (
+          <p className="text-gray-500 text-sm">Confirming your call booking...</p>
+        )}
+        {callStatus === "error" && (
+          <p className="text-red-600 text-sm">There was an issue confirming your call. Please check your dashboard or contact support.</p>
+        )}
+        {callStatus === "confirmed" && (
+          <p className="text-green-600 text-sm font-medium">Your call has been booked! The guide will be notified.</p>
+        )}
+        <div className="flex gap-4 justify-center">
+          <Link
+            href="/dashboard/seeker"
+            className="bg-teal-600 text-white px-5 py-2 rounded-lg hover:bg-teal-700 text-sm font-medium"
+          >
+            View Your Calls
+          </Link>
+          <Link
+            href="/guides"
+            className="text-teal-600 hover:text-teal-700 px-5 py-2 text-sm font-medium"
+          >
+            Browse More Guides
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   if (isGroupSession) {
     return (
       <div className="flex flex-col items-center gap-4">
@@ -75,7 +126,7 @@ function SuccessContent() {
             </Link>
           )}
           <Link
-            href="/dashboard/patient"
+            href="/dashboard/seeker"
             className="text-teal-600 hover:text-teal-700 px-5 py-2 text-sm font-medium"
           >
             Go to Dashboard
@@ -102,7 +153,7 @@ function SuccessContent() {
             Browse Recordings
           </Link>
           <Link
-            href="/dashboard/patient"
+            href="/dashboard/seeker"
             className="text-teal-600 hover:text-teal-700 px-5 py-2 text-sm font-medium"
           >
             Go to Dashboard
@@ -130,7 +181,7 @@ function SuccessContent() {
         </Link>
       ) : (
         <Link
-          href="/dashboard/patient"
+          href="/dashboard/seeker"
           className="bg-teal-600 text-white px-5 py-2 rounded-lg hover:bg-teal-700 text-sm font-medium"
         >
           Go to Dashboard
@@ -160,6 +211,7 @@ function CheckoutSuccessContent() {
   const type = searchParams.get("type");
   const isSubscription = type === "subscription";
   const isGroupSession = type === "group_session";
+  const isCall = type === "call";
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-16 text-center">
@@ -180,13 +232,15 @@ function CheckoutSuccessContent() {
       </div>
 
       <h1 className="text-2xl font-bold mb-2">
-        {isSubscription ? "Subscription Activated!" : isGroupSession ? "You're Signed Up!" : "Payment Successful!"}
+        {isSubscription ? "Subscription Activated!" : isGroupSession ? "You're Signed Up!" : isCall ? "Call Booked!" : "Payment Successful!"}
       </h1>
       <p className="text-gray-600 mb-6">
         {isSubscription
-          ? "Welcome! You now have unlimited access to all recordings on PeerHeal."
+          ? "Welcome! You now have unlimited access to all recordings on Kizu."
           : isGroupSession
           ? "You're registered for the group session. We'll send you a reminder before it starts."
+          : isCall
+          ? "Your call has been scheduled. You can view it on your dashboard."
           : "Thank you for your purchase. Your access has been granted."}
       </p>
 

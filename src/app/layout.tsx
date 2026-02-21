@@ -7,7 +7,7 @@ import Providers from "@/components/Providers";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "PeerHeal - Peer Recovery Guidance from People Who've Been There",
+  title: "Kizu - Recovery Guidance from People Who've Been There",
   description:
     "Connect with past surgery patients who match your profile. Access recorded recovery stories and book live video calls for personalized guidance.",
 };

@@ -40,7 +40,7 @@ export default function RecommendationsPage() {
   const [sort, setSort] = useState("most_recommended");
 
   const userRole = (session?.user as any)?.role;
-  const isContributor = userRole === "CONTRIBUTOR" || userRole === "BOTH" || userRole === "ADMIN";
+  const isContributor = userRole === "GUIDE" || userRole === "BOTH" || userRole === "ADMIN";
   const isSubscriber = (session?.user as any)?.subscriptionStatus === "active";
   const hasAccess = isContributor || isSubscriber;
   const [search, setSearch] = useState("");

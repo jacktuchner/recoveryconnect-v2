@@ -1,14 +1,14 @@
-# PeerHeal — Project Plan
+# Kizu — Project Plan
 
 ## Overview
 
-PeerHeal is a peer-to-peer surgical recovery support platform connecting patients with recovery mentors (contributors) who've been through similar procedures. Built with Next.js 16, TypeScript, Supabase, and Stripe.
+Kizu is a peer-to-peer surgical recovery support platform connecting seekers with recovery guides who've been through similar procedures. Built with Next.js 16, TypeScript, Supabase, and Stripe.
 
 ---
 
-## Current Status: Late-Stage Development
+## Current Status: Pre-Launch
 
-The core platform is built and functional. Most features are implemented. The build is clean with zero TypeScript/lint errors.
+The core platform is built and functional. All planned features are implemented. Build is clean with zero TypeScript/lint errors. Rebranded from PeerHeal → Kizu (Feb 2026). Domain: thekizu.com.
 
 ---
 
@@ -33,9 +33,9 @@ The core platform is built and functional. Most features are implemented. The bu
 
 | Role | Description |
 |------|------------|
-| **PATIENT** | Browse content, purchase recordings, book calls, join group sessions |
-| **CONTRIBUTOR** | Create recordings, set availability, earn money, host group sessions |
-| **BOTH** | Full patient + contributor access |
+| **SEEKER** | Browse content, purchase recordings, book calls, join group sessions |
+| **GUIDE** | Create recordings, set availability, earn money, host group sessions |
+| **BOTH** | Full seeker + guide access |
 | **ADMIN** | Platform moderation, user management, content review |
 
 ---
@@ -54,16 +54,16 @@ The core platform is built and functional. Most features are implemented. The bu
 - [x] Access control (subscription vs individual purchase)
 
 ### Tier 2: Live 1-on-1 Calls (Implemented)
-- [x] Contributor availability management (day/time slots, timezone)
+- [x] Guide availability management (day/time slots, timezone)
 - [x] Call booking workflow (REQUESTED → CONFIRMED → COMPLETED/CANCELLED/NO_SHOW)
 - [x] 30/60 minute session options
 - [x] Pre-call question submission
 - [x] Daily.co video integration
-- [x] Platform takes 25% fee, contributor gets 75%
+- [x] Platform takes 25% fee, guide gets 75%
 - [x] Call reminders (day-before, hour-before via cron)
 
 ### Tier 3: Group Sessions (Implemented)
-- [x] Contributor-created group sessions
+- [x] Guide-created group sessions
 - [x] Min/max capacity (4–20 attendees, min threshold default: 3)
 - [x] Free for subscribers option
 - [x] Lifecycle management (SCHEDULED → CONFIRMED → COMPLETED/CANCELLED)
@@ -71,9 +71,9 @@ The core platform is built and functional. Most features are implemented. The bu
 - [x] Refund handling
 
 ### Tier 4: Recommendations (Implemented)
-- [x] Product/provider recommendations by contributors
+- [x] Product/provider recommendations by guides
 - [x] 7 categories (Recovery Product, PT Provider, Massage Therapy, Medical Provider, App/Tool, Book/Resource, Other)
-- [x] Endorsement system (multi-contributor)
+- [x] Endorsement system (multi-guide)
 - [x] Voting/helpful system
 - [x] Comments
 - [x] Subscriber-only access
@@ -86,8 +86,8 @@ The core platform is built and functional. Most features are implemented. The bu
 - [x] Fetch messages + mark as read (GET /api/conversations/[id])
 - [x] Send messages (POST /api/messages)
 - [x] Unread count endpoint for navbar badge (GET /api/messages/unread)
-- [x] Subscriber-only for patients, contributors reply free
-- [x] MessageButton on contributor profiles
+- [x] Subscriber-only for seekers, guides reply free
+- [x] MessageButton on guide profiles
 - [x] Messages link + unread badge in navbar (polls every 15s)
 - [x] Chat UI with polling (3s), auto-scroll, read receipts
 - [x] Throttled email notifications (skip if last message <10 min ago)
@@ -96,14 +96,14 @@ The core platform is built and functional. Most features are implemented. The bu
 ### Matching System (Implemented)
 - [x] Multi-factor matching algorithm
 - [x] Scores based on: procedure type, details, age range, activity level, recovery goals, complicating factors, lifestyle context
-- [x] Match scores displayed on recordings & contributor cards
+- [x] Match scores displayed on recordings & guide cards
 
 ### Subscriptions & Payments (Implemented)
 - [x] Monthly plan ($19.99) and Annual plan ($149.99)
 - [x] Stripe Checkout + Customer Portal
-- [x] Stripe Connect for contributor payouts
+- [x] Stripe Connect for guide payouts
 - [x] Payment tracking across all purchase types
-- [x] Earnings dashboard for contributors
+- [x] Earnings dashboard for guides
 
 ### Authentication (Implemented)
 - [x] Email/password registration with role selection
@@ -139,13 +139,13 @@ ACL Reconstruction, Total Hip Replacement, Total Knee Replacement, Total Shoulde
 
 | Item | Price |
 |------|-------|
-| Individual recording | $4.99+ (contributor sets) |
+| Individual recording | $4.99+ (guide sets) |
 | Monthly subscription | $19.99 |
 | Annual subscription | $149.99 |
-| Call rates | $40–$75/hour (contributor sets) |
-| Group sessions | $10–$35/person (contributor sets) |
-| Platform fee | 25% on all contributor earnings |
-| Contributor payout | 75% |
+| Call rates | $40–$75/hour (guide sets) |
+| Group sessions | $10–$35/person (guide sets) |
+| Platform fee | 25% on all guide earnings |
+| Guide payout | 75% |
 
 ---
 
@@ -154,7 +154,7 @@ ACL Reconstruction, Total Hip Replacement, Total Knee Replacement, Total Shoulde
 ### Public
 - `/` — Homepage
 - `/about` — About page
-- `/how-it-works` — Patient/Contributor explainer + pricing
+- `/how-it-works` — Seeker/Guide explainer + pricing
 - `/contact` — Contact page
 - `/privacy`, `/terms` — Legal
 
@@ -164,28 +164,28 @@ ACL Reconstruction, Total Hip Replacement, Total Knee Replacement, Total Shoulde
 - `/auth/forgot-password` — Password reset request
 - `/auth/reset-password` — Reset form
 
-### Patient
+### Seeker
 - `/watch` — Browse recordings (filters, search, sorting, match scores)
 - `/recordings/[id]` — Recording detail
 - `/series/[id]` — Series detail
-- `/mentors` — Browse contributors for calls
-- `/contributors/[id]` — Contributor profile
-- `/book/[contributorId]` — Book a call
+- `/guides` — Browse guides for calls
+- `/guides/[id]` — Guide profile
+- `/book/[guideId]` — Book a call
 - `/group-sessions` — Browse group sessions
 - `/group-sessions/[id]` — Session detail + registration
 - `/recommendations` — Browse recommendations (subscriber-only)
 - `/recommendations/[id]` — Recommendation detail
-- `/dashboard/patient` — Patient dashboard (tabbed layout)
-- `/dashboard/patient/settings` — Settings (privacy, subscription, journal sharing, become a contributor)
+- `/dashboard/seeker` — Seeker dashboard (tabbed layout)
+- `/dashboard/seeker/settings` — Settings (privacy, subscription, journal sharing, become a guide)
 - `/messages` — Conversations list
 - `/messages/[conversationId]` — Chat view
 
-### Contributor
-- `/dashboard/contributor` — Overview (stats, call requests, shared patient journals, payout history, reviews received)
-- `/dashboard/contributor/content` — Content management (recordings, series, group sessions, recommendations)
-- `/dashboard/contributor/profile` — Profile editing (procedures, shared profile, bio & intro video)
-- `/dashboard/contributor/analytics` — Earnings & engagement analytics
-- `/dashboard/contributor/settings` — Settings (availability, payout settings, privacy settings, upgrade to patient access)
+### Guide
+- `/dashboard/guide` — Overview (stats, call requests, shared seeker journals, payout history, reviews received)
+- `/dashboard/guide/content` — Content management (recordings, series, group sessions, recommendations)
+- `/dashboard/guide/profile` — Profile editing (procedures, shared profile, bio & intro video)
+- `/dashboard/guide/analytics` — Earnings & engagement analytics
+- `/dashboard/guide/settings` — Settings (availability, payout settings, privacy settings, upgrade to seeker access)
 
 ### Admin
 - `/admin` — Stats overview
@@ -233,63 +233,103 @@ DAILY_API_KEY
 - [x] PATCH /api/reviews/[id] — author-only editing (rating, matchRelevance, helpfulness, comment)
 - [x] DELETE /api/reviews/[id] — author or admin deletion
 - [x] CallReviewForm component — reusable star-input form for create and edit modes
-- [x] Patient dashboard: "Leave a Review" on completed calls (inline CallReviewForm)
-- [x] Patient dashboard: "Pending Reviews" banner (up to 3 unreviewed completed calls)
-- [x] Patient dashboard: "My Reviews" section with edit/delete
-- [x] Contributor dashboard: "Avg Rating" and "Total Reviews" stat cards
-- [x] Contributor dashboard: "Reviews Received" section (10 most recent)
-- [x] Contributor profile: call + recording reviews merged, sorted by date, with type badges
+- [x] Seeker dashboard: "Leave a Review" on completed calls (inline CallReviewForm)
+- [x] Seeker dashboard: "Pending Reviews" banner (up to 3 unreviewed completed calls)
+- [x] Seeker dashboard: "My Reviews" section with edit/delete
+- [x] Guide dashboard: "Avg Rating" and "Total Reviews" stat cards
+- [x] Guide dashboard: "Reviews Received" section (10 most recent)
+- [x] Guide profile: call + recording reviews merged, sorted by date, with type badges
 - [x] ReportButton extended with reviewId prop for reporting reviews
 - [x] Reports API supports reviewId in create and fetch
 - [x] Admin reports page: review type filter, review context display, "Delete Review" action
 
-### Contributor Dashboard Tabs (Implemented)
+### Guide Dashboard Tabs (Implemented)
 - [x] Shared layout with tab bar (Overview, Content, Profile, Analytics, Settings)
 - [x] Each tab fetches only its own data (no wasted API calls)
-- [x] Overview: stats cards, call requests, shared patient journals, payout history, reviews received
+- [x] Overview: stats cards, call requests, shared seeker journals, payout history, reviews received
 - [x] Content: recordings, series, group sessions, recommendations
 - [x] Profile: procedures, shared profile, bio & intro video, "View Public Profile" button
 - [x] Analytics: full earnings & engagement analytics (dedicated page)
-- [x] Settings: availability manager, payout settings, privacy settings, upgrade to patient access
+- [x] Settings: availability manager, payout settings, privacy settings, upgrade to seeker access
 - [x] Public profile back link is context-aware (dashboard vs browse)
 
 ### Recovery Journal (Implemented)
 - [x] Daily journal entries with pain level (1-10), mobility level (1-10), mood (1-5), notes, milestones
 - [x] Per-procedure tracking with recovery week calculation from surgery date
 - [x] Share toggle per entry (isShared flag)
-- [x] Per-contributor journal sharing — patients grant access to specific contributors via JournalShare table
-- [x] Journal sharing manager in patient Settings (toggle switches per eligible contributor)
+- [x] Per-guide journal sharing — seekers grant access to specific guides via JournalShare table
+- [x] Journal sharing manager in seeker Settings (toggle switches per eligible guide)
 - [x] In-journal hint linking to Settings when share toggle is enabled
-- [x] Shared patient journals section on contributor Overview (expandable per patient, shows entries)
-- [x] API: GET/POST/DELETE `/api/journal/shares` (patient manages shares)
-- [x] API: GET `/api/journal/shares/received` (contributor sees who shared with them)
-- [x] API: GET `/api/journal/shared/[patientId]` (contributor views entries, requires explicit share grant)
+- [x] Shared seeker journals section on guide Overview (expandable per seeker, shows entries)
+- [x] API: GET/POST/DELETE `/api/journal/shares` (seeker manages shares)
+- [x] API: GET `/api/journal/shares/received` (guide sees who shared with them)
+- [x] API: GET `/api/journal/shared/[patientId]` (guide views entries, requires explicit share grant)
 
-### Patient Dashboard Tabs (Implemented)
+### Seeker Dashboard Tabs (Implemented)
 - [x] Shared layout with tab bar (Dashboard, Settings)
 - [x] Dashboard: subscription banners, procedures, profile, purchase history, journal, calls, reviews
-- [x] Settings: privacy settings, subscription management, journal sharing controls, become a contributor CTA
+- [x] Settings: privacy settings, subscription management, journal sharing controls, become a guide CTA
 - [x] Subscription portal redirects back to settings page
 
 ### Navigation (Implemented)
-- [x] Contributor dropdown: Overview, Content, Profile, Analytics, Settings
-- [x] Patient dropdown: Dashboard, Watch Stories, Book a Mentor, Group Sessions, Recommendations, Settings
+- [x] Guide dropdown: Overview, Content, Profile, Analytics, Settings
+- [x] Seeker dropdown: Dashboard, Watch Stories, Find a Guide, Group Sessions, Recommendations, Settings
 - [x] BOTH/ADMIN: both dropdowns side by side
-- [x] CONTRIBUTOR-only and PATIENT-only: single dropdown (consistent pattern)
+- [x] GUIDE-only and SEEKER-only: single dropdown (consistent pattern)
 - [x] Logged-out: "Browse" dropdown
 - [x] Mobile menu: section headers with indented links for all roles
 - [x] Messages link with unread badge (top-level, cross-cutting)
 
 ---
 
-## What's Next — Potential Enhancements
+## Launch Checklist
+
+### Infrastructure (Do First)
+- [ ] Deploy latest code to Vercel (rebrand commit)
+- [ ] Verify `thekizu.com` domain is live and SSL works
+- [ ] Verify Resend email sending from `support@thekizu.com`
+- [ ] Test Stripe checkout flow end-to-end (recording purchase, subscription, call booking)
+- [ ] Test Stripe Connect onboarding for a guide
+- [ ] Verify Daily.co video calls work in production
+- [ ] Verify S3 uploads work (recording upload flow)
+- [ ] Test cron jobs are running (call reminders, group session lifecycle)
+- [ ] Update `NEXT_PUBLIC_APP_URL` env var to `https://thekizu.com`
+
+### Content & Data
+- [ ] Create your own guide profile (first guide on the platform)
+- [ ] Upload 2-3 seed recordings so the platform isn't empty at launch
+- [ ] Test the full seeker flow: register → profile wizard → browse → purchase → watch
+
+### Payments
+- [ ] Switch Stripe from test mode to live mode
+- [ ] Update Stripe API keys in Vercel env vars (live keys)
+- [ ] Update Stripe webhook endpoint to `https://thekizu.com/api/webhooks/stripe`
+- [ ] Create live Stripe price IDs for monthly/annual subscriptions
+- [ ] Update `STRIPE_MONTHLY_PRICE_ID` and `STRIPE_ANNUAL_PRICE_ID` env vars
+
+### SEO & Analytics
+- [ ] Add Google Analytics or Vercel Analytics
+- [ ] Add Open Graph meta tags (image, description) for social sharing
+- [ ] Submit sitemap to Google Search Console
+- [ ] Add favicon/app icon with Kizu branding
+
+### Legal
+- [ ] Review Terms of Service one more time (all references say Kizu)
+- [ ] Review Privacy Policy one more time
+- [ ] Consider adding a cookie consent banner if targeting EU users
+
+---
+
+## Post-Launch Enhancements
 
 These are **not yet built** but are natural next steps:
 
-1. **Full-text search + transcriptions** — The transcription pipeline (OpenAI Whisper) is already built but not active — needs an API key (~$0.006/min, very cheap). Once activated: transcribe all recordings, display transcripts on recording pages for accessibility, build a search UI so patients can search by what contributors actually say (e.g. "knee pain at night"), and wire up the existing content moderation flags to the admin dashboard. Buy the OpenAI API key when ready to build this.
-2. **AI-powered recommendations** — Suggest recordings/contributors based on user profile and behavior.
+1. **Full-text search + transcriptions** — The transcription pipeline (OpenAI Whisper) is already built but not active — needs an API key (~$0.006/min, very cheap). Once activated: transcribe all recordings, display transcripts on recording pages for accessibility, build a search UI so seekers can search by what guides actually say (e.g. "knee pain at night"), and wire up the existing content moderation flags to the admin dashboard.
+2. **AI-powered recommendations** — Suggest recordings/guides based on user profile and behavior.
 3. **Mobile app (Capacitor)** — Wrap existing Next.js app in native iOS/Android shell via Capacitor. Get app store presence, push notifications, and native feel with minimal code changes.
 4. **Content moderation AI** — Automated content filtering beyond manual admin review.
+5. **Social proof** — Testimonials, user count badges, "X people watched this" indicators.
+6. **Email marketing** — Drip campaigns for new users, re-engagement for inactive users.
 ---
 
 ## Dev Workflow

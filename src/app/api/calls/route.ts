@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
 
     if (!contributorId || !scheduledAt) {
       return NextResponse.json(
-        { error: "Contributor ID and scheduled time are required" },
+        { error: "Guide ID and scheduled time are required" },
         { status: 400 }
       );
     }
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
 
     if (contribError || !contributor?.profile?.isAvailableForCalls) {
       return NextResponse.json(
-        { error: "This contributor is not available for calls" },
+        { error: "This guide is not available for calls" },
         { status: 400 }
       );
     }
@@ -96,8 +96,8 @@ export async function POST(req: NextRequest) {
     if (call.contributor?.email) {
       sendCallBookedEmail(
         call.contributor.email,
-        call.contributor.name || "Contributor",
-        call.patient?.name || "A patient",
+        call.contributor.name || "Guide",
+        call.patient?.name || "A seeker",
         new Date(call.scheduledAt),
         call.durationMinutes,
         call.questionsInAdvance

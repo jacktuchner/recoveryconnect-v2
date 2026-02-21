@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useSession, signOut } from "next-auth/react";
 import { useState, useRef, useEffect } from "react";
 
@@ -9,18 +10,16 @@ type NavLink = {
   label: string;
 };
 
-const patientLinks: NavLink[] = [
-  { href: "/dashboard/patient", label: "Dashboard" },
+const seekerLinks: NavLink[] = [
   { href: "/watch", label: "Watch Stories" },
-  { href: "/mentors", label: "Book a Mentor" },
+  { href: "/guides", label: "Find a Guide" },
   { href: "/group-sessions", label: "Group Sessions" },
   { href: "/recommendations", label: "Recommendations" },
-  { href: "/dashboard/patient/settings", label: "Settings" },
 ];
 
 const browseLinks: NavLink[] = [
   { href: "/watch", label: "Watch Stories" },
-  { href: "/mentors", label: "Book a Mentor" },
+  { href: "/guides", label: "Find a Guide" },
   { href: "/group-sessions", label: "Group Sessions" },
   { href: "/recommendations", label: "Recommendations" },
 ];
@@ -110,38 +109,45 @@ export default function Navbar() {
 
   const userRole = (session?.user as any)?.role;
   const isBoth = userRole === "BOTH" || userRole === "ADMIN";
-  const isContributor = userRole === "CONTRIBUTOR" || userRole === "BOTH" || userRole === "ADMIN";
-  const isContributorOnly = userRole === "CONTRIBUTOR";
+  const isGuide = userRole === "GUIDE" || userRole === "BOTH" || userRole === "ADMIN";
+  const isGuideOnly = userRole === "GUIDE";
 
   const userId = (session?.user as any)?.id;
 
-  const contributorLinks: NavLink[] = [
-    { href: "/dashboard/contributor", label: "Overview" },
-    { href: "/dashboard/contributor/content", label: "Content" },
-    { href: "/dashboard/contributor/profile", label: "Profile" },
-    { href: "/dashboard/contributor/analytics", label: "Analytics" },
-    { href: "/dashboard/contributor/settings", label: "Settings" },
+  const guideLinks: NavLink[] = [
+    { href: "/dashboard/guide", label: "Overview" },
+    { href: "/dashboard/guide/content", label: "Content" },
+    { href: "/dashboard/guide/profile", label: "Profile" },
+    { href: "/dashboard/guide/analytics", label: "Analytics" },
+  ];
+
+  const seekerDashboardHref = "/dashboard/seeker";
+
+  const settingsLinks: NavLink[] = [
+    { href: "/settings", label: "General" },
+    ...(isGuide ? [{ href: "/settings/guide", label: "Guide Settings" }] : []),
+    ...(userRole === "SEEKER" || isBoth ? [{ href: "/settings/seeker", label: "Seeker Settings" }] : []),
   ];
 
   return (
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-teal-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">PH</span>
-            </div>
-            <span className="text-xl font-bold text-gray-900">
-              Peer<span className="text-teal-600">Heal</span>
-            </span>
+          <Link href="/" className="flex items-center">
+            <Image
+              src="/images/logo_v2.png"
+              alt="Kizu"
+              width={56}
+              height={56}
+            />
           </Link>
 
           <div className="hidden lg:flex items-center gap-5">
-            {/* BOTH/ADMIN: three dropdowns */}
+            {/* BOTH/ADMIN */}
             {session && isBoth && (
               <>
-                <Dropdown label="Contributor" links={contributorLinks} />
-                <Dropdown label="Patient" links={patientLinks} />
+                <Dropdown label="Guide Tools" links={guideLinks} />
+                <Dropdown label="Seeker Resources" links={[{ href: seekerDashboardHref, label: "Dashboard" }, ...seekerLinks]} />
                 {userRole === "ADMIN" && (
                   <Link href="/admin" className="text-purple-600 hover:text-purple-700 font-medium transition-colors">
                     Admin
@@ -150,14 +156,19 @@ export default function Navbar() {
               </>
             )}
 
-            {/* CONTRIBUTOR only */}
-            {session && isContributorOnly && (
-              <Dropdown label="Contributor" links={contributorLinks} />
+            {/* GUIDE only */}
+            {session && isGuideOnly && (
+              <Dropdown label="Guide Tools" links={guideLinks} />
             )}
 
-            {/* PATIENT only */}
-            {session && userRole === "PATIENT" && (
-              <Dropdown label="Patient" links={patientLinks} />
+            {/* SEEKER only */}
+            {session && userRole === "SEEKER" && (
+              <>
+                <Link href={seekerDashboardHref} className="text-gray-600 hover:text-teal-600 transition-colors">
+                  Dashboard
+                </Link>
+                <Dropdown label="Resources" links={seekerLinks} />
+              </>
             )}
 
             {/* Not logged in */}
@@ -176,6 +187,7 @@ export default function Navbar() {
 
             {session ? (
               <>
+                <Dropdown label="Settings" links={settingsLinks} />
                 <button
                   onClick={() => signOut()}
                   className="text-gray-600 hover:text-teal-600 transition-colors"
@@ -220,14 +232,17 @@ export default function Navbar() {
             {/* BOTH/ADMIN mobile */}
             {session && isBoth && (
               <>
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide pt-2 pb-1">Contributor</p>
-                {contributorLinks.map((link) => (
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide pt-2 pb-1">Guide Tools</p>
+                {guideLinks.map((link) => (
                   <Link key={link.href} href={link.href} className="block py-2 pl-3 text-gray-600" onClick={() => setMenuOpen(false)}>
                     {link.label}
                   </Link>
                 ))}
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide pt-2 pb-1">Patient</p>
-                {patientLinks.map((link) => (
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide pt-2 pb-1">Seeker Resources</p>
+                <Link href={seekerDashboardHref} className="block py-2 pl-3 text-gray-600" onClick={() => setMenuOpen(false)}>
+                  Dashboard
+                </Link>
+                {seekerLinks.map((link) => (
                   <Link key={link.href} href={link.href} className="block py-2 pl-3 text-gray-600" onClick={() => setMenuOpen(false)}>
                     {link.label}
                   </Link>
@@ -240,11 +255,11 @@ export default function Navbar() {
               </>
             )}
 
-            {/* CONTRIBUTOR only mobile */}
-            {session && isContributorOnly && (
+            {/* GUIDE only mobile */}
+            {session && isGuideOnly && (
               <>
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide pt-2 pb-1">Contributor</p>
-                {contributorLinks.map((link) => (
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide pt-2 pb-1">Guide Tools</p>
+                {guideLinks.map((link) => (
                   <Link key={link.href} href={link.href} className="block py-2 pl-3 text-gray-600" onClick={() => setMenuOpen(false)}>
                     {link.label}
                   </Link>
@@ -252,11 +267,14 @@ export default function Navbar() {
               </>
             )}
 
-            {/* PATIENT only mobile */}
-            {session && userRole === "PATIENT" && (
+            {/* SEEKER only mobile */}
+            {session && userRole === "SEEKER" && (
               <>
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide pt-2 pb-1">Patient</p>
-                {patientLinks.map((link) => (
+                <Link href={seekerDashboardHref} className="block py-2 text-gray-600" onClick={() => setMenuOpen(false)}>
+                  Dashboard
+                </Link>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide pt-2 pb-1">Resources</p>
+                {seekerLinks.map((link) => (
                   <Link key={link.href} href={link.href} className="block py-2 pl-3 text-gray-600" onClick={() => setMenuOpen(false)}>
                     {link.label}
                   </Link>
@@ -290,7 +308,15 @@ export default function Navbar() {
             </Link>
 
             {session ? (
-              <button onClick={() => signOut()} className="block py-2 text-gray-600 pt-3">Sign Out</button>
+              <>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide pt-2 pb-1">Settings</p>
+                {settingsLinks.map((link) => (
+                  <Link key={link.href} href={link.href} className="block py-2 pl-3 text-gray-600" onClick={() => setMenuOpen(false)}>
+                    {link.label}
+                  </Link>
+                ))}
+                <button onClick={() => signOut()} className="block py-2 text-gray-600 pt-3">Sign Out</button>
+              </>
             ) : (
               <>
                 <Link href="/auth/signin" className="block py-2 text-gray-600" onClick={() => setMenuOpen(false)}>Sign In</Link>

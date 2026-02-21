@@ -1,0 +1,6 @@
+-- Rename UserRole enum values
+ALTER TYPE "UserRole" RENAME VALUE 'PATIENT' TO 'SEEKER';
+ALTER TYPE "UserRole" RENAME VALUE 'CONTRIBUTOR' TO 'GUIDE';
+
+-- Rename PaymentType enum value
+ALTER TYPE "PaymentType" RENAME VALUE 'CONTRIBUTOR_PAYOUT' TO 'GUIDE_PAYOUT';

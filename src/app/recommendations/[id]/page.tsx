@@ -47,7 +47,7 @@ export default function RecommendationDetailPage({ params }: { params: Promise<{
   const [submittingComment, setSubmittingComment] = useState(false);
 
   const userRole = (session?.user as any)?.role;
-  const isContributor = userRole === "CONTRIBUTOR" || userRole === "BOTH" || userRole === "ADMIN";
+  const isContributor = userRole === "GUIDE" || userRole === "BOTH" || userRole === "ADMIN";
   const isSubscriber = (session?.user as any)?.subscriptionStatus === "active";
   const hasAccess = isContributor || isSubscriber;
 
@@ -278,7 +278,7 @@ export default function RecommendationDetailPage({ params }: { params: Promise<{
                 <div key={endorsement.id} className="border-b border-gray-100 last:border-0 pb-4 last:pb-0">
                   <div className="flex items-center gap-3 mb-2">
                     <Link
-                      href={`/contributors/${endorsement.contributor.id}`}
+                      href={`/guides/${endorsement.contributor.id}`}
                       className="flex items-center gap-2 hover:text-teal-600"
                     >
                       <div className="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center">

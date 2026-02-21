@@ -118,7 +118,7 @@ export async function POST(req: NextRequest) {
 
     if (
       currentUser &&
-      (currentUser.role === "PATIENT") &&
+      (currentUser.role === "SEEKER") &&
       currentUser.subscriptionStatus !== "active" &&
       currentUser.subscriptionStatus !== "trialing"
     ) {

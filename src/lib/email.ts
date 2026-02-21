@@ -2,9 +2,7 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Use Resend's test domain until peerheal.com is verified
-// Change to "PeerHeal <noreply@peerheal.com>" after domain verification
-const FROM_EMAIL = process.env.EMAIL_FROM || "PeerHeal <onboarding@resend.dev>";
+const FROM_EMAIL = process.env.EMAIL_FROM || "Kizu <support@thekizu.com>";
 
 // Email templates
 function baseTemplate(content: string) {
@@ -14,18 +12,18 @@ function baseTemplate(content: string) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PeerHeal</title>
+  <title>Kizu</title>
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #374151; max-width: 600px; margin: 0 auto; padding: 20px;">
   <div style="text-align: center; margin-bottom: 30px;">
     <div style="display: inline-block; background: #0d9488; color: white; font-weight: bold; padding: 10px 15px; border-radius: 8px; font-size: 18px;">
-      Peer<span style="color: #a5f3fc;">Heal</span>
+      Kizu
     </div>
   </div>
   ${content}
   <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center; color: #9ca3af; font-size: 14px;">
-    <p>PeerHeal - Peer support for your recovery journey</p>
-    <p style="font-size: 12px;">This email was sent by PeerHeal. If you didn't expect this email, you can ignore it.</p>
+    <p>Kizu - Peer support for your recovery journey</p>
+    <p style="font-size: 12px;">This email was sent by Kizu. If you didn't expect this email, you can ignore it.</p>
   </div>
 </body>
 </html>
@@ -35,21 +33,21 @@ function baseTemplate(content: string) {
 // Welcome email for new users
 export async function sendWelcomeEmail(to: string, name: string, role: string) {
   console.log("[EMAIL] Sending welcome email to:", to, "with API key:", process.env.RESEND_API_KEY ? "SET" : "MISSING");
-  const isContributor = role === "CONTRIBUTOR";
+  const isGuide = role === "GUIDE";
 
   const content = `
-    <h1 style="color: #0d9488; font-size: 24px; margin-bottom: 20px;">Welcome to PeerHeal, ${name}!</h1>
+    <h1 style="color: #0d9488; font-size: 24px; margin-bottom: 20px;">Welcome to Kizu, ${name}!</h1>
     <p>Thank you for joining our community. ${
-      isContributor
+      isGuide
         ? "We're excited to have you share your recovery experience with others."
         : "We're here to help connect you with people who understand your recovery journey."
     }</p>
     <p><strong>What's next?</strong></p>
     <ul style="padding-left: 20px;">
       ${
-        isContributor
+        isGuide
           ? `
-        <li>Complete your contributor profile</li>
+        <li>Complete your guide profile</li>
         <li>Record your first recovery story</li>
         <li>Set up your availability for calls</li>
         <li>Connect your Stripe account for payouts</li>
@@ -57,18 +55,18 @@ export async function sendWelcomeEmail(to: string, name: string, role: string) {
           : `
         <li>Complete your recovery profile to get better matches</li>
         <li>Browse recovery stories from people like you</li>
-        <li>Book a call with a mentor who's been there</li>
+        <li>Book a call with a guide who's been there</li>
       `
       }
     </ul>
     <div style="text-align: center; margin: 30px 0;">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/${isContributor ? "contributor" : "patient"}"
+      <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/${isGuide ? "guide" : "seeker"}"
          style="display: inline-block; background: #0d9488; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600;">
         Go to Your Dashboard
       </a>
     </div>
     <p>If you have any questions, we're here to help.</p>
-    <p>Best,<br>The PeerHeal Team</p>
+    <p>Best,<br>The Kizu Team</p>
   `;
 
   try {
@@ -76,7 +74,7 @@ export async function sendWelcomeEmail(to: string, name: string, role: string) {
     const result = await resend.emails.send({
       from: FROM_EMAIL,
       to,
-      subject: `Welcome to PeerHeal, ${name}!`,
+      subject: `Welcome to Kizu, ${name}!`,
       html: baseTemplate(content),
     });
     console.log("[EMAIL] Send result:", result);
@@ -87,14 +85,16 @@ export async function sendWelcomeEmail(to: string, name: string, role: string) {
   }
 }
 
-// Call booked - sent to contributor
+// Call confirmed - sent to both guide and seeker (auto-confirmed on payment)
 export async function sendCallBookedEmail(
-  contributorEmail: string,
-  contributorName: string,
-  patientName: string,
+  recipientEmail: string,
+  recipientName: string,
+  otherPartyName: string,
   scheduledAt: Date,
   durationMinutes: number,
-  questions?: string
+  questions?: string,
+  videoRoomUrl?: string | null,
+  isSeeker: boolean = false
 ) {
   const dateStr = scheduledAt.toLocaleDateString("en-US", {
     weekday: "long",
@@ -107,10 +107,18 @@ export async function sendCallBookedEmail(
     minute: "2-digit",
   });
 
+  const heading = isSeeker ? "Your Call is Confirmed!" : "New Call Scheduled!";
+  const intro = isSeeker
+    ? `Your call with <strong>${otherPartyName}</strong> is confirmed.`
+    : `<strong>${otherPartyName}</strong> has booked a call with you.`;
+  const dashboardUrl = isSeeker
+    ? `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/seeker`
+    : `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/guide`;
+
   const content = `
-    <h1 style="color: #0d9488; font-size: 24px; margin-bottom: 20px;">New Call Request!</h1>
-    <p>Hi ${contributorName},</p>
-    <p><strong>${patientName}</strong> has requested a call with you.</p>
+    <h1 style="color: #0d9488; font-size: 24px; margin-bottom: 20px;">${heading}</h1>
+    <p>Hi ${recipientName},</p>
+    <p>${intro}</p>
     <div style="background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 8px; padding: 20px; margin: 20px 0;">
       <p style="margin: 0 0 10px 0;"><strong>Date:</strong> ${dateStr}</p>
       <p style="margin: 0 0 10px 0;"><strong>Time:</strong> ${timeStr}</p>
@@ -120,26 +128,45 @@ export async function sendCallBookedEmail(
       questions
         ? `
       <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin: 20px 0;">
-        <p style="margin: 0 0 10px 0; font-weight: 600;">Questions from ${patientName}:</p>
-        <p style="margin: 0; color: #6b7280; font-style: italic;">"${questions}"</p>
+        <p style="margin: 0 0 10px 0; font-weight: 600;">Questions from ${otherPartyName}:</p>
+        <p style="margin: 0; color: #6b7280; font-style: italic;">&ldquo;${questions}&rdquo;</p>
+      </div>
+    `
+        : ""
+    }
+    ${
+      videoRoomUrl
+        ? `
+      <div style="background: #ecfdf5; border: 2px solid #10b981; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center;">
+        <p style="margin: 0 0 15px 0; font-weight: 600; color: #059669;">Join your video call here:</p>
+        <a href="${videoRoomUrl}"
+           style="display: inline-block; background: #10b981; color: white; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+          Join Video Call
+        </a>
+        <p style="margin: 15px 0 0 0; font-size: 12px; color: #6b7280;">
+          This link will be active starting 15 minutes before your scheduled time.
+        </p>
       </div>
     `
         : ""
     }
     <div style="text-align: center; margin: 30px 0;">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/contributor"
+      <a href="${dashboardUrl}"
          style="display: inline-block; background: #0d9488; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600;">
-        Confirm or Decline
+        View Call Details
       </a>
     </div>
-    <p style="color: #6b7280; font-size: 14px;">Please respond to this request as soon as possible.</p>
+    <p style="color: #6b7280; font-size: 14px;">Cancellations made less than 24 hours before the call are non-refundable. We&apos;ll send you a reminder before your call.</p>
   `;
 
   try {
+    const subject = isSeeker
+      ? `Call confirmed with ${otherPartyName}${videoRoomUrl ? " - Video link inside" : ""}`
+      : `New call scheduled with ${otherPartyName}`;
     await resend.emails.send({
       from: FROM_EMAIL,
-      to: contributorEmail,
-      subject: `New call request from ${patientName}`,
+      to: recipientEmail,
+      subject,
       html: baseTemplate(content),
     });
     return { success: true };
@@ -149,71 +176,14 @@ export async function sendCallBookedEmail(
   }
 }
 
-// Call confirmed - sent to patient
-export async function sendCallConfirmedEmail(
-  patientEmail: string,
-  patientName: string,
-  contributorName: string,
-  scheduledAt: Date,
-  durationMinutes: number
-) {
-  const dateStr = scheduledAt.toLocaleDateString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-  const timeStr = scheduledAt.toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-
-  const content = `
-    <h1 style="color: #0d9488; font-size: 24px; margin-bottom: 20px;">Your Call is Confirmed!</h1>
-    <p>Hi ${patientName},</p>
-    <p>Great news! <strong>${contributorName}</strong> has confirmed your call.</p>
-    <div style="background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 8px; padding: 20px; margin: 20px 0;">
-      <p style="margin: 0 0 10px 0;"><strong>Date:</strong> ${dateStr}</p>
-      <p style="margin: 0 0 10px 0;"><strong>Time:</strong> ${timeStr}</p>
-      <p style="margin: 0;"><strong>Duration:</strong> ${durationMinutes} minutes</p>
-    </div>
-    <p><strong>Tips for your call:</strong></p>
-    <ul style="padding-left: 20px; color: #6b7280;">
-      <li>Find a quiet, private space</li>
-      <li>Have your questions ready</li>
-      <li>Test your camera and microphone beforehand</li>
-      <li>Remember: this is peer support, not medical advice</li>
-    </ul>
-    <div style="text-align: center; margin: 30px 0;">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/patient"
-         style="display: inline-block; background: #0d9488; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600;">
-        View Your Calls
-      </a>
-    </div>
-    <p>We'll send you a reminder before your call.</p>
-  `;
-
-  try {
-    await resend.emails.send({
-      from: FROM_EMAIL,
-      to: patientEmail,
-      subject: `Call confirmed with ${contributorName}`,
-      html: baseTemplate(content),
-    });
-    return { success: true };
-  } catch (error) {
-    console.error("Failed to send call confirmed email:", error);
-    return { success: false, error };
-  }
-}
-
-// Call cancelled - sent to the other party
+// Call cancelled - sent to both parties
 export async function sendCallCancelledEmail(
   recipientEmail: string,
   recipientName: string,
   cancelledByName: string,
   scheduledAt: Date,
-  wasContributorCancelling: boolean
+  wasGuideCancelling: boolean,
+  refundIssued: boolean = false
 ) {
   const dateStr = scheduledAt.toLocaleDateString("en-US", {
     weekday: "long",
@@ -226,28 +196,33 @@ export async function sendCallCancelledEmail(
     minute: "2-digit",
   });
 
+  const refundNote = refundIssued
+    ? `<p style="color: #059669; font-weight: 600;">A full refund has been issued and will appear on your statement shortly.</p>`
+    : `<p style="color: #991b1b; font-weight: 600;">This cancellation was made less than 24 hours before the call, so no refund will be issued.</p>`;
+
   const content = `
     <h1 style="color: #dc2626; font-size: 24px; margin-bottom: 20px;">Call Cancelled</h1>
     <p>Hi ${recipientName},</p>
-    <p>Unfortunately, <strong>${cancelledByName}</strong> has cancelled the call that was scheduled for:</p>
+    <p>${cancelledByName === "You" ? "You have" : `<strong>${cancelledByName}</strong> has`} cancelled the call that was scheduled for:</p>
     <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 20px; margin: 20px 0;">
       <p style="margin: 0 0 10px 0;"><strong>Date:</strong> ${dateStr}</p>
       <p style="margin: 0;"><strong>Time:</strong> ${timeStr}</p>
     </div>
+    ${refundNote}
     ${
-      wasContributorCancelling
+      wasGuideCancelling
         ? `
-      <p>Don't worry - there are other mentors available who can help you on your recovery journey.</p>
+      <p>There are other guides available who can help you on your recovery journey.</p>
       <div style="text-align: center; margin: 30px 0;">
-        <a href="${process.env.NEXT_PUBLIC_APP_URL}/mentors"
+        <a href="${process.env.NEXT_PUBLIC_APP_URL}/guides"
            style="display: inline-block; background: #0d9488; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600;">
-          Find Another Mentor
+          Find Another Guide
         </a>
       </div>
     `
         : `
       <div style="text-align: center; margin: 30px 0;">
-        <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/contributor"
+        <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/guide"
            style="display: inline-block; background: #0d9488; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600;">
           View Your Dashboard
         </a>
@@ -261,7 +236,7 @@ export async function sendCallCancelledEmail(
     await resend.emails.send({
       from: FROM_EMAIL,
       to: recipientEmail,
-      subject: `Call cancelled by ${cancelledByName}`,
+      subject: `Call cancelled - ${dateStr}`,
       html: baseTemplate(content),
     });
     return { success: true };
@@ -275,7 +250,7 @@ export async function sendCallCancelledEmail(
 export async function sendPasswordResetEmail(to: string, resetUrl: string) {
   const content = `
     <h1 style="color: #0d9488; font-size: 24px; margin-bottom: 20px;">Reset Your Password</h1>
-    <p>We received a request to reset your password for your PeerHeal account.</p>
+    <p>We received a request to reset your password for your Kizu account.</p>
     <p>Click the button below to create a new password. This link will expire in 1 hour.</p>
     <div style="text-align: center; margin: 30px 0;">
       <a href="${resetUrl}"
@@ -294,7 +269,7 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string) {
     await resend.emails.send({
       from: FROM_EMAIL,
       to,
-      subject: "Reset your PeerHeal password",
+      subject: "Reset your Kizu password",
       html: baseTemplate(content),
     });
     return { success: true };
@@ -309,9 +284,9 @@ export async function sendSubscriptionConfirmationEmail(to: string, name: string
   const planLabel = plan === "annual" ? "Annual" : "Monthly";
 
   const content = `
-    <h1 style="color: #0d9488; font-size: 24px; margin-bottom: 20px;">Welcome to PeerHeal!</h1>
+    <h1 style="color: #0d9488; font-size: 24px; margin-bottom: 20px;">Welcome to Kizu!</h1>
     <p>Hi ${name},</p>
-    <p>Your <strong>${planLabel}</strong> subscription is now active. You have unlimited access to all recovery recordings on PeerHeal.</p>
+    <p>Your <strong>${planLabel}</strong> subscription is now active. You have unlimited access to all recovery recordings on Kizu.</p>
     <div style="background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 8px; padding: 20px; margin: 20px 0;">
       <p style="margin: 0 0 10px 0;"><strong>Plan:</strong> ${planLabel}</p>
       <p style="margin: 0;"><strong>Access:</strong> Unlimited recordings</p>
@@ -324,14 +299,14 @@ export async function sendSubscriptionConfirmationEmail(to: string, name: string
       </a>
     </div>
     <p>You can manage your subscription anytime from your dashboard.</p>
-    <p>Best,<br>The PeerHeal Team</p>
+    <p>Best,<br>The Kizu Team</p>
   `;
 
   try {
     await resend.emails.send({
       from: FROM_EMAIL,
       to,
-      subject: `Your PeerHeal subscription is active!`,
+      subject: `Your Kizu subscription is active!`,
       html: baseTemplate(content),
     });
     return { success: true };
@@ -346,27 +321,27 @@ export async function sendSubscriptionCancelledEmail(to: string, name: string, a
   const content = `
     <h1 style="color: #dc2626; font-size: 24px; margin-bottom: 20px;">Subscription Cancelled</h1>
     <p>Hi ${name},</p>
-    <p>Your PeerHeal subscription has been cancelled.</p>
+    <p>Your Kizu subscription has been cancelled.</p>
     <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 20px; margin: 20px 0;">
       <p style="margin: 0;"><strong>Access until:</strong> ${accessEndsDate}</p>
     </div>
     <p>You&apos;ll continue to have unlimited recording access until your current billing period ends. After that, you can still purchase individual recordings.</p>
     <p>Changed your mind? You can resubscribe anytime from your dashboard.</p>
     <div style="text-align: center; margin: 30px 0;">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/patient"
+      <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/seeker"
          style="display: inline-block; background: #0d9488; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600;">
         Go to Dashboard
       </a>
     </div>
     <p>We hope to see you back soon.</p>
-    <p>Best,<br>The PeerHeal Team</p>
+    <p>Best,<br>The Kizu Team</p>
   `;
 
   try {
     await resend.emails.send({
       from: FROM_EMAIL,
       to,
-      subject: "Your PeerHeal subscription has been cancelled",
+      subject: "Your Kizu subscription has been cancelled",
       html: baseTemplate(content),
     });
     return { success: true };
@@ -412,7 +387,7 @@ export async function sendGroupSessionSignupEmail(
     </div>
     ` : `
     <div style="text-align: center; margin: 30px 0;">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/patient" style="display: inline-block; background: #0d9488; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600;">
+      <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/seeker" style="display: inline-block; background: #0d9488; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600;">
         View Your Dashboard
       </a>
     </div>
@@ -608,7 +583,40 @@ export async function sendNewMessageEmail(
   }
 }
 
-// New contributor application submitted - sent to admin
+// Password changed confirmation
+export async function sendPasswordChangedEmail(to: string, name: string) {
+  const content = `
+    <h1 style="color: #0d9488; font-size: 24px; margin-bottom: 20px;">Password Changed</h1>
+    <p>Hi ${name},</p>
+    <p>Your Kizu account password was just changed successfully.</p>
+    <p>If you made this change, no further action is needed.</p>
+    <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 20px; margin: 20px 0;">
+      <p style="margin: 0; color: #991b1b;"><strong>Didn't change your password?</strong> If you didn't make this change, please reset your password immediately and contact support.</p>
+    </div>
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${process.env.NEXT_PUBLIC_APP_URL}/auth/forgot-password"
+         style="display: inline-block; background: #dc2626; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600;">
+        Reset Password
+      </a>
+    </div>
+    <p>Best,<br>The Kizu Team</p>
+  `;
+
+  try {
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to,
+      subject: "Your Kizu password was changed",
+      html: baseTemplate(content),
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to send password changed email:", error);
+    return { success: false, error };
+  }
+}
+
+// New guide application submitted - sent to admin
 export async function sendApplicationReceivedEmail(
   adminEmail: string,
   adminName: string,
@@ -616,9 +624,9 @@ export async function sendApplicationReceivedEmail(
   applicantEmail: string
 ) {
   const content = `
-    <h1 style="color: #0d9488; font-size: 24px; margin-bottom: 20px;">New Contributor Application</h1>
+    <h1 style="color: #0d9488; font-size: 24px; margin-bottom: 20px;">New Guide Application</h1>
     <p>Hi ${adminName},</p>
-    <p><strong>${applicantName}</strong> (${applicantEmail}) has submitted a contributor application and is waiting for review.</p>
+    <p><strong>${applicantName}</strong> (${applicantEmail}) has submitted a guide application and is waiting for review.</p>
     <div style="text-align: center; margin: 30px 0;">
       <a href="${process.env.NEXT_PUBLIC_APP_URL}/admin/applications"
          style="display: inline-block; background: #0d9488; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600;">
@@ -632,7 +640,7 @@ export async function sendApplicationReceivedEmail(
     await resend.emails.send({
       from: FROM_EMAIL,
       to: adminEmail,
-      subject: `New contributor application from ${applicantName}`,
+      subject: `New guide application from ${applicantName}`,
       html: baseTemplate(content),
     });
     return { success: true };
@@ -642,12 +650,50 @@ export async function sendApplicationReceivedEmail(
   }
 }
 
-// Contributor application approved - sent to applicant
+// Guide application submitted - confirmation sent to applicant
+export async function sendApplicationSubmittedEmail(to: string, name: string) {
+  const content = `
+    <h1 style="color: #0d9488; font-size: 24px; margin-bottom: 20px;">Application Received!</h1>
+    <p>Hi ${name},</p>
+    <p>Thank you for applying to become a guide on Kizu. We've received your application and our team will review it shortly.</p>
+    <div style="background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 8px; padding: 20px; margin: 20px 0;">
+      <p style="margin: 0 0 10px 0;"><strong>What happens next:</strong></p>
+      <ul style="margin: 0; padding-left: 20px;">
+        <li>Our team will review your application</li>
+        <li>We may reach out to schedule a brief call</li>
+        <li>You'll receive an email once a decision is made</li>
+      </ul>
+    </div>
+    <p>In the meantime, you can continue using Kizu as a seeker.</p>
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/seeker"
+         style="display: inline-block; background: #0d9488; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600;">
+        Go to Dashboard
+      </a>
+    </div>
+    <p>Best,<br>The Kizu Team</p>
+  `;
+
+  try {
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to,
+      subject: "We received your Kizu guide application!",
+      html: baseTemplate(content),
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to send application submitted email:", error);
+    return { success: false, error };
+  }
+}
+
+// Guide application approved - sent to applicant
 export async function sendApplicationApprovedEmail(to: string, name: string) {
   const content = `
     <h1 style="color: #0d9488; font-size: 24px; margin-bottom: 20px;">You're Approved!</h1>
     <p>Hi ${name},</p>
-    <p>Great news! Your contributor application has been approved. You now have full access to share your recovery experience on PeerHeal.</p>
+    <p>Great news! Your guide application has been approved. You now have full access to share your recovery experience on Kizu.</p>
     <div style="background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 8px; padding: 20px; margin: 20px 0;">
       <p style="margin: 0 0 10px 0;"><strong>What you can do now:</strong></p>
       <ul style="margin: 0; padding-left: 20px;">
@@ -658,20 +704,20 @@ export async function sendApplicationApprovedEmail(to: string, name: string) {
       </ul>
     </div>
     <div style="text-align: center; margin: 30px 0;">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/contributor"
+      <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/guide"
          style="display: inline-block; background: #0d9488; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600;">
-        Go to Contributor Dashboard
+        Go to Guide Dashboard
       </a>
     </div>
     <p>Thank you for being part of our community and helping others through their recovery.</p>
-    <p>Best,<br>The PeerHeal Team</p>
+    <p>Best,<br>The Kizu Team</p>
   `;
 
   try {
     await resend.emails.send({
       from: FROM_EMAIL,
       to,
-      subject: "Your PeerHeal contributor application is approved!",
+      subject: "Your Kizu guide application is approved!",
       html: baseTemplate(content),
     });
     return { success: true };
@@ -681,28 +727,28 @@ export async function sendApplicationApprovedEmail(to: string, name: string) {
   }
 }
 
-// Contributor application rejected - sent to applicant
+// Guide application rejected - sent to applicant
 export async function sendApplicationRejectedEmail(to: string, name: string) {
   const content = `
     <h1 style="color: #374151; font-size: 24px; margin-bottom: 20px;">Application Update</h1>
     <p>Hi ${name},</p>
-    <p>Thank you for your interest in becoming a contributor on PeerHeal. After reviewing your application, we're unable to approve it at this time.</p>
+    <p>Thank you for your interest in becoming a guide on Kizu. After reviewing your application, we're unable to approve it at this time.</p>
     <p>This doesn't reflect on your recovery experience — we may need additional information or documentation. You're welcome to reapply in the future.</p>
     <div style="text-align: center; margin: 30px 0;">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/patient"
+      <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/seeker"
          style="display: inline-block; background: #0d9488; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600;">
         Go to Dashboard
       </a>
     </div>
     <p>If you have any questions, feel free to reach out.</p>
-    <p>Best,<br>The PeerHeal Team</p>
+    <p>Best,<br>The Kizu Team</p>
   `;
 
   try {
     await resend.emails.send({
       from: FROM_EMAIL,
       to,
-      subject: "Update on your PeerHeal contributor application",
+      subject: "Update on your Kizu guide application",
       html: baseTemplate(content),
     });
     return { success: true };
@@ -719,7 +765,7 @@ export async function sendCallReminderEmail(
   otherPartyName: string,
   scheduledAt: Date,
   durationMinutes: number,
-  isContributor: boolean,
+  isGuide: boolean,
   reminderType: "day" | "hour"
 ) {
   const dateStr = scheduledAt.toLocaleDateString("en-US", {
@@ -749,10 +795,10 @@ export async function sendCallReminderEmail(
       <li>Find a quiet, private space</li>
       <li>Test your camera and microphone</li>
       <li>Have a stable internet connection</li>
-      ${isContributor ? "<li>Review any questions submitted in advance</li>" : "<li>Have your questions ready</li>"}
+      ${isGuide ? "<li>Review any questions submitted in advance</li>" : "<li>Have your questions ready</li>"}
     </ul>
     <div style="text-align: center; margin: 30px 0;">
-      <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/${isContributor ? "contributor" : "patient"}"
+      <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/${isGuide ? "guide" : "seeker"}"
          style="display: inline-block; background: #0d9488; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600;">
         View Call Details
       </a>

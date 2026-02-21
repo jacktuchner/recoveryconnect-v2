@@ -13,6 +13,10 @@ interface Application {
   zoomCompleted: boolean;
   reviewNote: string | null;
   reviewedById: string | null;
+  agreementAcceptedAt: string | null;
+  agreementSignature: string | null;
+  agreementSignatureImage: string | null;
+  agreementVersion: string | null;
   status: ApplicationStatus;
   createdAt: string;
   updatedAt: string;
@@ -67,8 +71,8 @@ export default function AdminApplicationsPage() {
     if (!app) return;
 
     const confirmMsg = action === "approve"
-      ? `Approve ${app.user.name}'s contributor application?`
-      : `Reject ${app.user.name}'s application? Their role will revert to PATIENT.`;
+      ? `Approve ${app.user.name}'s guide application?`
+      : `Reject ${app.user.name}'s application? Their role will revert to SEEKER.`;
 
     if (!confirm(confirmMsg)) return;
 
@@ -117,8 +121,8 @@ export default function AdminApplicationsPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Contributor Applications</h1>
-        <p className="text-gray-500 mt-1">Review and manage contributor applications ({total} total)</p>
+        <h1 className="text-2xl font-bold text-gray-900">Guide Applications</h1>
+        <p className="text-gray-500 mt-1">Review and manage guide applications ({total} total)</p>
       </div>
 
       {/* Status tabs */}
@@ -225,6 +229,31 @@ export default function AdminApplicationsPage() {
                           </div>
                         </div>
                       )}
+
+                      {/* Agreement status */}
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-500 mb-1">Guide Agreement</h4>
+                        {app.agreementAcceptedAt ? (
+                          <div className="text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2 space-y-2">
+                            <p>Signed by: <span className="font-semibold italic">{app.agreementSignature}</span></p>
+                            {app.agreementSignatureImage && (
+                              <div className="bg-white border border-green-200 rounded p-2">
+                                <img
+                                  src={app.agreementSignatureImage}
+                                  alt={`Signature by ${app.agreementSignature}`}
+                                  className="h-16 object-contain"
+                                />
+                              </div>
+                            )}
+                            <p>Date: {new Date(app.agreementAcceptedAt).toLocaleString()}</p>
+                            <p className="text-green-600 text-xs">Agreement version: {app.agreementVersion}</p>
+                          </div>
+                        ) : (
+                          <div className="text-sm text-gray-400 bg-gray-50 rounded-lg px-3 py-2">
+                            Not signed (pre-agreement application)
+                          </div>
+                        )}
+                      </div>
 
                       {/* Zoom completed checkbox */}
                       <div className="flex items-center gap-2">

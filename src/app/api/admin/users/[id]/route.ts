@@ -174,7 +174,7 @@ export async function PATCH(
     const body = await req.json();
     const { role } = body;
 
-    if (!role || !["PATIENT", "CONTRIBUTOR", "BOTH", "ADMIN"].includes(role)) {
+    if (!role || !["SEEKER", "GUIDE", "BOTH", "ADMIN"].includes(role)) {
       return NextResponse.json(
         { error: "Invalid role. Must be PATIENT, CONTRIBUTOR, BOTH, or ADMIN" },
         { status: 400 }

@@ -1,10 +1,11 @@
 import Link from "next/link";
+import Image from "next/image";
 import { PROCEDURE_TYPES, RECORDING_CATEGORIES, CHRONIC_PAIN_CONDITIONS } from "@/lib/constants";
 import ContentPreviewSection from "@/components/ContentPreviewSection";
 import HeroCTA from "@/components/HeroCTA";
-import ContributorCTA from "@/components/ContributorCTA";
-import FooterContributorLinks from "@/components/FooterContributorLinks";
-import FooterPatientLinks from "@/components/FooterPatientLinks";
+import GuideCTA from "@/components/GuideCTA";
+import FooterGuideLinks from "@/components/FooterGuideLinks";
+import FooterSeekerLinks from "@/components/FooterSeekerLinks";
 
 export default function HomePage() {
   return (
@@ -31,7 +32,7 @@ export default function HomePage() {
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold mb-4">How PeerHeal Works</h2>
+            <h2 className="text-3xl font-bold mb-4">How Kizu Works</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
               Two tiers of peer support, designed to give you exactly the
               guidance you need.
@@ -97,7 +98,7 @@ export default function HomePage() {
                 </li>
               </ul>
               <Link
-                href="/mentors"
+                href="/guides"
                 className="inline-flex items-center gap-2 text-cyan-700 font-semibold hover:text-cyan-800"
               >
                 Find a Mentor
@@ -149,9 +150,9 @@ export default function HomePage() {
       <section className="bg-gradient-to-br from-green-50 to-teal-50 py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Every Contributor is Vetted</h2>
+            <h2 className="text-3xl font-bold mb-4">Every Guide is Vetted</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              We review every contributor before they can publish content or take calls.
+              We review every guide before they can publish content or take calls.
               When you see the Verified badge, you know they&apos;ve been through our process.
             </p>
           </div>
@@ -164,7 +165,7 @@ export default function HomePage() {
                 </svg>
               </div>
               <h4 className="font-semibold mb-2">Written Application</h4>
-              <p className="text-sm text-gray-500">Contributors describe their experience and what they want to share</p>
+              <p className="text-sm text-gray-500">Guides describe their experience and what they want to share</p>
             </div>
             <div className="bg-white rounded-xl border border-gray-200 p-6 text-center">
               <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -182,7 +183,7 @@ export default function HomePage() {
                 </svg>
               </div>
               <h4 className="font-semibold mb-2">Verified Badge</h4>
-              <p className="text-sm text-gray-500">Approved contributors display a Verified badge visible to all patients</p>
+              <p className="text-sm text-gray-500">Approved guides display a Verified badge visible to all seekers</p>
             </div>
           </div>
         </div>
@@ -236,7 +237,7 @@ export default function HomePage() {
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">Structured Content</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Contributors record guided entries across six categories, so you
+              Guides record guided entries across six categories, so you
               find exactly the information you need.
             </p>
           </div>
@@ -254,19 +255,19 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CTA for Contributors */}
+      {/* CTA for Guides */}
       <section className="bg-gradient-to-br from-cyan-600 to-teal-700 text-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl font-bold mb-4">
             Been through it? Help others navigate it.
           </h2>
           <p className="text-cyan-100 max-w-2xl mx-auto mb-8">
-            Many contributors say that sharing their story is one of the most meaningful
+            Many guides say that sharing their story is one of the most meaningful
             parts of their recovery — almost therapeutic. Get paid to record content on your
             own time or take live video calls. Whether you&apos;ve recovered from surgery or
             manage an autoimmune condition, someone out there needs to hear your story.
           </p>
-          <ContributorCTA />
+          <GuideCTA />
         </div>
       </section>
 
@@ -274,8 +275,8 @@ export default function HomePage() {
       <section className="py-12">
         <div className="max-w-3xl mx-auto px-4 text-center">
           <p className="text-xs text-gray-400 leading-relaxed">
-            PeerHeal provides peer-to-peer recovery experiences and is not a
-            medical service. Content shared by contributors reflects personal
+            Kizu provides peer-to-peer recovery experiences and is not a
+            medical service. Content shared by guides reflects personal
             experience and should not be considered medical advice. Always consult
             your healthcare provider for medical decisions. By using this platform,
             you agree to our Terms of Service and understand that individual
@@ -289,20 +290,22 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
             <div>
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 bg-teal-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">PH</span>
-                </div>
-                <span className="text-white font-bold">PeerHeal</span>
+              <div className="mb-4">
+                <Image
+                  src="/images/logo_v2.png"
+                  alt="Kizu"
+                  width={64}
+                  height={64}
+                />
               </div>
               <p className="text-sm">
                 Peer recovery guidance from people who have been through it.
               </p>
             </div>
-            <FooterPatientLinks />
+            <FooterSeekerLinks />
             <div>
-              <h4 className="text-white font-semibold mb-3">For Contributors</h4>
-              <FooterContributorLinks />
+              <h4 className="text-white font-semibold mb-3">For Guides</h4>
+              <FooterGuideLinks />
             </div>
             <div>
               <h4 className="text-white font-semibold mb-3">Company</h4>
@@ -315,7 +318,7 @@ export default function HomePage() {
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-sm text-center">
-            &copy; {new Date().getFullYear()} PeerHeal. All rights reserved.
+            &copy; {new Date().getFullYear()} Kizu. All rights reserved.
           </div>
         </div>
       </footer>

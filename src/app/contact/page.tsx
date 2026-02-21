@@ -11,7 +11,7 @@ export default function ContactPage() {
     e.preventDefault();
     // For now, open mailto link with the form data
     const mailtoBody = `Name: ${form.name}\nEmail: ${form.email}\n\n${form.message}`;
-    window.location.href = `mailto:jacktuchner@me.com?subject=${encodeURIComponent(form.subject || "PeerHeal Contact")}&body=${encodeURIComponent(mailtoBody)}`;
+    window.location.href = `mailto:jacktuchner@me.com?subject=${encodeURIComponent(form.subject || "Kizu Contact")}&body=${encodeURIComponent(mailtoBody)}`;
     setSubmitted(true);
   }
 
@@ -123,7 +123,7 @@ export default function ContactPage() {
                       <option value="General Question">General Question</option>
                       <option value="Account Issue">Account Issue</option>
                       <option value="Payment/Billing">Payment / Billing</option>
-                      <option value="Become a Contributor">Become a Contributor</option>
+                      <option value="Become a Guide">Become a Guide</option>
                       <option value="Report a Problem">Report a Problem</option>
                       <option value="Feature Request">Feature Request</option>
                       <option value="Other">Other</option>

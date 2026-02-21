@@ -4,7 +4,8 @@ import { supabase } from "@/lib/supabase";
 import { PLATFORM_FEE_PERCENT } from "@/lib/constants";
 import { v4 as uuidv4 } from "uuid";
 import Stripe from "stripe";
-import { sendSubscriptionConfirmationEmail, sendSubscriptionCancelledEmail, sendGroupSessionSignupEmail } from "@/lib/email";
+import { sendSubscriptionConfirmationEmail, sendSubscriptionCancelledEmail, sendGroupSessionSignupEmail, sendCallBookedEmail } from "@/lib/email";
+import { createRoom } from "@/lib/daily";
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
@@ -161,7 +162,7 @@ async function handleRecordingPurchase(
       await supabase.from("Payment").insert({
         id: uuidv4(),
         userId: recording.contributor.id,
-        type: "CONTRIBUTOR_PAYOUT",
+        type: "GUIDE_PAYOUT",
         amount: contributorPayout,
         currency: "usd",
         status: "COMPLETED",
@@ -176,7 +177,7 @@ async function handleRecordingPurchase(
       console.error("Error creating recording payout:", payoutError);
     }
   } else {
-    console.log(`Skipping payout for recording ${recording.id}: contributor not onboarded to Stripe Connect`);
+    console.log(`Skipping payout for recording ${recording.id}: guide not onboarded to Stripe Connect`);
   }
 
   console.log(`Recording purchase completed: user ${userId}, recording ${recordingId}`);
@@ -202,7 +203,7 @@ async function handleCallPayment(
     .single();
 
   if (contribError || !contributor?.profile) {
-    throw new Error("Contributor not found");
+    throw new Error("Guide not found");
   }
 
   const rate = contributor.profile.hourlyRate || 50;
@@ -224,7 +225,7 @@ async function handleCallPayment(
     status: "COMPLETED",
     stripePaymentId: session.payment_intent as string,
     stripeSessionId: session.id,
-    metadata: { contributorId, callId, description: `${duration}-min call with ${contributor.name || "Mentor"}` },
+    metadata: { contributorId, callId, description: `${duration}-min call with ${contributor.name || "Guide"}` },
     createdAt: new Date().toISOString(),
   });
 
@@ -233,7 +234,25 @@ async function handleCallPayment(
     throw paymentError;
   }
 
-  // Create call record
+  // Create Daily.co video room immediately (auto-confirm)
+  let videoRoomUrl: string | null = null;
+  try {
+    const scheduledAtDate = new Date(scheduledAt);
+    const expiresAt = new Date(scheduledAtDate.getTime() + (duration + 120) * 60 * 1000);
+    const minutesUntilExpiry = Math.max(60, Math.ceil((expiresAt.getTime() - Date.now()) / 60000));
+
+    videoRoomUrl = await createRoom({
+      callId,
+      expiresInMinutes: minutesUntilExpiry,
+      enableChat: true,
+      enableScreenshare: true,
+    });
+    console.log(`Created video room for call ${callId}: ${videoRoomUrl}`);
+  } catch (roomError) {
+    console.error("Failed to create video room:", roomError);
+  }
+
+  // Create call record as CONFIRMED (auto-confirm)
   const { error: callError } = await supabase.from("Call").insert({
     id: callId,
     patientId: userId,
@@ -244,7 +263,8 @@ async function handleCallPayment(
     price,
     platformFee,
     contributorPayout,
-    status: "REQUESTED",
+    status: "CONFIRMED",
+    videoRoomUrl,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   });
@@ -254,7 +274,41 @@ async function handleCallPayment(
     throw callError;
   }
 
-  console.log(`Call payment completed: patient ${userId}, contributor ${contributorId}`);
+  // Send emails to both parties
+  const { data: seeker } = await supabase
+    .from("User")
+    .select("name, email")
+    .eq("id", userId)
+    .single();
+
+  // Notification email to guide (no confirm/decline needed)
+  if (contributor.email) {
+    sendCallBookedEmail(
+      contributor.email,
+      contributor.name || "Guide",
+      seeker?.name || "A seeker",
+      new Date(scheduledAt),
+      duration,
+      questionsInAdvance,
+      videoRoomUrl
+    ).catch((err) => console.error("Failed to send call booked email:", err));
+  }
+
+  // Confirmation email to seeker with video link
+  if (seeker?.email) {
+    sendCallBookedEmail(
+      seeker.email,
+      seeker.name || "there",
+      contributor.name || "your guide",
+      new Date(scheduledAt),
+      duration,
+      undefined,
+      videoRoomUrl,
+      true // isSeeker
+    ).catch((err) => console.error("Failed to send call confirmed email to seeker:", err));
+  }
+
+  console.log(`Call auto-confirmed: seeker ${userId}, guide ${contributorId}`);
 }
 
 async function handleSeriesPurchase(
@@ -360,7 +414,7 @@ async function handleSeriesPurchase(
       await supabase.from("Payment").insert({
         id: uuidv4(),
         userId: series.contributor.id,
-        type: "CONTRIBUTOR_PAYOUT",
+        type: "GUIDE_PAYOUT",
         amount: contributorPayout,
         currency: "usd",
         status: "COMPLETED",
@@ -375,7 +429,7 @@ async function handleSeriesPurchase(
       console.error("Error creating series payout:", payoutError);
     }
   } else {
-    console.log(`Skipping payout for series ${series.id}: contributor not onboarded to Stripe Connect`);
+    console.log(`Skipping payout for series ${series.id}: guide not onboarded to Stripe Connect`);
   }
 
   console.log(`Series purchase completed: user ${userId}, series ${seriesId}, recordings: ${recordingIdList.length}`);

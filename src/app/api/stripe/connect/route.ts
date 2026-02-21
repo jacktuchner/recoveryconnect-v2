@@ -111,8 +111,8 @@ export async function POST() {
     const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
     const accountLink = await stripe.accountLinks.create({
       account: stripeConnectId,
-      refresh_url: `${baseUrl}/dashboard/contributor?connect_refresh=true`,
-      return_url: `${baseUrl}/dashboard/contributor?connect_complete=true`,
+      refresh_url: `${baseUrl}/dashboard/guide?connect_refresh=true`,
+      return_url: `${baseUrl}/dashboard/guide?connect_complete=true`,
       type: "account_onboarding",
     });
 

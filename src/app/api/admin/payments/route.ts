@@ -43,7 +43,7 @@ export async function GET() {
     const { data: pendingPayouts } = await supabase
       .from("Payment")
       .select("amount")
-      .eq("type", "CONTRIBUTOR_PAYOUT")
+      .eq("type", "GUIDE_PAYOUT")
       .eq("status", "PENDING");
 
     const pendingPayoutsTotal = (pendingPayouts || []).reduce(
@@ -55,7 +55,7 @@ export async function GET() {
     const { data: completedPayouts } = await supabase
       .from("Payment")
       .select("amount")
-      .eq("type", "CONTRIBUTOR_PAYOUT")
+      .eq("type", "GUIDE_PAYOUT")
       .eq("status", "COMPLETED");
 
     const completedPayoutsTotal = (completedPayouts || []).reduce(

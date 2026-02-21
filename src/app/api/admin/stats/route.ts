@@ -34,7 +34,7 @@ export async function GET() {
     const { count: totalContributors } = await supabase
       .from("User")
       .select("*", { count: "exact", head: true })
-      .in("role", ["CONTRIBUTOR", "BOTH"]);
+      .in("role", ["GUIDE", "BOTH"]);
 
     // Get pending reports count
     const { count: pendingReports } = await supabase

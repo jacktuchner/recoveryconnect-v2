@@ -156,7 +156,7 @@ export default function SeriesDetailPage() {
             </div>
             <div>
               <Link
-                href={`/contributors/${series.contributorId}`}
+                href={`/guides/${series.contributorId}`}
                 className="font-semibold hover:text-purple-700"
               >
                 {series.contributor?.name || "Anonymous"}

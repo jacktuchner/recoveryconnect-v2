@@ -390,7 +390,7 @@ async function runAutoComplete(results: { count: number; errors: string[] }) {
             await supabase.from("Payment").insert({
               id: uuidv4(),
               userId: session.contributorId,
-              type: "CONTRIBUTOR_PAYOUT",
+              type: "GUIDE_PAYOUT",
               amount: contributorPayout,
               currency: "usd",
               status: "COMPLETED",

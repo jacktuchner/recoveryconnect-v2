@@ -18,7 +18,7 @@ export async function POST(
 
     const userId = (session.user as Record<string, string>).id;
     const userRole = (session.user as any).role;
-    const isContributor = userRole === "CONTRIBUTOR" || userRole === "BOTH" || userRole === "ADMIN";
+    const isContributor = userRole === "GUIDE" || userRole === "BOTH" || userRole === "ADMIN";
     const isSubscriber = (session.user as any).subscriptionStatus === "active";
 
     if (!isContributor && !isSubscriber) {

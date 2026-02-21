@@ -31,10 +31,10 @@ export default function SignInPage() {
       const session = await getSession();
       const role = (session?.user as any)?.role;
 
-      if (role === "CONTRIBUTOR" || role === "BOTH") {
-        router.push("/dashboard/contributor");
+      if (role === "GUIDE" || role === "BOTH") {
+        router.push("/dashboard/guide");
       } else {
-        router.push("/dashboard/patient");
+        router.push("/dashboard/seeker");
       }
       router.refresh();
     }
@@ -45,7 +45,7 @@ export default function SignInPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold">Welcome back</h1>
-          <p className="text-gray-600 mt-2">Sign in to your PeerHeal account</p>
+          <p className="text-gray-600 mt-2">Sign in to your Kizu account</p>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-gray-200 p-8 space-y-5">
