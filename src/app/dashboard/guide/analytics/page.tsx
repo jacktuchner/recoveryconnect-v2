@@ -275,10 +275,9 @@ export default function ContributorAnalyticsPage() {
       {/* === REVENUE SECTION === */}
       <section className="mb-10">
         <h2 className="text-xl font-bold mb-4">Revenue</h2>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
           <StatCard label="Total Earnings" value={`$${revenue.totalEarnings.toFixed(2)}`} color="green" />
           <StatCard label="Call Earnings" value={`$${revenue.callEarnings.toFixed(2)}`} color="teal" />
-          <StatCard label="Recording Earnings" value={`$${revenue.recordingEarnings.toFixed(2)}`} color="purple" />
           <StatCard label="Group Session Earnings" value={`$${revenue.groupSessionEarnings.toFixed(2)}`} color="cyan" />
         </div>
         <div className="bg-white rounded-xl border border-gray-200 p-6">
@@ -290,15 +289,13 @@ export default function ContributorAnalyticsPage() {
       {/* === ENGAGEMENT SECTION === */}
       <section className="mb-10">
         <h2 className="text-xl font-bold mb-4">Engagement</h2>
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+        <div className="grid grid-cols-1 gap-4 mb-4">
           <StatCard label="Total Views" value={engagement.totalViews.toLocaleString()} color="teal" />
-          <StatCard label="Purchases" value={engagement.totalPurchases.toLocaleString()} color="green" />
-          <StatCard label="Subscriber Views" value={engagement.totalSubscriberViews.toLocaleString()} color="purple" />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
           <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <h3 className="text-sm font-semibold text-gray-700 mb-4">Monthly Subscriber Views</h3>
+            <h3 className="text-sm font-semibold text-gray-700 mb-4">Monthly Views</h3>
             <LineChart data={engagement.monthlyViews} valueKey="views" labelKey="month" color="#0d9488" />
           </div>
 
@@ -314,7 +311,7 @@ export default function ContributorAnalyticsPage() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 truncate">{r.title}</p>
                       <p className="text-xs text-gray-500">
-                        {r.views.toLocaleString()} views &middot; {r.purchases} purchases
+                        {r.views.toLocaleString()} views
                       </p>
                     </div>
                   </div>

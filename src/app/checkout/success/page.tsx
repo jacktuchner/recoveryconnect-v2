@@ -14,16 +14,14 @@ function SuccessContent() {
     recordingTitle?: string;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [subStatus, setSubStatus] = useState<"verifying" | "activated" | "error">("verifying");
   const [callStatus, setCallStatus] = useState<"verifying" | "confirmed" | "error">("verifying");
 
-  const isSubscription = type === "subscription";
   const isGroupSession = type === "group_session";
   const isCall = type === "call";
   const groupSessionId = searchParams.get("groupSessionId");
 
   function loadPurchaseInfo() {
-    if (!sessionId || isSubscription || isGroupSession || isCall) return;
+    if (!sessionId || isGroupSession || isCall) return;
     setError(null);
     fetch(`/api/checkout/session?session_id=${sessionId}`)
       .then((res) => {
@@ -37,25 +35,6 @@ function SuccessContent() {
   useEffect(() => {
     loadPurchaseInfo();
   }, [sessionId]);
-
-  // Verify subscription checkout and activate it in the DB
-  useEffect(() => {
-    if (!isSubscription || !sessionId) return;
-    fetch("/api/checkout/subscription/verify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sessionId }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.status === "activated" || data.status === "already_active") {
-          setSubStatus("activated");
-        } else {
-          setSubStatus("error");
-        }
-      })
-      .catch(() => setSubStatus("error"));
-  }, [isSubscription, sessionId]);
 
   // Verify call checkout and create the call record if webhook hasn't
   useEffect(() => {
@@ -136,33 +115,6 @@ function SuccessContent() {
     );
   }
 
-  if (isSubscription) {
-    return (
-      <div className="flex flex-col items-center gap-4">
-        {subStatus === "verifying" && (
-          <p className="text-gray-500 text-sm">Activating your subscription...</p>
-        )}
-        {subStatus === "error" && (
-          <p className="text-red-600 text-sm">There was an issue activating your subscription. Please refresh or contact support.</p>
-        )}
-        <div className="flex gap-4 justify-center">
-          <Link
-            href="/watch"
-            className="bg-teal-600 text-white px-5 py-2 rounded-lg hover:bg-teal-700 text-sm font-medium"
-          >
-            Browse Recordings
-          </Link>
-          <Link
-            href="/dashboard/seeker"
-            className="text-teal-600 hover:text-teal-700 px-5 py-2 text-sm font-medium"
-          >
-            Go to Dashboard
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col items-center gap-4">
       {error && (
@@ -209,7 +161,6 @@ export default function CheckoutSuccessPage() {
 function CheckoutSuccessContent() {
   const searchParams = useSearchParams();
   const type = searchParams.get("type");
-  const isSubscription = type === "subscription";
   const isGroupSession = type === "group_session";
   const isCall = type === "call";
 
@@ -232,16 +183,14 @@ function CheckoutSuccessContent() {
       </div>
 
       <h1 className="text-2xl font-bold mb-2">
-        {isSubscription ? "Subscription Activated!" : isGroupSession ? "You're Signed Up!" : isCall ? "Call Booked!" : "Payment Successful!"}
+        {isGroupSession ? "You're Signed Up!" : isCall ? "Call Booked!" : "Payment Successful!"}
       </h1>
       <p className="text-gray-600 mb-6">
-        {isSubscription
-          ? "Welcome! You now have unlimited access to all recordings on Kizu."
-          : isGroupSession
+        {isGroupSession
           ? "You're registered for the group session. We'll send you a reminder before it starts."
           : isCall
           ? "Your call has been scheduled. You can view it on your dashboard."
-          : "Thank you for your purchase. Your access has been granted."}
+          : "Thank you! You can view your details on the dashboard."}
       </p>
 
       <SuccessContent />

@@ -34,7 +34,7 @@ export default function HomePage() {
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold mb-4">How Kizu Works</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Two tiers of peer support, designed to give you exactly the
+              Free peer support, designed to give you exactly the
               guidance you need.
             </p>
           </div>
@@ -263,9 +263,10 @@ export default function HomePage() {
           </h2>
           <p className="text-cyan-100 max-w-2xl mx-auto mb-8">
             Many guides say that sharing their story is one of the most meaningful
-            parts of their recovery — almost therapeutic. Get paid to record content on your
-            own time or take live video calls. Whether you&apos;ve recovered from surgery or
-            manage an autoimmune condition, someone out there needs to hear your story.
+            parts of their recovery — almost therapeutic. Record free stories that build
+            your audience, and earn money through live video calls. Whether you&apos;ve
+            recovered from surgery or manage an autoimmune condition, someone out there
+            needs to hear your story.
           </p>
           <GuideCTA />
         </div>

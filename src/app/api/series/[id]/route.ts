@@ -36,24 +36,10 @@ export async function GET(
       );
     }
 
-    // Check if user has access to this series
-    let hasAccess = userId && series.access?.some((a: any) => a.userId === userId);
-    let isSubscriber = false;
+    // All series are now free — always grant access
+    const hasAccess = true;
+    const isSubscriber = false;
     const isContributor = userId === series.contributorId;
-
-    // Check subscription status
-    if (userId && !hasAccess && !isContributor) {
-      const { data: user } = await supabase
-        .from("User")
-        .select("subscriptionStatus")
-        .eq("id", userId)
-        .single();
-
-      if (user?.subscriptionStatus === "active") {
-        hasAccess = true;
-        isSubscriber = true;
-      }
-    }
 
     // Sort recordings by sequence number
     const sortedRecordings = (series.recordings || [])
@@ -69,15 +55,8 @@ export async function GET(
     const discountedPrice = totalValue * (1 - series.discountPercent / 100);
     const totalDuration = sortedRecordings.reduce((sum: number, r: any) => sum + (r?.durationSeconds || 0), 0);
 
-    // Remove sensitive data from recordings if user doesn't have access
-    const publicRecordings = sortedRecordings.map((r: any) => {
-      if (hasAccess || isContributor) {
-        return r;
-      }
-      // Hide media URL for non-purchasers
-      const { mediaUrl, ...publicData } = r;
-      return publicData;
-    });
+    // All content is free — always include full data
+    const publicRecordings = sortedRecordings;
 
     return NextResponse.json({
       ...series,

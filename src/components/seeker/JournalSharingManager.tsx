@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
 
 interface EligibleContributor {
   id: string;
@@ -10,11 +9,7 @@ interface EligibleContributor {
   hasShare: boolean;
 }
 
-interface JournalSharingManagerProps {
-  isSubscriber: boolean;
-}
-
-export default function JournalSharingManager({ isSubscriber }: JournalSharingManagerProps) {
+export default function JournalSharingManager() {
   const [contributors, setContributors] = useState<EligibleContributor[]>([]);
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState<string | null>(null);
@@ -56,17 +51,6 @@ export default function JournalSharingManager({ isSubscriber }: JournalSharingMa
     } finally {
       setToggling(null);
     }
-  }
-
-  if (!isSubscriber) {
-    return (
-      <div className="text-sm text-gray-500">
-        Journal sharing is available for subscribers.{" "}
-        <Link href="/how-it-works#pricing" className="text-teal-600 hover:text-teal-700 underline">
-          Learn about subscribing
-        </Link>
-      </div>
-    );
   }
 
   if (loading) {

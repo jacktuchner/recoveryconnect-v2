@@ -8,67 +8,32 @@ import MatchBadge from "@/components/MatchBadge";
 import DisclaimerBanner from "@/components/DisclaimerBanner";
 import ReportButton from "@/components/ReportButton";
 import ContentAcknowledgmentModal from "@/components/ContentAcknowledgmentModal";
-import PurchaseButton from "@/components/PurchaseButton";
-
-function TranscriptSection({ transcription, hasAccess }: { transcription: string; hasAccess: boolean }) {
+function TranscriptSection({ transcription }: { transcription: string }) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const previewLength = 200;
-  const hasMoreContent = transcription.length > previewLength;
-
-  if (hasAccess) {
-    // Full transcription with collapsible UI
-    return (
-      <div className="bg-gray-50 rounded-lg p-4 mb-6">
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="flex items-center justify-between w-full text-left"
-        >
-          <h3 className="font-semibold text-sm text-gray-700">
-            Transcript
-          </h3>
-          <svg
-            className={`w-5 h-5 text-gray-500 transition-transform ${isExpanded ? "rotate-180" : ""}`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
-        {isExpanded && (
-          <p className="text-sm text-gray-600 whitespace-pre-wrap mt-3 pt-3 border-t border-gray-200">
-            {transcription}
-          </p>
-        )}
-      </div>
-    );
-  }
-
-  // Preview for non-purchasers
-  const preview = transcription.slice(0, previewLength);
 
   return (
-    <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-4 mb-6 relative overflow-hidden">
-      <h3 className="font-semibold text-sm text-gray-700 mb-2">
-        Transcript Preview
-      </h3>
-      <div className="relative">
-        <p className="text-sm text-gray-600">
-          {preview}
-          {hasMoreContent && "..."}
+    <div className="bg-gray-50 rounded-lg p-4 mb-6">
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="flex items-center justify-between w-full text-left"
+      >
+        <h3 className="font-semibold text-sm text-gray-700">
+          Transcript
+        </h3>
+        <svg
+          className={`w-5 h-5 text-gray-500 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {isExpanded && (
+        <p className="text-sm text-gray-600 whitespace-pre-wrap mt-3 pt-3 border-t border-gray-200">
+          {transcription}
         </p>
-        {hasMoreContent && (
-          <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-gray-100 to-transparent" />
-        )}
-      </div>
-      <div className="mt-3 pt-3 border-t border-gray-200">
-        <p className="text-xs text-gray-500 flex items-center gap-1.5">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-          </svg>
-          Purchase to read the full transcript
-        </p>
-      </div>
+      )}
     </div>
   );
 }
@@ -96,8 +61,6 @@ export default function RecordingDetailPage() {
   const { id } = useParams();
   const { data: session } = useSession();
   const [recording, setRecording] = useState<any>(null);
-  const [hasAccess, setHasAccess] = useState(false);
-  const [isSubscriber, setIsSubscriber] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reviewError, setReviewError] = useState<string | null>(null);
@@ -116,8 +79,6 @@ export default function RecordingDetailPage() {
       if (!res.ok) throw new Error("Failed to load recording.");
       const data = await res.json();
       setRecording(data);
-      setHasAccess(data.hasAccess || false);
-      setIsSubscriber(data.isSubscriber || false);
     } catch (err) {
       console.error(err);
       setError("Failed to load recording.");
@@ -179,7 +140,8 @@ export default function RecordingDetailPage() {
     ? (recording.reviews.reduce((a: number, r: any) => a + r.rating, 0) / recording.reviews.length).toFixed(1)
     : null;
 
-  const canViewContent = isContributor || hasAccess;
+  // All recordings are free — always viewable
+  const canViewContent = true;
 
   return (
     <ContentAcknowledgmentModal>
@@ -196,50 +158,24 @@ export default function RecordingDetailPage() {
 
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           {/* Player Area */}
-          {canViewContent ? (
-            <div className="bg-black aspect-video flex items-center justify-center">
-              {recording.isVideo ? (
-                <video
-                  src={recording.mediaUrl}
-                  controls
-                  className="w-full h-full"
-                  poster={recording.thumbnailUrl || undefined}
-                >
-                  Your browser does not support the video element.
-                </video>
-              ) : (
-                <div className="w-full p-8">
-                  <audio src={recording.mediaUrl} controls className="w-full">
-                    Your browser does not support the audio element.
-                  </audio>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="bg-gradient-to-br from-teal-50 to-cyan-50 p-8 flex items-center justify-center">
-              <div className="text-center max-w-md">
-                <div className="w-20 h-20 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-10 h-10 text-teal-500" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
-                  </svg>
-                </div>
-                <p className="text-sm text-teal-600 mb-4">
-                  {recording.isVideo ? "Video" : "Audio"} Recording
-                  {recording.durationSeconds && ` · ${Math.floor(recording.durationSeconds / 60)}:${(recording.durationSeconds % 60).toString().padStart(2, "0")}`}
-                </p>
-                <p className="text-gray-600 mb-4">Purchase this recording to watch the full content.</p>
-                <div className="max-w-xs mx-auto space-y-3">
-                  <PurchaseButton recordingId={recording.id} price={recording.price} />
-                  <Link
-                    href="/how-it-works#pricing"
-                    className="block text-sm text-teal-600 hover:text-teal-700 font-medium"
-                  >
-                    Or subscribe for unlimited access
-                  </Link>
-                </div>
+          <div className="bg-black aspect-video flex items-center justify-center">
+            {recording.isVideo ? (
+              <video
+                src={recording.mediaUrl}
+                controls
+                className="w-full h-full"
+                poster={recording.thumbnailUrl || undefined}
+              >
+                Your browser does not support the video element.
+              </video>
+            ) : (
+              <div className="w-full p-8">
+                <audio src={recording.mediaUrl} controls className="w-full">
+                  Your browser does not support the audio element.
+                </audio>
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
           <div className="p-6 sm:p-8">
             <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
@@ -263,22 +199,7 @@ export default function RecordingDetailPage() {
                 <h1 className="text-2xl font-bold">{recording.title}</h1>
               </div>
               <div className="text-right">
-                {canViewContent ? (
-                  isSubscriber ? (
-                    <span className="text-sm bg-green-100 text-green-700 px-3 py-1 rounded-full font-medium">
-                      Included in your subscription
-                    </span>
-                  ) : (
-                    <span className="text-sm bg-green-100 text-green-700 px-3 py-1 rounded-full font-medium">
-                      Purchased
-                    </span>
-                  )
-                ) : (
-                  <>
-                    <p className="text-2xl font-bold text-teal-700">${recording.price.toFixed(2)}</p>
-                    <p className="text-xs text-gray-400">{recording.viewCount} views</p>
-                  </>
-                )}
+                <p className="text-xs text-gray-400">{recording.viewCount} views</p>
               </div>
             </div>
 
@@ -286,12 +207,9 @@ export default function RecordingDetailPage() {
               <p className="text-gray-600 mb-6">{recording.description}</p>
             )}
 
-            {/* Transcription - Full for purchasers, preview for others */}
+            {/* Transcription */}
             {recording.transcription && (
-              <TranscriptSection
-                transcription={recording.transcription}
-                hasAccess={canViewContent}
-              />
+              <TranscriptSection transcription={recording.transcription} />
             )}
 
             {/* Contributor Info */}
@@ -325,15 +243,32 @@ export default function RecordingDetailPage() {
                 </span>
               </div>
 
-              {recording.contributor?.profile?.isAvailableForCalls && !isContributor && (
-                <Link
-                  href={`/book/${recording.contributorId}`}
-                  className="mt-3 inline-block bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 text-sm font-medium"
-                >
-                  Book a Live Call with {recording.contributor.name?.split(" ")[0]}
-                </Link>
-              )}
             </div>
+
+            {/* Book a Call CTA */}
+            {recording.contributor?.profile?.isAvailableForCalls && !isContributor && (
+              <div className="bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-200 rounded-xl p-5 mb-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div>
+                    <p className="font-semibold text-gray-900">
+                      Want personalized advice from {recording.contributor.name?.split(" ")[0]}?
+                    </p>
+                    <p className="text-sm text-gray-600 mt-0.5">
+                      Book a 1-on-1 video call &middot; ${(recording.contributor.profile.hourlyRate / 2).toFixed(0)}/30min
+                    </p>
+                  </div>
+                  <Link
+                    href={`/book/${recording.contributorId}`}
+                    className="inline-flex items-center justify-center gap-2 bg-teal-600 text-white px-6 py-3 rounded-lg hover:bg-teal-700 font-medium text-sm whitespace-nowrap"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    Book a Call
+                  </Link>
+                </div>
+              </div>
+            )}
 
             {/* Report Button */}
             <div className="flex justify-end mb-6">
@@ -347,7 +282,7 @@ export default function RecordingDetailPage() {
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-bold">Reviews ({recording.reviews?.length || 0})</h2>
-                {session && canViewContent && !isContributor && (
+                {session && !isContributor && (
                   <button
                     onClick={() => setShowReviewForm(!showReviewForm)}
                     className="text-sm text-teal-600 hover:text-teal-700 font-medium"

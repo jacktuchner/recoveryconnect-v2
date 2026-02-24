@@ -9,13 +9,9 @@ interface SeriesCardProps {
   contributorName: string;
   procedureType: string;
   recordingCount: number;
-  totalValue: number;
-  discountedPrice: number;
-  discountPercent: number;
   totalDuration?: number;
   matchScore?: number;
   matchBreakdown?: { attribute: string; matched: boolean; weight: number }[];
-  isSubscriber?: boolean;
 }
 
 function MatchScoreTooltip({ breakdown }: { breakdown: { attribute: string; matched: boolean; weight: number }[] }) {
@@ -67,16 +63,10 @@ export default function SeriesCard({
   contributorName,
   procedureType,
   recordingCount,
-  totalValue,
-  discountedPrice,
-  discountPercent,
   totalDuration,
   matchScore,
   matchBreakdown,
-  isSubscriber,
 }: SeriesCardProps) {
-  const savings = totalValue - discountedPrice;
-
   return (
     <Link href={`/series/${id}`} className="block group">
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-purple-200 transition-all">
@@ -86,11 +76,6 @@ export default function SeriesCard({
               <span className="text-xs font-medium bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
                 Series
               </span>
-              {!isSubscriber && (
-                <span className="text-xs font-bold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-                  Save {discountPercent}%
-                </span>
-              )}
             </div>
             {matchScore !== undefined && (
               <div className="flex items-center">
@@ -150,21 +135,6 @@ export default function SeriesCard({
             </span>
           </div>
 
-          <div className="flex items-center justify-between text-sm">
-            {isSubscriber ? (
-              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">Included</span>
-            ) : (
-              <>
-                <div>
-                  <span className="text-gray-400 line-through mr-2">${totalValue.toFixed(2)}</span>
-                  <span className="font-semibold text-purple-700">${discountedPrice.toFixed(2)}</span>
-                </div>
-                <span className="text-xs text-green-600 font-medium">
-                  Save ${savings.toFixed(2)}
-                </span>
-              </>
-            )}
-          </div>
         </div>
       </div>
     </Link>

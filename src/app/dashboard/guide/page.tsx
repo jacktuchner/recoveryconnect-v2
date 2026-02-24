@@ -13,6 +13,7 @@ export default function GuideOverviewPage() {
   const [calls, setCalls] = useState<any[]>([]);
   const [groupSessions, setGroupSessions] = useState<any[]>([]);
   const [reviewsReceived, setReviewsReceived] = useState<any[]>([]);
+  const [forumReplyCount, setForumReplyCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -30,6 +31,13 @@ export default function GuideOverviewPage() {
         if (callsRes.ok) setCalls(await callsRes.json());
         if (gsRes.ok) setGroupSessions(await gsRes.json());
         if (revRes.ok) setReviewsReceived(await revRes.json());
+        try {
+          const frRes = await fetch("/api/forum/replies/count");
+          if (frRes.ok) {
+            const frData = await frRes.json();
+            setForumReplyCount(frData.count || 0);
+          }
+        } catch {}
       } catch (err) {
         console.error(err);
       } finally {
@@ -64,7 +72,7 @@ export default function GuideOverviewPage() {
           <p className="text-2xl font-bold text-teal-700">{calls.filter((c) => c.status === "CONFIRMED" && new Date(c.scheduledAt) > new Date()).length}</p>
         </div>
       </div>
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div className="bg-white rounded-xl border border-gray-200 p-4">
           <p className="text-sm text-gray-500">Group Sessions</p>
           <p className="text-2xl font-bold text-teal-700">{groupSessions.filter((s: any) => s.status === "SCHEDULED" || s.status === "CONFIRMED").length}</p>
@@ -80,6 +88,10 @@ export default function GuideOverviewPage() {
         <div className="bg-white rounded-xl border border-gray-200 p-4">
           <p className="text-sm text-gray-500">Total Reviews</p>
           <p className="text-2xl font-bold text-teal-700">{reviewsReceived.length}</p>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <p className="text-sm text-gray-500">Community Replies</p>
+          <p className="text-2xl font-bold text-cyan-700">{forumReplyCount}</p>
         </div>
       </div>
       <CallRequestsSection

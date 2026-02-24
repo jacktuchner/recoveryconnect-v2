@@ -163,7 +163,7 @@ export default function GuideDetailPage() {
               {contributor.profile?.isAvailableForCalls && (
                 <Link
                   href={`/book/${contributor.id}`}
-                  className="bg-teal-600 text-white px-5 py-2.5 rounded-lg hover:bg-teal-700 font-medium text-sm text-center"
+                  className="bg-teal-600 text-white px-6 py-3 rounded-lg hover:bg-teal-700 font-semibold text-base text-center shadow-md hover:shadow-lg transition-all"
                 >
                   Book a Call &middot; ${(contributor.profile.hourlyRate / 2).toFixed(0)}/30min
                 </Link>
@@ -389,7 +389,7 @@ export default function GuideDetailPage() {
           {!isOwnProfile && (
             <Link
               href={`/book/${contributor.id}`}
-              className="mt-4 inline-flex items-center gap-2 bg-teal-600 text-white px-5 py-2.5 rounded-lg hover:bg-teal-700 font-medium text-sm"
+              className="mt-4 inline-flex items-center gap-2 bg-teal-600 text-white px-6 py-3 rounded-lg hover:bg-teal-700 font-semibold text-base shadow-md hover:shadow-lg transition-all"
             >
               Book a Call
             </Link>
@@ -416,7 +416,6 @@ export default function GuideDetailPage() {
                 category={rec.category}
                 durationSeconds={rec.durationSeconds}
                 isVideo={rec.isVideo}
-                price={rec.price}
                 viewCount={rec.viewCount}
                 averageRating={
                   rec.reviews?.length
@@ -435,34 +434,26 @@ export default function GuideDetailPage() {
         <section className="mb-8">
           <h2 className="text-xl font-bold mb-4">Series ({contributor.series.length})</h2>
           <div className="grid sm:grid-cols-2 gap-6">
-            {contributor.series.map((s: any) => {
-              const totalPrice = s.recordings.reduce((sum: number, r: any) => sum + (r.price || 0), 0);
-              const discountedPrice = totalPrice * (1 - s.discountPercent / 100);
-              return (
+            {contributor.series.map((s: any) => (
                 <Link key={s.id} href={`/series/${s.id}`} className="block group">
                   <div className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-lg hover:border-teal-200 transition-all h-full">
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <h3 className="font-semibold text-gray-900 group-hover:text-teal-700 transition-colors">
                         {s.title}
                       </h3>
-                      <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full flex-shrink-0">
-                        {s.discountPercent}% off
+                      <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full flex-shrink-0">
+                        Series
                       </span>
                     </div>
                     {s.description && (
                       <p className="text-sm text-gray-600 line-clamp-2 mb-3">{s.description}</p>
                     )}
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-500">{s.recordings.length} recordings</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-gray-400 line-through">${totalPrice.toFixed(2)}</span>
-                        <span className="font-bold text-teal-700">${discountedPrice.toFixed(2)}</span>
-                      </div>
+                    <div className="text-sm text-gray-500">
+                      {s.recordings.length} recordings
                     </div>
                   </div>
                 </Link>
-              );
-            })}
+            ))}
           </div>
         </section>
       )}

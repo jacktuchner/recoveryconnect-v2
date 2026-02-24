@@ -3,7 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { PROCEDURE_TYPES, AGE_RANGES, GENDERS, ACTIVITY_LEVELS, RECOVERY_GOALS, COMPLICATING_FACTORS, LIFESTYLE_CONTEXTS, SUBSCRIPTION_MONTHLY_PRICE, SUBSCRIPTION_ANNUAL_PRICE, CHRONIC_PAIN_CONDITIONS, CHRONIC_PAIN_GOALS, CHRONIC_PAIN_COMPLICATING_FACTORS, isChronicPainCondition, getAllConditions } from "@/lib/constants";
+import { PROCEDURE_TYPES, AGE_RANGES, GENDERS, ACTIVITY_LEVELS, RECOVERY_GOALS, COMPLICATING_FACTORS, LIFESTYLE_CONTEXTS, CHRONIC_PAIN_CONDITIONS, CHRONIC_PAIN_GOALS, CHRONIC_PAIN_COMPLICATING_FACTORS, isChronicPainCondition, getAllConditions } from "@/lib/constants";
 import { getTimeSinceSurgery, getTimeSinceSurgeryLabel, getTimeSinceDiagnosisLabel, getCurrentRecoveryWeek } from "@/lib/surgeryDate";
 import RecoveryJournal from "@/components/seeker/RecoveryJournal";
 import ProfileWizard from "@/components/ProfileWizard";
@@ -93,28 +93,17 @@ export default function SeekerDashboard() {
 
   const [newProcedure, setNewProcedure] = useState("");
 
-  const [subscription, setSubscription] = useState<{
-    status: string | null;
-    plan: string | null;
-    currentPeriodEnd: string | null;
-    cancelAtPeriodEnd: boolean;
-  }>({ status: null, plan: null, currentPeriodEnd: null, cancelAtPeriodEnd: false });
-  const [subscriptionLoading, setSubscriptionLoading] = useState(false);
 
   useEffect(() => {
     if (!session?.user) return;
     async function load() {
       try {
         const userId = (session?.user as any)?.id;
-        const [profileRes, callsRes, subRes, reviewsRes] = await Promise.all([
+        const [profileRes, callsRes, reviewsRes] = await Promise.all([
           fetch("/api/profile"),
           fetch("/api/calls"),
-          fetch("/api/subscription"),
           fetch(`/api/reviews?authorId=${userId}`),
         ]);
-        if (subRes.ok) {
-          setSubscription(await subRes.json());
-        }
         if (profileRes.ok) {
           const p = await profileRes.json();
           if (p) {
@@ -471,40 +460,6 @@ export default function SeekerDashboard() {
     }));
   }
 
-  async function openSubscriptionPortal() {
-    setSubscriptionLoading(true);
-    try {
-      const res = await fetch("/api/subscription/portal", { method: "POST" });
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setSubscriptionLoading(false);
-    }
-  }
-
-  async function handleSubscribe(plan: "monthly" | "annual") {
-    setSubscriptionLoading(true);
-    try {
-      const res = await fetch("/api/checkout/subscription", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan }),
-      });
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setSubscriptionLoading(false);
-    }
-  }
-
   const [cancellingCallId, setCancellingCallId] = useState<string | null>(null);
   const [cancelError, setCancelError] = useState<string | null>(null);
 
@@ -608,91 +563,23 @@ export default function SeekerDashboard() {
         </section>
       )}
 
-      {/* Subscription Status */}
-      {subscription.status === "active" && !subscription.cancelAtPeriodEnd && (
-        <section className="bg-green-50 border border-green-200 rounded-xl p-4 mb-8 flex items-center justify-between">
+      {/* Community Forum */}
+      <section className="bg-gradient-to-r from-cyan-50 to-blue-50 rounded-xl border border-cyan-200 p-5 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <p className="font-semibold text-green-800">Kizu Subscriber</p>
-            <p className="text-sm text-green-700">
-              {subscription.plan === "annual" ? "Annual" : "Monthly"} plan
-              {subscription.currentPeriodEnd && (
-                <> &middot; Next billing: {new Date(subscription.currentPeriodEnd).toLocaleDateString()}</>
-              )}
+            <h3 className="font-semibold text-gray-900">Community Forum</h3>
+            <p className="text-sm text-gray-600 mt-0.5">
+              Connect with others on similar recovery journeys. Ask questions, share tips, and support each other.
             </p>
           </div>
-          <button
-            onClick={openSubscriptionPortal}
-            disabled={subscriptionLoading}
-            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm font-medium disabled:opacity-50"
+          <Link
+            href="/community"
+            className="self-start bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 text-sm font-medium whitespace-nowrap"
           >
-            {subscriptionLoading ? "Loading..." : "Manage Subscription"}
-          </button>
-        </section>
-      )}
-
-      {subscription.status === "active" && subscription.cancelAtPeriodEnd && (
-        <section className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-8 flex items-center justify-between">
-          <div>
-            <p className="font-semibold text-yellow-800">Subscription Ending</p>
-            <p className="text-sm text-yellow-700">
-              Your subscription ends on {subscription.currentPeriodEnd ? new Date(subscription.currentPeriodEnd).toLocaleDateString() : "soon"}
-            </p>
-          </div>
-          <button
-            onClick={openSubscriptionPortal}
-            disabled={subscriptionLoading}
-            className="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 text-sm font-medium disabled:opacity-50"
-          >
-            {subscriptionLoading ? "Loading..." : "Resubscribe"}
-          </button>
-        </section>
-      )}
-
-      {subscription.status === "past_due" && (
-        <section className="bg-red-50 border border-red-200 rounded-xl p-4 mb-8 flex items-center justify-between">
-          <div>
-            <p className="font-semibold text-red-800">Payment Failed</p>
-            <p className="text-sm text-red-700">
-              Your subscription payment failed. Please update your payment method.
-            </p>
-          </div>
-          <button
-            onClick={openSubscriptionPortal}
-            disabled={subscriptionLoading}
-            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 text-sm font-medium disabled:opacity-50"
-          >
-            {subscriptionLoading ? "Loading..." : "Update Payment"}
-          </button>
-        </section>
-      )}
-
-      {(!subscription.status || subscription.status === "canceled") && (
-        <section className="bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-200 rounded-xl p-6 mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-semibold text-teal-900">Unlock Unlimited Recordings</p>
-              <p className="text-sm text-teal-700 mt-1">
-                Get access to all recovery stories for ${SUBSCRIPTION_MONTHLY_PRICE}/mo or ${SUBSCRIPTION_ANNUAL_PRICE}/yr
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => handleSubscribe("monthly")}
-                disabled={subscriptionLoading}
-                className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 text-sm font-medium disabled:opacity-50"
-              >
-                {subscriptionLoading ? "Loading..." : "Subscribe"}
-              </button>
-              <Link
-                href="/how-it-works#pricing"
-                className="text-teal-600 hover:text-teal-700 px-3 py-2 text-sm font-medium"
-              >
-                Learn More
-              </Link>
-            </div>
-          </div>
-        </section>
-      )}
+            Visit Community
+          </Link>
+        </div>
+      </section>
 
       {/* Pending Reviews Banner */}
       {pendingCallReviews.length > 0 && (
@@ -1183,7 +1070,6 @@ export default function SeekerDashboard() {
             procedureType={activeProcedure}
             surgeryDate={getProcedureData(activeProcedure, 0).surgeryDate || null}
             currentWeek={getCurrentRecoveryWeek(getProcedureData(activeProcedure, 0).surgeryDate || null) ?? undefined}
-            isSubscriber={subscription.status === "active"}
             conditionCategory={isChronicPainCondition(activeProcedure) ? "CHRONIC_PAIN" : "SURGERY"}
           />
         </section>

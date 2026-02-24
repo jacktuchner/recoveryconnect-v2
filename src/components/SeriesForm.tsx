@@ -30,7 +30,6 @@ export default function SeriesForm({ initialData, onSuccess, onCancel }: SeriesF
     title: initialData?.title || "",
     description: initialData?.description || "",
     procedureType: initialData?.procedureType || "",
-    discountPercent: initialData?.discountPercent || 15,
   });
   const [selectedRecordingIds, setSelectedRecordingIds] = useState<string[]>(
     initialData?.recordingIds || []
@@ -80,14 +79,6 @@ export default function SeriesForm({ initialData, onSuccess, onCancel }: SeriesF
     ? availableRecordings.filter((r) => r.procedureType === form.procedureType)
     : availableRecordings;
 
-  // Calculate pricing preview
-  const selectedRecordings = availableRecordings.filter((r) =>
-    selectedRecordingIds.includes(r.id)
-  );
-  const totalValue = selectedRecordings.reduce((sum, r) => sum + r.price, 0);
-  const discountedPrice = totalValue * (1 - form.discountPercent / 100);
-  const savings = totalValue - discountedPrice;
-
   function toggleRecording(recordingId: string) {
     setSelectedRecordingIds((prev) =>
       prev.includes(recordingId)
@@ -127,7 +118,6 @@ export default function SeriesForm({ initialData, onSuccess, onCancel }: SeriesF
           title: form.title,
           description: form.description,
           procedureType: form.procedureType,
-          discountPercent: form.discountPercent,
           recordingIds: selectedRecordingIds,
         }),
       });
@@ -222,28 +212,6 @@ export default function SeriesForm({ initialData, onSuccess, onCancel }: SeriesF
           </select>
         </div>
 
-        {/* Discount Slider */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Bundle Discount: {form.discountPercent}%
-          </label>
-          <input
-            type="range"
-            min={5}
-            max={30}
-            step={5}
-            value={form.discountPercent}
-            onChange={(e) =>
-              setForm((f) => ({ ...f, discountPercent: parseInt(e.target.value) }))
-            }
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
-          />
-          <div className="flex justify-between text-xs text-gray-500 mt-1">
-            <span>5%</span>
-            <span>30%</span>
-          </div>
-        </div>
-
         {/* Recording Selection */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -276,9 +244,6 @@ export default function SeriesForm({ initialData, onSuccess, onCancel }: SeriesF
                           {recording.title}
                         </p>
                       </div>
-                      <span className="text-sm text-gray-500">
-                        ${recording.price.toFixed(2)}
-                      </span>
                     </label>
                   );
                 })}
@@ -343,28 +308,6 @@ export default function SeriesForm({ initialData, onSuccess, onCancel }: SeriesF
           </div>
         )}
 
-        {/* Pricing Preview */}
-        {selectedRecordingIds.length >= 1 && (
-          <div className="bg-purple-50 rounded-lg p-4">
-            <h4 className="text-sm font-medium text-purple-900 mb-2">Pricing Preview</h4>
-            <div className="space-y-1 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Individual total:</span>
-                <span className="text-gray-600">${totalValue.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Bundle discount ({form.discountPercent}%):</span>
-                <span className="text-green-600">-${savings.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between font-semibold pt-1 border-t border-purple-200">
-                <span className="text-purple-900">Bundle price:</span>
-                <span className="text-purple-700">${discountedPrice.toFixed(2)}</span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Actions */}
         {/* Note about publishing */}
         {selectedRecordingIds.length < 2 && (
           <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg p-3">

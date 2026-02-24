@@ -25,45 +25,9 @@ export async function GET(
       );
     }
 
-    // Check if user has access (is contributor, subscriber, or has purchased)
-    let hasAccess = false;
-    let isSubscriber = false;
-    if (userId) {
-      // Check if user is the contributor
-      if (recording.contributorId === userId) {
-        hasAccess = true;
-      } else {
-        // Check subscription status
-        const { data: user } = await supabase
-          .from("User")
-          .select("subscriptionStatus")
-          .eq("id", userId)
-          .single();
-
-        if (user?.subscriptionStatus === "active") {
-          hasAccess = true;
-          isSubscriber = true;
-
-          // Track subscriber view for payout distribution
-          await supabase
-            .from("SubscriberView")
-            .upsert(
-              { id: `${userId}_${id}`, userId, recordingId: id, viewedAt: new Date().toISOString() },
-              { onConflict: "userId,recordingId" }
-            );
-        } else {
-          // Check if user has purchased access
-          const { data: access } = await supabase
-            .from("RecordingAccess")
-            .select("id")
-            .eq("userId", userId)
-            .eq("recordingId", id)
-            .single();
-
-          hasAccess = !!access;
-        }
-      }
-    }
+    // All recordings are now free — always grant access
+    const hasAccess = true;
+    const isSubscriber = false;
 
     // Increment view count
     await supabase

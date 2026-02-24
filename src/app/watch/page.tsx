@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import RecordingCard from "@/components/RecordingCard";
@@ -9,14 +9,10 @@ import SeriesCard from "@/components/SeriesCard";
 import FilterSidebar from "@/components/FilterSidebar";
 import ContentAcknowledgmentModal from "@/components/ContentAcknowledgmentModal";
 import DisclaimerBanner from "@/components/DisclaimerBanner";
-import { SUBSCRIPTION_MONTHLY_PRICE, SUBSCRIPTION_ANNUAL_PRICE } from "@/lib/constants";
-
-type SortOption = "match" | "price_low" | "price_high" | "newest" | "most_viewed" | "highest_rated";
+type SortOption = "match" | "newest" | "most_viewed" | "highest_rated";
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: "match", label: "Best Match" },
-  { value: "price_low", label: "Price: Low to High" },
-  { value: "price_high", label: "Price: High to Low" },
   { value: "newest", label: "Newest First" },
   { value: "most_viewed", label: "Most Viewed" },
   { value: "highest_rated", label: "Highest Rated" },
@@ -25,44 +21,6 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
 function WatchContent() {
   const searchParams = useSearchParams();
   const { data: session } = useSession();
-  const router = useRouter();
-
-  const [subscription, setSubscription] = useState<{
-    status: string | null;
-    plan: string | null;
-  }>({ status: null, plan: null });
-  const [subscriptionLoading, setSubscriptionLoading] = useState(false);
-
-  useEffect(() => {
-    if (!session?.user) return;
-    fetch("/api/subscription")
-      .then((res) => res.ok ? res.json() : null)
-      .then((data) => { if (data) setSubscription(data); })
-      .catch(() => {});
-  }, [session]);
-
-  async function handleSubscribe(plan: "monthly" | "annual") {
-    if (!session?.user) {
-      router.push("/auth/register");
-      return;
-    }
-    setSubscriptionLoading(true);
-    try {
-      const res = await fetch("/api/checkout/subscription", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan }),
-      });
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setSubscriptionLoading(false);
-    }
-  }
 
   const [filters, setFilters] = useState({
     procedures: [] as string[],
@@ -184,10 +142,6 @@ function WatchContent() {
     switch (sortBy) {
       case "match":
         return (b.matchScore || 0) - (a.matchScore || 0);
-      case "price_low":
-        return (a.price || 0) - (b.price || 0);
-      case "price_high":
-        return (b.price || 0) - (a.price || 0);
       case "newest":
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       case "most_viewed":
@@ -227,10 +181,8 @@ function WatchContent() {
               <h1 className="text-3xl sm:text-4xl font-bold">Watch Recovery Stories</h1>
             </div>
             <p className="text-lg sm:text-xl text-teal-100 max-w-2xl">
+              All recordings are free &mdash; watch anytime.
               Real people sharing what recovery is actually like.
-              {subscription.status === "active"
-                ? " You have unlimited access to all recordings."
-                : " Buy individually or subscribe for unlimited access."}
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <span className="inline-flex items-center gap-1.5 text-sm bg-white/10 px-3 py-1.5 rounded-full">
@@ -247,9 +199,9 @@ function WatchContent() {
               </span>
               <span className="inline-flex items-center gap-1.5 text-sm bg-white/10 px-3 py-1.5 rounded-full">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                {subscription.status === "active" ? "Subscriber — unlimited access" : "Pay per recording"}
+                100% free
               </span>
             </div>
           </div>
@@ -283,35 +235,6 @@ function WatchContent() {
               </Link>
             </div>
           </div>
-
-          {/* Subscription CTA */}
-          {subscription.status !== "active" && (
-            <div className="mb-8 p-4 bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-200 rounded-xl">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div>
-                  <p className="font-medium text-teal-900">Unlock Unlimited Recordings</p>
-                  <p className="text-sm text-teal-700">
-                    Get access to all recovery stories for ${SUBSCRIPTION_MONTHLY_PRICE}/mo or ${SUBSCRIPTION_ANNUAL_PRICE}/yr
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => handleSubscribe("monthly")}
-                    disabled={subscriptionLoading}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium whitespace-nowrap disabled:opacity-50"
-                  >
-                    {subscriptionLoading ? "Loading..." : "Subscribe"}
-                  </button>
-                  <Link
-                    href="/how-it-works#pricing"
-                    className="text-teal-600 hover:text-teal-700 px-3 py-2 text-sm font-medium whitespace-nowrap"
-                  >
-                    Learn More
-                  </Link>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Search and Sort Bar */}
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
@@ -410,9 +333,6 @@ function WatchContent() {
                 <div className="mb-8">
                   <div className="flex items-center gap-2 mb-4">
                     <h2 className="text-lg font-semibold text-gray-900">Recovery Series</h2>
-                    <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
-                      Bundle & Save
-                    </span>
                   </div>
                   <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                     {filteredSeries.map((s: any) => (
@@ -423,13 +343,9 @@ function WatchContent() {
                         contributorName={s.contributor?.name || "Anonymous"}
                         procedureType={s.procedureType}
                         recordingCount={s.recordingCount}
-                        totalValue={s.totalValue}
-                        discountedPrice={s.discountedPrice}
-                        discountPercent={s.discountPercent}
                         totalDuration={s.totalDuration}
                         matchScore={s.matchScore}
                         matchBreakdown={s.matchBreakdown}
-                        isSubscriber={subscription.status === "active"}
                       />
                     ))}
                   </div>
@@ -477,7 +393,6 @@ function WatchContent() {
                       category={rec.category}
                       durationSeconds={rec.durationSeconds}
                       isVideo={rec.isVideo}
-                      price={rec.price}
                       viewCount={rec.viewCount}
                       averageRating={
                         rec.reviews?.length
@@ -486,7 +401,6 @@ function WatchContent() {
                       }
                       matchScore={rec.matchScore}
                       matchBreakdown={rec.matchBreakdown}
-                      isSubscriber={subscription.status === "active"}
                       contributorVerified={rec.contributor?.contributorStatus === "APPROVED"}
                     />
                   ))}

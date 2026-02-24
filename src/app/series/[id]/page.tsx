@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import SeriesPurchaseButton from "@/components/SeriesPurchaseButton";
 
 const activityLabels: Record<string, string> = {
   SEDENTARY: "Sedentary",
@@ -74,8 +73,8 @@ export default function SeriesDetailPage() {
   );
   if (!series) return <div className="max-w-4xl mx-auto px-4 py-8">Series not found.</div>;
 
-  const canViewContent = series.hasAccess || series.isContributor;
-  const isSubscriber = series.isSubscriber || false;
+  // All series are free — always viewable
+  const canViewContent = true;
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -94,29 +93,6 @@ export default function SeriesDetailPage() {
               <h1 className="text-2xl font-bold mt-2 text-gray-900">{series.title}</h1>
               {series.description && (
                 <p className="text-gray-600 mt-2">{series.description}</p>
-              )}
-            </div>
-            <div className="text-right">
-              {canViewContent ? (
-                <span className="text-sm bg-green-100 text-green-700 px-3 py-1 rounded-full font-medium">
-                  {isSubscriber ? "Included in your subscription" : "Purchased"}
-                </span>
-              ) : (
-                <div className="bg-white rounded-lg p-4 border border-purple-200 shadow-sm">
-                  <div className="flex items-baseline gap-2 mb-1">
-                    <span className="text-gray-400 line-through">${series.totalValue?.toFixed(2)}</span>
-                    <span className="text-2xl font-bold text-purple-700">${series.discountedPrice?.toFixed(2)}</span>
-                  </div>
-                  <p className="text-xs text-green-600 font-medium mb-3">
-                    Save ${series.savings?.toFixed(2)} ({series.discountPercent}% bundle discount)
-                  </p>
-                  <SeriesPurchaseButton
-                    seriesId={series.id}
-                    totalValue={series.totalValue}
-                    discountedPrice={series.discountedPrice}
-                    discountPercent={series.discountPercent}
-                  />
-                </div>
               )}
             </div>
           </div>
@@ -175,11 +151,7 @@ export default function SeriesDetailPage() {
             {series.recordings?.map((recording: any, index: number) => (
               <div
                 key={recording.id}
-                className={`flex items-center gap-4 p-4 rounded-lg border ${
-                  canViewContent
-                    ? "border-gray-200 hover:border-purple-200 transition-colors"
-                    : "border-gray-100 bg-gray-50"
-                }`}
+                className="flex items-center gap-4 p-4 rounded-lg border border-gray-200 hover:border-purple-200 transition-colors"
               >
                 {/* Sequence Number */}
                 <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
@@ -188,18 +160,12 @@ export default function SeriesDetailPage() {
 
                 {/* Recording Info */}
                 <div className="flex-1 min-w-0">
-                  {canViewContent ? (
-                    <Link
-                      href={`/recordings/${recording.id}`}
-                      className="font-medium text-gray-900 hover:text-purple-700 block truncate"
-                    >
-                      {recording.title}
-                    </Link>
-                  ) : (
-                    <span className="font-medium text-gray-900 block truncate">
-                      {recording.title}
-                    </span>
-                  )}
+                  <Link
+                    href={`/recordings/${recording.id}`}
+                    className="font-medium text-gray-900 hover:text-purple-700 block truncate"
+                  >
+                    {recording.title}
+                  </Link>
                   <div className="flex items-center gap-2 mt-1">
                     {recording.category && (
                       <span className="text-xs text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full">
@@ -214,47 +180,41 @@ export default function SeriesDetailPage() {
                   </div>
                 </div>
 
-                {/* Price / Status */}
+                {/* Watch Link */}
                 <div className="flex-shrink-0 text-right">
-                  {canViewContent ? (
-                    <Link
-                      href={`/recordings/${recording.id}`}
-                      className="text-sm text-purple-600 hover:text-purple-700 font-medium"
-                    >
-                      Watch &rarr;
-                    </Link>
-                  ) : (
-                    <div>
-                      <span className="text-sm text-gray-500">${recording.price?.toFixed(2)}</span>
-                      <span className="block text-xs text-gray-400">if bought alone</span>
-                    </div>
-                  )}
+                  <Link
+                    href={`/recordings/${recording.id}`}
+                    className="text-sm text-purple-600 hover:text-purple-700 font-medium"
+                  >
+                    Watch &rarr;
+                  </Link>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Purchase CTA for non-purchasers */}
-        {!canViewContent && (
-          <div className="p-6 bg-purple-50 border-t border-purple-100">
+        {/* Book a Call CTA */}
+        {series.contributor && !series.isContributor && (
+          <div className="p-6 bg-gradient-to-r from-teal-50 to-cyan-50 border-t border-teal-100">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <div>
-                <p className="font-medium text-gray-900">
-                  Get all {series.recordingCount} recordings for one discounted price
+                <p className="font-semibold text-gray-900">
+                  Want personalized advice from {series.contributor.name?.split(" ")[0]}?
                 </p>
                 <p className="text-sm text-gray-600">
-                  Save ${series.savings?.toFixed(2)} compared to buying individually
+                  Book a 1-on-1 video call for real-time Q&A
                 </p>
               </div>
-              <div className="flex-shrink-0 w-full sm:w-auto">
-                <SeriesPurchaseButton
-                  seriesId={series.id}
-                  totalValue={series.totalValue}
-                  discountedPrice={series.discountedPrice}
-                  discountPercent={series.discountPercent}
-                />
-              </div>
+              <Link
+                href={`/book/${series.contributorId}`}
+                className="inline-flex items-center justify-center gap-2 bg-teal-600 text-white px-6 py-3 rounded-lg hover:bg-teal-700 font-medium text-sm whitespace-nowrap"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                Book a Call
+              </Link>
             </div>
           </div>
         )}

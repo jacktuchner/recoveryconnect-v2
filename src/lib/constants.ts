@@ -167,11 +167,6 @@ export const RECOMMENDATION_PRICE_RANGES = [
 
 export const LOCATION_BASED_CATEGORIES = ["PT_PROVIDER", "MASSAGE_THERAPY", "MEDICAL_PROVIDER"] as const;
 
-// Subscription pricing
-export const SUBSCRIPTION_MONTHLY_PRICE = 19.99;
-export const SUBSCRIPTION_ANNUAL_PRICE = 149.99;
-export const STRIPE_MONTHLY_PRICE_ID = process.env.STRIPE_MONTHLY_PRICE_ID || "";
-export const STRIPE_ANNUAL_PRICE_ID = process.env.STRIPE_ANNUAL_PRICE_ID || "";
 
 // ─── Guide Vetting ───
 
@@ -332,6 +327,17 @@ export const JOURNAL_TRIGGER_PRESETS = [
   "Gluten/dairy", "Hormonal cycle", "Travel", "Sitting too long",
   "Infection/illness", "Emotional upset",
 ] as const;
+
+// ─── Community Forum ───
+
+export const FORUM_THREAD_TYPES = [
+  { value: "DISCUSSION", label: "Discussion" },
+  { value: "QUESTION", label: "Question" },
+  { value: "EXPERIENCE", label: "Experience" },
+  { value: "TIP", label: "Tip" },
+] as const;
+
+export const FORUM_PAGE_SIZE = 15;
 
 // ─── Guide Agreement ───
 

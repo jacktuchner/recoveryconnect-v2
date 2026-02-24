@@ -51,7 +51,6 @@ export default function RecordingForm({ onSuccess, onCancel }: RecordingFormProp
   const [form, setForm] = useState({
     title: "",
     description: "",
-    price: 4.99,
     isVideo: false,
   });
 
@@ -193,7 +192,6 @@ export default function RecordingForm({ onSuccess, onCancel }: RecordingFormProp
           mediaUrl: fileUrl,
           durationSeconds,
           isVideo: form.isVideo,
-          price: form.price,
           faqPromptId: selectedPrompt?.id || null,
           transcription: transcript || null,
           transcriptionStatus: transcript ? "COMPLETED" : "NONE",
@@ -441,32 +439,16 @@ export default function RecordingForm({ onSuccess, onCancel }: RecordingFormProp
             )}
           </div>
 
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Price ($)
-              </label>
+          <div>
+            <label className="flex items-center gap-2 text-sm text-gray-700">
               <input
-                type="number"
-                min={1}
-                max={15}
-                step={0.01}
-                value={form.price}
-                onChange={(e) => setForm((f) => ({ ...f, price: parseFloat(e.target.value) || 4.99 }))}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                type="checkbox"
+                checked={form.isVideo}
+                onChange={(e) => setForm((f) => ({ ...f, isVideo: e.target.checked }))}
+                className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
               />
-            </div>
-            <div className="flex items-end">
-              <label className="flex items-center gap-2 text-sm text-gray-700">
-                <input
-                  type="checkbox"
-                  checked={form.isVideo}
-                  onChange={(e) => setForm((f) => ({ ...f, isVideo: e.target.checked }))}
-                  className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
-                />
-                This is a video recording
-              </label>
-            </div>
+              This is a video recording
+            </label>
           </div>
 
           <div className="flex justify-between pt-4">

@@ -14,12 +14,10 @@ interface RecordingCardProps {
   category: string;
   durationSeconds?: number | null;
   isVideo: boolean;
-  price: number;
   viewCount: number;
   averageRating?: number;
   matchScore?: number;
   matchBreakdown?: { attribute: string; matched: boolean; weight: number }[];
-  isSubscriber?: boolean;
   contributorVerified?: boolean;
 }
 
@@ -86,7 +84,7 @@ function MatchScoreTooltip({ breakdown }: { breakdown: { attribute: string; matc
 
 export default function RecordingCard({
   id, title, contributorName, procedureType, ageRange, activityLevel,
-  category, durationSeconds, isVideo, price, viewCount, averageRating, matchScore, matchBreakdown, isSubscriber,
+  category, durationSeconds, isVideo, viewCount, averageRating, matchScore, matchBreakdown,
   contributorVerified,
 }: RecordingCardProps) {
   return (
@@ -139,11 +137,6 @@ export default function RecordingCard({
           </div>
 
           <div className="flex items-center justify-between text-sm mt-auto">
-            {isSubscriber ? (
-              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">Included</span>
-            ) : (
-              <span className="font-semibold text-teal-700">${price.toFixed(2)}</span>
-            )}
             <div className="flex items-center gap-3 text-gray-400">
               {averageRating !== undefined && (
                 <span className="flex items-center gap-0.5">

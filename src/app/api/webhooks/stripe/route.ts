@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { PLATFORM_FEE_PERCENT } from "@/lib/constants";
 import { v4 as uuidv4 } from "uuid";
 import Stripe from "stripe";
-import { sendSubscriptionConfirmationEmail, sendSubscriptionCancelledEmail, sendGroupSessionSignupEmail, sendCallBookedEmail } from "@/lib/email";
+import { sendGroupSessionSignupEmail, sendCallBookedEmail } from "@/lib/email";
 import { createRoom } from "@/lib/daily";
 
 export async function POST(req: NextRequest) {
@@ -572,16 +572,6 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
       createdAt: new Date().toISOString(),
     });
 
-    // Send confirmation email
-    const { data: user } = await supabase
-      .from("User")
-      .select("email, name")
-      .eq("id", userId)
-      .single();
-
-    if (user?.email) {
-      await sendSubscriptionConfirmationEmail(user.email, user.name || "there", plan || "monthly");
-    }
   }
 
   console.log(`Subscription ${status} for user ${userId}: ${subscription.id}`);
@@ -605,24 +595,6 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   if (updateError) {
     console.error("Error updating user subscription:", updateError);
     throw updateError;
-  }
-
-  // Send cancellation email
-  const { data: user } = await supabase
-    .from("User")
-    .select("email, name, subscriptionCurrentPeriodEnd")
-    .eq("id", userId)
-    .single();
-
-  if (user?.email) {
-    const accessEndsDate = user.subscriptionCurrentPeriodEnd
-      ? new Date(user.subscriptionCurrentPeriodEnd).toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        })
-      : "soon";
-    await sendSubscriptionCancelledEmail(user.email, user.name || "there", accessEndsDate);
   }
 
   console.log(`Subscription deleted for user ${userId}: ${subscription.id}`);

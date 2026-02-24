@@ -1,10 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
-import { SUBSCRIPTION_MONTHLY_PRICE, SUBSCRIPTION_ANNUAL_PRICE } from "@/lib/constants";
 
 function CheckIcon({ className }: { className?: string }) {
   return (
@@ -16,36 +14,10 @@ function CheckIcon({ className }: { className?: string }) {
 
 export default function HowItWorksPage() {
   const { data: session } = useSession();
-  const router = useRouter();
-  const [subscribing, setSubscribing] = useState<string | null>(null);
-
   const userRole = (session?.user as any)?.role;
-  const isContributorRole = userRole === "GUIDE";
+  const isContributorRole = userRole === "GUIDE" || userRole === "BOTH" || userRole === "ADMIN";
   const defaultTab = isContributorRole ? "contributor" : "patient";
   const [activeTab, setActiveTab] = useState<"patient" | "contributor">(defaultTab);
-
-  async function handleSubscribe(plan: "monthly" | "annual") {
-    if (!session?.user) {
-      router.push("/auth/register");
-      return;
-    }
-    setSubscribing(plan);
-    try {
-      const res = await fetch("/api/checkout/subscription", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan }),
-      });
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setSubscribing(null);
-    }
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -149,19 +121,22 @@ export default function HowItWorksPage() {
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-3">Watch or Talk</h3>
                 <p className="text-gray-600">
-                  Purchase recordings to watch on your schedule, or book a live 1-on-1 video call
+                  Watch free recordings on your schedule, or book a live 1-on-1 video call
                   for personalized advice and real-time Q&A with your mentor.
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Two Options Section */}
+          {/* Ways to Connect Section */}
           <div className="bg-white py-16 sm:py-24">
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-              <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
-                Two Ways to Connect
+              <h2 className="text-3xl font-bold text-center text-gray-900 mb-4">
+                Ways to Connect
               </h2>
+              <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
+                Multiple ways to learn from others and support each other through recovery.
+              </p>
 
               <div className="grid md:grid-cols-2 gap-8">
                 {/* Recordings Card */}
@@ -174,7 +149,7 @@ export default function HowItWorksPage() {
                   <h3 className="text-2xl font-bold text-gray-900 mb-3">Watch Real Stories</h3>
                   <p className="text-gray-600 mb-6">
                     Pre-recorded audio and video from guides sharing their journey.
-                    Buy once, watch anytime.
+                    Watch anytime, completely free.
                   </p>
                   <ul className="space-y-3 mb-8">
                     <li className="flex items-start gap-3">
@@ -184,10 +159,6 @@ export default function HowItWorksPage() {
                     <li className="flex items-start gap-3">
                       <CheckIcon className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
                       <span className="text-gray-700">Practical tips and lessons learned</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckIcon className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700">Mental health and coping strategies</span>
                     </li>
                     <li className="flex items-start gap-3">
                       <CheckIcon className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
@@ -214,25 +185,21 @@ export default function HowItWorksPage() {
                   </div>
                   <h3 className="text-2xl font-bold text-gray-900 mb-3">Book a Live Call</h3>
                   <p className="text-gray-600 mb-6">
-                    1-on-1 video calls with a matched mentor. Ask your specific questions and
+                    1-on-1 video calls with a matched guide. Ask your specific questions and
                     get personalized advice in real-time.
                   </p>
                   <ul className="space-y-3 mb-8">
                     <li className="flex items-start gap-3">
                       <CheckIcon className="w-5 h-5 text-cyan-600 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700">Real-time Q&A with your mentor</span>
+                      <span className="text-gray-700">Real-time Q&A with your guide</span>
                     </li>
                     <li className="flex items-start gap-3">
                       <CheckIcon className="w-5 h-5 text-cyan-600 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700">Personalized to your specific situation</span>
+                      <span className="text-gray-700">Personalized to your situation</span>
                     </li>
                     <li className="flex items-start gap-3">
                       <CheckIcon className="w-5 h-5 text-cyan-600 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700">30 or 60 minute sessions available</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckIcon className="w-5 h-5 text-cyan-600 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700">Submit questions in advance</span>
+                      <span className="text-gray-700">30 or 60 minute sessions</span>
                     </li>
                   </ul>
                   <Link
@@ -242,112 +209,96 @@ export default function HowItWorksPage() {
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                     </svg>
-                    Find a Mentor
+                    Find a Guide
+                  </Link>
+                </div>
+
+                {/* Group Sessions Card */}
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-8">
+                  <div className="w-14 h-14 bg-blue-600 rounded-xl flex items-center justify-center mb-6">
+                    <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-3">Group Sessions</h3>
+                  <p className="text-gray-600 mb-6">
+                    Join live group video sessions led by a guide. Learn alongside others
+                    going through the same thing.
+                  </p>
+                  <ul className="space-y-3 mb-8">
+                    <li className="flex items-start gap-3">
+                      <CheckIcon className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                      <span className="text-gray-700">Shared experience with peers</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <CheckIcon className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                      <span className="text-gray-700">More affordable than 1-on-1 calls</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <CheckIcon className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                      <span className="text-gray-700">Priced per session by the guide</span>
+                    </li>
+                  </ul>
+                  <Link
+                    href="/group-sessions"
+                    className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    Browse Sessions
+                  </Link>
+                </div>
+
+                {/* Community Forum Card */}
+                <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-2xl p-8">
+                  <div className="w-14 h-14 bg-purple-600 rounded-xl flex items-center justify-center mb-6">
+                    <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-3">Community Forum</h3>
+                  <p className="text-gray-600 mb-6">
+                    Free peer support organized by condition. Ask questions, share tips,
+                    and connect with others on the same journey.
+                  </p>
+                  <ul className="space-y-3 mb-8">
+                    <li className="flex items-start gap-3">
+                      <CheckIcon className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
+                      <span className="text-gray-700">Free for all members</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <CheckIcon className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
+                      <span className="text-gray-700">Organized by surgery or condition</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <CheckIcon className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
+                      <span className="text-gray-700">Guides participate with verified badges</span>
+                    </li>
+                  </ul>
+                  <Link
+                    href="/community"
+                    className="inline-flex items-center gap-2 bg-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                    Visit Community
                   </Link>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Pricing Section */}
-          <div id="pricing" className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
-            <h2 className="text-3xl font-bold text-center text-gray-900 mb-4">
-              Choose Your Plan
-            </h2>
-            <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
-              Subscribe for unlimited recording access, or purchase recordings individually.
-              Live calls are always priced per session.
-            </p>
-
-            <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-              {/* Individual Purchase */}
-              <div className="bg-white border border-gray-200 rounded-2xl p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-1">Individual</h3>
-                <p className="text-sm text-gray-500 mb-4">Pay per recording</p>
-                <p className="text-3xl font-bold text-gray-900 mb-1">$4.99+</p>
-                <p className="text-sm text-gray-500 mb-6">per recording</p>
-                <ul className="space-y-2 mb-6 text-sm text-gray-600">
-                  <li className="flex items-start gap-2">
-                    <CheckIcon className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
-                    Buy only what you need
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckIcon className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
-                    Lifetime access to purchased recordings
-                  </li>
-                </ul>
-                <Link
-                  href="/watch"
-                  className="block text-center bg-gray-100 text-gray-700 px-6 py-2.5 rounded-lg font-medium hover:bg-gray-200 transition-colors text-sm"
-                >
-                  Browse Recordings
-                </Link>
-              </div>
-
-              {/* Monthly Subscription */}
-              <div className="bg-gradient-to-br from-teal-50 to-cyan-50 border-2 border-teal-500 rounded-2xl p-6 relative">
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="bg-teal-600 text-white text-xs font-bold px-3 py-1 rounded-full">
-                    MOST POPULAR
-                  </span>
-                </div>
-                <h3 className="text-lg font-bold text-gray-900 mb-1">Monthly</h3>
-                <p className="text-sm text-gray-500 mb-4">Unlimited recordings</p>
-                <p className="text-3xl font-bold text-teal-700 mb-1">${SUBSCRIPTION_MONTHLY_PRICE.toFixed(2)}</p>
-                <p className="text-sm text-gray-500 mb-6">per month</p>
-                <ul className="space-y-2 mb-6 text-sm text-gray-700">
-                  <li className="flex items-start gap-2">
-                    <CheckIcon className="w-4 h-4 text-teal-600 flex-shrink-0 mt-0.5" />
-                    Unlimited recording access
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckIcon className="w-4 h-4 text-teal-600 flex-shrink-0 mt-0.5" />
-                    Cancel anytime
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckIcon className="w-4 h-4 text-teal-600 flex-shrink-0 mt-0.5" />
-                    New content added regularly
-                  </li>
-                </ul>
-                <button
-                  onClick={() => handleSubscribe("monthly")}
-                  disabled={subscribing === "monthly"}
-                  className="w-full bg-teal-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-teal-700 transition-colors text-sm disabled:opacity-50"
-                >
-                  {subscribing === "monthly" ? "Loading..." : "Subscribe Monthly"}
-                </button>
-              </div>
-
-              {/* Annual Subscription */}
-              <div className="bg-white border border-gray-200 rounded-2xl p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-1">Annual</h3>
-                <p className="text-sm text-gray-500 mb-4">Best value</p>
-                <p className="text-3xl font-bold text-gray-900 mb-1">${SUBSCRIPTION_ANNUAL_PRICE.toFixed(2)}</p>
-                <p className="text-sm text-gray-500 mb-1">per year</p>
-                <p className="text-xs text-green-600 font-medium mb-5">Save ~$90/year vs monthly</p>
-                <ul className="space-y-2 mb-6 text-sm text-gray-600">
-                  <li className="flex items-start gap-2">
-                    <CheckIcon className="w-4 h-4 text-teal-600 flex-shrink-0 mt-0.5" />
-                    Everything in Monthly
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckIcon className="w-4 h-4 text-teal-600 flex-shrink-0 mt-0.5" />
-                    ~$12.50/month equivalent
-                  </li>
-                </ul>
-                <button
-                  onClick={() => handleSubscribe("annual")}
-                  disabled={subscribing === "annual"}
-                  className="w-full bg-gray-900 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-gray-800 transition-colors text-sm disabled:opacity-50"
-                >
-                  {subscribing === "annual" ? "Loading..." : "Subscribe Annually"}
-                </button>
-              </div>
+          {/* Pricing Summary */}
+          <div id="pricing" className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+            <div className="bg-gradient-to-br from-teal-50 to-cyan-50 border border-teal-200 rounded-2xl p-8 text-center">
+              <h2 className="text-2xl font-bold text-gray-900 mb-3">Simple, Transparent Pricing</h2>
+              <p className="text-gray-600 max-w-xl mx-auto">
+                All recordings and stories are completely free. Live calls and group sessions
+                are priced per session, set by each guide.
+              </p>
             </div>
-
-            <p className="text-center text-sm text-gray-500 mt-8">
-              Live calls are priced per session, set by each guide.
-            </p>
           </div>
 
           {/* Patient FAQ */}
@@ -386,37 +337,10 @@ export default function HowItWorksPage() {
               </div>
 
               <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h3 className="font-semibold text-gray-900 mb-2">What if I&apos;m not satisfied with a purchase?</h3>
+                <h3 className="font-semibold text-gray-900 mb-2">What if I&apos;m not satisfied with a call?</h3>
                 <p className="text-gray-600">
-                  We want you to have a positive experience. If you&apos;re not satisfied with a recording
-                  or call, contact our support team and we&apos;ll work with you to make it right.
-                </p>
-              </div>
-
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h3 className="font-semibold text-gray-900 mb-2">How does the subscription work?</h3>
-                <p className="text-gray-600">
-                  A subscription gives you unlimited access to all recordings on Kizu.
-                  Watch as many recovery stories as you want, anytime. You can cancel at any time
-                  and keep access until the end of your billing period. Live calls are priced separately.
-                </p>
-              </div>
-
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h3 className="font-semibold text-gray-900 mb-2">Do guides still get paid with subscriptions?</h3>
-                <p className="text-gray-600">
-                  Yes! Subscription revenue is distributed to guides based on how much their content
-                  is watched by subscribers. Guides with popular, helpful content earn more. This ensures
-                  guides are fairly compensated while keeping access affordable for seekers.
-                </p>
-              </div>
-
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h3 className="font-semibold text-gray-900 mb-2">Can I still buy individual recordings?</h3>
-                <p className="text-gray-600">
-                  Absolutely. Both options are available. If you only need one or two specific recordings,
-                  individual purchases may be more cost-effective. If you want to explore many recovery stories,
-                  the subscription offers the best value.
+                  We want you to have a positive experience. If you&apos;re not satisfied with a
+                  call, contact our support team and we&apos;ll work with you to make it right.
                 </p>
               </div>
             </div>
@@ -530,21 +454,24 @@ export default function HowItWorksPage() {
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-3">Earn & Help</h3>
                 <p className="text-gray-600">
-                  Get paid when seekers watch your recordings, buy your series, or book calls with you.
-                  You earn 75% of every sale.
+                  Your free recordings build your audience. Seekers book paid calls with you.
+                  You earn 75% of every call and group session.
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Ways to Earn */}
+          {/* Ways to Earn & Engage */}
           <div className="bg-white py-16 sm:py-24">
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-              <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
-                Ways to Earn
+              <h2 className="text-3xl font-bold text-center text-gray-900 mb-4">
+                Ways to Earn & Engage
               </h2>
+              <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
+                Earn from your content and calls, or connect with seekers for free in the community.
+              </p>
 
-              <div className="grid md:grid-cols-3 gap-8">
+              <div className="grid md:grid-cols-2 gap-8">
                 {/* Recordings */}
                 <div className="bg-gradient-to-br from-teal-50 to-cyan-50 border border-teal-200 rounded-2xl p-8">
                   <div className="w-14 h-14 bg-teal-600 rounded-xl flex items-center justify-center mb-6">
@@ -554,21 +481,21 @@ export default function HowItWorksPage() {
                   </div>
                   <h3 className="text-xl font-bold text-gray-900 mb-3">Recordings</h3>
                   <p className="text-gray-600 mb-4">
-                    Record your story. You set the price, earn 75% of each sale.
-                    Subscribers can watch unlimited, and you earn based on views.
+                    Your free recordings are your marketing. They build visibility and
+                    drive seekers to book paid calls with you.
                   </p>
                   <ul className="space-y-2">
                     <li className="flex items-start gap-2">
                       <CheckIcon className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700 text-sm">Set your own price per recording</span>
+                      <span className="text-gray-700 text-sm">Build your audience and reputation</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckIcon className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700 text-sm">Bundle into series for higher value</span>
+                      <span className="text-gray-700 text-sm">Group into free series</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckIcon className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700 text-sm">Earn from subscriber views too</span>
+                      <span className="text-gray-700 text-sm">Drive seekers to book calls with you</span>
                     </li>
                   </ul>
                 </div>
@@ -628,6 +555,34 @@ export default function HowItWorksPage() {
                     </li>
                   </ul>
                 </div>
+
+                {/* Community Forum */}
+                <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-2xl p-8">
+                  <div className="w-14 h-14 bg-purple-600 rounded-xl flex items-center justify-center mb-6">
+                    <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">Community Forum</h3>
+                  <p className="text-gray-600 mb-4">
+                    See what seekers are asking about, answer questions, and build your
+                    presence. Your posts display a verified guide badge.
+                  </p>
+                  <ul className="space-y-2">
+                    <li className="flex items-start gap-2">
+                      <CheckIcon className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
+                      <span className="text-gray-700 text-sm">Understand what seekers need</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckIcon className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
+                      <span className="text-gray-700 text-sm">Build trust with verified badge</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckIcon className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
+                      <span className="text-gray-700 text-sm">Pin helpful threads for seekers</span>
+                    </li>
+                  </ul>
+                </div>
               </div>
             </div>
           </div>
@@ -642,11 +597,10 @@ export default function HowItWorksPage() {
               <div className="bg-white rounded-xl border border-gray-200 p-6">
                 <h3 className="font-semibold text-gray-900 mb-2">How do I get paid?</h3>
                 <p className="text-gray-600">
-                  We use Stripe Connect for all payouts. You earn 75% of every individual sale &mdash; recordings,
-                  series, calls, and group sessions. For subscribers who watch your content, subscription
-                  revenue is distributed based on how much your recordings are watched relative to other
-                  guides. The more seekers engage with your content, the more you earn. Payouts are
-                  processed automatically to your connected bank account.
+                  We use Stripe Connect for all payouts. You earn 75% of every call booking
+                  and group session. Your free recordings serve as marketing &mdash; they build trust
+                  and drive seekers to book paid calls. Payouts are processed automatically to
+                  your connected bank account.
                 </p>
               </div>
 
@@ -662,8 +616,8 @@ export default function HowItWorksPage() {
               <div className="bg-white rounded-xl border border-gray-200 p-6">
                 <h3 className="font-semibold text-gray-900 mb-2">Can I set my own prices?</h3>
                 <p className="text-gray-600">
-                  Yes! You have full control over pricing for your recordings, series, live calls,
-                  and group sessions. Set prices that reflect the value of your experience.
+                  You control your hourly rate for calls and your group session pricing.
+                  Recordings are free to maximize your audience reach.
                 </p>
               </div>
 
@@ -691,12 +645,12 @@ export default function HowItWorksPage() {
             <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
               <h2 className="text-3xl font-bold mb-4">Ready to Share Your Story?</h2>
               <p className="text-lg text-teal-100 mb-8">
-                {session
+                {isContributorRole
                   ? "Head to your guide dashboard to start recording, set up calls, and manage your profile."
-                  : "Your experience matters — to others and to you. Many guides say sharing their story helps them process their own recovery. Sign up and start making a difference."}
+                  : "Your experience matters — to others and to you. Many guides say sharing their story helps them process their own recovery."}
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                {session ? (
+                {isContributorRole ? (
                   <Link
                     href="/dashboard/guide"
                     className="inline-flex items-center justify-center gap-2 bg-white text-teal-700 px-8 py-3 rounded-lg font-semibold hover:bg-teal-50 transition-colors"
@@ -705,7 +659,7 @@ export default function HowItWorksPage() {
                   </Link>
                 ) : (
                   <Link
-                    href="/auth/register"
+                    href={session ? "/guide-application" : "/auth/register"}
                     className="inline-flex items-center justify-center gap-2 bg-white text-teal-700 px-8 py-3 rounded-lg font-semibold hover:bg-teal-50 transition-colors"
                   >
                     Become a Guide
