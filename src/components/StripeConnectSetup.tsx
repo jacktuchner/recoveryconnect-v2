@@ -106,7 +106,7 @@ export default function StripeConnectSetup() {
       {!status?.connected ? (
         <div>
           <p className="text-gray-600 mb-4">
-            Set up your payout account to receive earnings from your recordings and calls.
+            Set up your payout account to receive earnings from your calls and group sessions.
             We use Stripe for secure payments.
           </p>
           <button

@@ -119,6 +119,8 @@ model User {
   journalEntries         JournalEntry[]
   journalSharesGiven     JournalShare[]  @relation("PatientJournalShares")
   journalSharesReceived  JournalShare[]  @relation("ContributorJournalShares")
+  forumThreads           ForumThread[]
+  forumReplies           ForumReply[]
 }
 
 model Profile {
@@ -698,6 +700,41 @@ model JournalShare {
   @@unique([patientId, contributorId])
   @@index([patientId])
   @@index([contributorId])
+}
+
+// ─── Community Forum ───
+
+model ForumThread {
+  id            String       @id @default(cuid())
+  authorId      String
+  author        User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  title         String
+  content       String       @db.Text
+  procedureType String
+  threadType    String       @default("DISCUSSION")
+  isPinned      Boolean      @default(false)
+  replyCount    Int          @default(0)
+  lastReplyAt   DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  replies       ForumReply[]
+
+  @@index([procedureType, createdAt])
+  @@index([procedureType, lastReplyAt])
+}
+
+model ForumReply {
+  id        String      @id @default(cuid())
+  threadId  String
+  thread    ForumThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  content   String      @db.Text
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([threadId, createdAt])
 }
 
 // ─── Subscriber Views (for subscription payout tracking) ───

@@ -10,18 +10,12 @@ type NavLink = {
   label: string;
 };
 
-const seekerLinks: NavLink[] = [
-  { href: "/watch", label: "Watch Stories" },
-  { href: "/guides", label: "Find a Guide" },
-  { href: "/group-sessions", label: "Group Sessions" },
-  { href: "/recommendations", label: "Recommendations" },
-];
-
 const browseLinks: NavLink[] = [
   { href: "/watch", label: "Watch Stories" },
   { href: "/guides", label: "Find a Guide" },
   { href: "/group-sessions", label: "Group Sessions" },
-  { href: "/recommendations", label: "Recommendations" },
+  { href: "/recommendations", label: "Recommended Products" },
+  { href: "/community", label: "Community" },
 ];
 
 function Dropdown({ label, links, onNavigate }: { label: string; links: NavLink[]; onNavigate?: () => void }) {
@@ -109,25 +103,13 @@ export default function Navbar() {
 
   const userRole = (session?.user as any)?.role;
   const isBoth = userRole === "BOTH" || userRole === "ADMIN";
-  const isGuide = userRole === "GUIDE" || userRole === "BOTH" || userRole === "ADMIN";
-  const isGuideOnly = userRole === "GUIDE";
+  const isGuide = userRole === "GUIDE";
 
-  const userId = (session?.user as any)?.id;
-
-  const guideLinks: NavLink[] = [
-    { href: "/dashboard/guide", label: "Overview" },
-    { href: "/dashboard/guide/content", label: "Content" },
-    { href: "/dashboard/guide/profile", label: "Profile" },
-    { href: "/dashboard/guide/analytics", label: "Analytics" },
-  ];
-
-  const seekerDashboardHref = "/dashboard/seeker";
-
-  const settingsLinks: NavLink[] = [
-    { href: "/settings", label: "General" },
-    ...(isGuide ? [{ href: "/settings/guide", label: "Guide Settings" }] : []),
-    ...(userRole === "SEEKER" || isBoth ? [{ href: "/settings/seeker", label: "Seeker Settings" }] : []),
-  ];
+  const dashboardHref = isBoth
+    ? "/dashboard"
+    : isGuide
+      ? "/dashboard/guide"
+      : "/dashboard/seeker";
 
   return (
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
@@ -142,52 +124,23 @@ export default function Navbar() {
             />
           </Link>
 
+          {/* Desktop nav */}
           <div className="hidden lg:flex items-center gap-5">
-            {/* BOTH/ADMIN */}
-            {session && isBoth && (
+            {session ? (
               <>
-                <Dropdown label="Guide Tools" links={guideLinks} />
-                <Dropdown label="Seeker Resources" links={[{ href: seekerDashboardHref, label: "Dashboard" }, ...seekerLinks]} />
+                <Link href={dashboardHref} className="text-gray-600 hover:text-teal-600 transition-colors">
+                  Dashboard
+                </Link>
+                <Dropdown label="Browse" links={browseLinks} />
+                <MessagesLink />
                 {userRole === "ADMIN" && (
                   <Link href="/admin" className="text-purple-600 hover:text-purple-700 font-medium transition-colors">
                     Admin
                   </Link>
                 )}
-              </>
-            )}
-
-            {/* GUIDE only */}
-            {session && isGuideOnly && (
-              <Dropdown label="Guide Tools" links={guideLinks} />
-            )}
-
-            {/* SEEKER only */}
-            {session && userRole === "SEEKER" && (
-              <>
-                <Link href={seekerDashboardHref} className="text-gray-600 hover:text-teal-600 transition-colors">
-                  Dashboard
+                <Link href="/settings" className="text-gray-600 hover:text-teal-600 transition-colors">
+                  Settings
                 </Link>
-                <Dropdown label="Resources" links={seekerLinks} />
-              </>
-            )}
-
-            {/* Not logged in */}
-            {!session && (
-              <Dropdown label="Browse" links={browseLinks} />
-            )}
-
-            {session && <MessagesLink />}
-
-            <Link href="/how-it-works" className="text-gray-600 hover:text-teal-600 transition-colors">
-              How It Works
-            </Link>
-            <Link href="/about" className="text-gray-600 hover:text-teal-600 transition-colors">
-              About
-            </Link>
-
-            {session ? (
-              <>
-                <Dropdown label="Settings" links={settingsLinks} />
                 <button
                   onClick={() => signOut()}
                   className="text-gray-600 hover:text-teal-600 transition-colors"
@@ -202,6 +155,13 @@ export default function Navbar() {
               </>
             ) : (
               <>
+                <Dropdown label="Browse" links={browseLinks} />
+                <Link href="/how-it-works" className="text-gray-600 hover:text-teal-600 transition-colors">
+                  How It Works
+                </Link>
+                <Link href="/about" className="text-gray-600 hover:text-teal-600 transition-colors">
+                  About
+                </Link>
                 <Link href="/auth/signin" className="text-gray-600 hover:text-teal-600 transition-colors">
                   Sign In
                 </Link>
@@ -212,6 +172,7 @@ export default function Navbar() {
             )}
           </div>
 
+          {/* Mobile hamburger */}
           <button
             className="lg:hidden p-2"
             onClick={() => setMenuOpen(!menuOpen)}
@@ -229,61 +190,33 @@ export default function Navbar() {
         {/* Mobile menu */}
         {menuOpen && (
           <div className="lg:hidden pb-4 space-y-1">
-            {/* BOTH/ADMIN mobile */}
-            {session && isBoth && (
+            {session ? (
               <>
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide pt-2 pb-1">Guide Tools</p>
-                {guideLinks.map((link) => (
-                  <Link key={link.href} href={link.href} className="block py-2 pl-3 text-gray-600" onClick={() => setMenuOpen(false)}>
-                    {link.label}
-                  </Link>
-                ))}
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide pt-2 pb-1">Seeker Resources</p>
-                <Link href={seekerDashboardHref} className="block py-2 pl-3 text-gray-600" onClick={() => setMenuOpen(false)}>
+                <Link href={dashboardHref} className="block py-2 text-gray-600" onClick={() => setMenuOpen(false)}>
                   Dashboard
                 </Link>
-                {seekerLinks.map((link) => (
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide pt-2 pb-1">Browse</p>
+                {browseLinks.map((link) => (
                   <Link key={link.href} href={link.href} className="block py-2 pl-3 text-gray-600" onClick={() => setMenuOpen(false)}>
                     {link.label}
                   </Link>
                 ))}
+                <Link href="/messages" className="block py-2 text-gray-600" onClick={() => setMenuOpen(false)}>
+                  Messages
+                </Link>
                 {userRole === "ADMIN" && (
                   <Link href="/admin" className="block py-2 text-purple-600 font-medium" onClick={() => setMenuOpen(false)}>
                     Admin
                   </Link>
                 )}
-              </>
-            )}
-
-            {/* GUIDE only mobile */}
-            {session && isGuideOnly && (
-              <>
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide pt-2 pb-1">Guide Tools</p>
-                {guideLinks.map((link) => (
-                  <Link key={link.href} href={link.href} className="block py-2 pl-3 text-gray-600" onClick={() => setMenuOpen(false)}>
-                    {link.label}
-                  </Link>
-                ))}
-              </>
-            )}
-
-            {/* SEEKER only mobile */}
-            {session && userRole === "SEEKER" && (
-              <>
-                <Link href={seekerDashboardHref} className="block py-2 text-gray-600" onClick={() => setMenuOpen(false)}>
-                  Dashboard
+                <Link href="/settings" className="block py-2 text-gray-600" onClick={() => setMenuOpen(false)}>
+                  Settings
                 </Link>
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide pt-2 pb-1">Resources</p>
-                {seekerLinks.map((link) => (
-                  <Link key={link.href} href={link.href} className="block py-2 pl-3 text-gray-600" onClick={() => setMenuOpen(false)}>
-                    {link.label}
-                  </Link>
-                ))}
+                <button onClick={() => signOut()} className="block py-2 text-gray-600 pt-3">
+                  Sign Out
+                </button>
               </>
-            )}
-
-            {/* Not logged in mobile */}
-            {!session && (
+            ) : (
               <>
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide pt-2 pb-1">Browse</p>
                 {browseLinks.map((link) => (
@@ -291,36 +224,18 @@ export default function Navbar() {
                     {link.label}
                   </Link>
                 ))}
-              </>
-            )}
-
-            {session && (
-              <Link href="/messages" className="block py-2 text-gray-600" onClick={() => setMenuOpen(false)}>
-                Messages
-              </Link>
-            )}
-
-            <Link href="/how-it-works" className="block py-2 text-gray-600" onClick={() => setMenuOpen(false)}>
-              How It Works
-            </Link>
-            <Link href="/about" className="block py-2 text-gray-600" onClick={() => setMenuOpen(false)}>
-              About
-            </Link>
-
-            {session ? (
-              <>
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide pt-2 pb-1">Settings</p>
-                {settingsLinks.map((link) => (
-                  <Link key={link.href} href={link.href} className="block py-2 pl-3 text-gray-600" onClick={() => setMenuOpen(false)}>
-                    {link.label}
-                  </Link>
-                ))}
-                <button onClick={() => signOut()} className="block py-2 text-gray-600 pt-3">Sign Out</button>
-              </>
-            ) : (
-              <>
-                <Link href="/auth/signin" className="block py-2 text-gray-600" onClick={() => setMenuOpen(false)}>Sign In</Link>
-                <Link href="/auth/register" className="block py-2 text-teal-600 font-medium" onClick={() => setMenuOpen(false)}>Get Started</Link>
+                <Link href="/how-it-works" className="block py-2 text-gray-600" onClick={() => setMenuOpen(false)}>
+                  How It Works
+                </Link>
+                <Link href="/about" className="block py-2 text-gray-600" onClick={() => setMenuOpen(false)}>
+                  About
+                </Link>
+                <Link href="/auth/signin" className="block py-2 text-gray-600" onClick={() => setMenuOpen(false)}>
+                  Sign In
+                </Link>
+                <Link href="/auth/register" className="block py-2 text-teal-600 font-medium" onClick={() => setMenuOpen(false)}>
+                  Get Started
+                </Link>
               </>
             )}
           </div>
