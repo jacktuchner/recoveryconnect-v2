@@ -9,6 +9,7 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const procedure = searchParams.get("procedure");
+    const matchProcedure = searchParams.get("matchProcedure");
     const availableForCalls = searchParams.get("availableForCalls") === "true";
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "12");
@@ -76,8 +77,8 @@ export async function GET(req: NextRequest) {
         .single();
 
       if (userProfile) {
-        // Use activeProcedureType for matching, fallback to procedureType
-        const activeProc = userProfile.activeProcedureType || userProfile.procedureType;
+        // Use matchProcedure query param if provided, otherwise fall back to activeProcedureType
+        const activeProc = matchProcedure || userProfile.activeProcedureType || userProfile.procedureType;
 
         // Get per-procedure attributes from procedureProfiles, fallback to legacy fields
         const procProfiles = userProfile.procedureProfiles || {};

@@ -190,6 +190,28 @@ function GuidesContent() {
   const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [userProcedures, setUserProcedures] = useState<string[]>([]);
+  const [selectedProcedure, setSelectedProcedure] = useState<string>("");
+
+  // Fetch the seeker's conditions on mount
+  useEffect(() => {
+    async function fetchProfile() {
+      try {
+        const res = await fetch("/api/profile");
+        if (!res.ok) return;
+        const data = await res.json();
+        const procs: string[] = data.procedureTypes || [];
+        const active: string = data.activeProcedureType || "";
+        if (procs.length > 0) {
+          setUserProcedures(procs);
+          setSelectedProcedure(active || procs[0]);
+        }
+      } catch {
+        // Not logged in or no profile — leave empty
+      }
+    }
+    fetchProfile();
+  }, []);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -197,6 +219,9 @@ function GuidesContent() {
     const params = new URLSearchParams();
     params.set("availableForCalls", "true");
     params.set("page", pagination.page.toString());
+    if (selectedProcedure) {
+      params.set("matchProcedure", selectedProcedure);
+    }
 
     try {
       const res = await fetch(`/api/guides?${params}`);
@@ -210,7 +235,7 @@ function GuidesContent() {
     } finally {
       setLoading(false);
     }
-  }, [pagination.page]);
+  }, [pagination.page, selectedProcedure]);
 
   useEffect(() => {
     fetchData();
@@ -328,6 +353,29 @@ function GuidesContent() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <DisclaimerBanner dismissible />
+
+          {userProcedures.length >= 2 && (
+            <div className="mb-6 flex items-center gap-3 bg-white border border-gray-200 rounded-xl px-4 py-3">
+              <label htmlFor="condition-selector" className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                Matching for:
+              </label>
+              <select
+                id="condition-selector"
+                value={selectedProcedure}
+                onChange={(e) => {
+                  setSelectedProcedure(e.target.value);
+                  setPagination((prev) => ({ ...prev, page: 1 }));
+                }}
+                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-white focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+              >
+                {userProcedures.map((proc) => (
+                  <option key={proc} value={proc}>
+                    {proc}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 flex items-center justify-between">
