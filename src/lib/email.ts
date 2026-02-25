@@ -16,9 +16,7 @@ function baseTemplate(content: string) {
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #374151; max-width: 600px; margin: 0 auto; padding: 20px;">
   <div style="text-align: center; margin-bottom: 30px;">
-    <div style="display: inline-block; background: #0d9488; color: white; font-weight: bold; padding: 10px 15px; border-radius: 8px; font-size: 18px;">
-      Kizu
-    </div>
+    <img src="${process.env.NEXT_PUBLIC_APP_URL}/images/logo_v2.png" alt="Kizu" width="80" height="80" style="border-radius: 50%; display: inline-block;" />
   </div>
   ${content}
   <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center; color: #9ca3af; font-size: 14px;">
@@ -94,7 +92,13 @@ export async function sendCallBookedEmail(
   durationMinutes: number,
   questions?: string,
   videoRoomUrl?: string | null,
-  isSeeker: boolean = false
+  isSeeker: boolean = false,
+  extras?: {
+    seekerCondition?: string;
+    guideConditions?: string[];
+    guideSurgeryInfo?: string;
+    guideBio?: string;
+  }
 ) {
   const dateStr = scheduledAt.toLocaleDateString("en-US", {
     weekday: "long",
@@ -115,6 +119,53 @@ export async function sendCallBookedEmail(
     ? `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/seeker`
     : `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/guide`;
 
+  // Guide version: show seeker's condition
+  let aboutSeekerSection = "";
+  if (!isSeeker && extras?.seekerCondition) {
+    aboutSeekerSection = `
+      <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin: 20px 0;">
+        <p style="margin: 0 0 10px 0; font-weight: 600;">About the seeker:</p>
+        <p style="margin: 0;"><strong>Condition:</strong> ${extras.seekerCondition}</p>
+      </div>
+    `;
+  }
+
+  // Seeker version: show guide's background + preparation tips
+  let aboutGuideSection = "";
+  let preparationSection = "";
+  if (isSeeker) {
+    const guideDetails: string[] = [];
+    if (extras?.guideConditions && extras.guideConditions.length > 0) {
+      guideDetails.push(`<p style="margin: 0 0 8px 0;"><strong>Procedures:</strong> ${extras.guideConditions.join(", ")}</p>`);
+    }
+    if (extras?.guideSurgeryInfo) {
+      guideDetails.push(`<p style="margin: 0 0 8px 0;"><strong>Recovery timeline:</strong> ${extras.guideSurgeryInfo}</p>`);
+    }
+    if (extras?.guideBio) {
+      const truncatedBio = extras.guideBio.length > 200 ? extras.guideBio.slice(0, 200) + "..." : extras.guideBio;
+      guideDetails.push(`<p style="margin: 0; color: #6b7280; font-style: italic;">&ldquo;${truncatedBio}&rdquo;</p>`);
+    }
+    if (guideDetails.length > 0) {
+      aboutGuideSection = `
+        <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin: 20px 0;">
+          <p style="margin: 0 0 10px 0; font-weight: 600;">About your guide:</p>
+          ${guideDetails.join("")}
+        </div>
+      `;
+    }
+
+    preparationSection = `
+      <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 20px; margin: 20px 0;">
+        <p style="margin: 0 0 10px 0; font-weight: 600;">How to prepare:</p>
+        <ul style="margin: 0; padding-left: 20px; color: #6b7280;">
+          <li>Test your camera and microphone beforehand</li>
+          <li>Find a quiet, private space</li>
+          <li>Have your questions ready</li>
+        </ul>
+      </div>
+    `;
+  }
+
   const content = `
     <h1 style="color: #0d9488; font-size: 24px; margin-bottom: 20px;">${heading}</h1>
     <p>Hi ${recipientName},</p>
@@ -124,6 +175,7 @@ export async function sendCallBookedEmail(
       <p style="margin: 0 0 10px 0;"><strong>Time:</strong> ${timeStr}</p>
       <p style="margin: 0;"><strong>Duration:</strong> ${durationMinutes} minutes</p>
     </div>
+    ${aboutSeekerSection}
     ${
       questions
         ? `
@@ -134,6 +186,8 @@ export async function sendCallBookedEmail(
     `
         : ""
     }
+    ${aboutGuideSection}
+    ${preparationSection}
     ${
       videoRoomUrl
         ? `
@@ -744,6 +798,138 @@ export async function sendCallReminderEmail(
     return { success: true };
   } catch (error) {
     console.error("Failed to send call reminder email:", error);
+    return { success: false, error };
+  }
+}
+
+// Review request - sent to seeker after a completed call
+export async function sendReviewRequestEmail(
+  to: string,
+  seekerName: string,
+  guideName: string,
+  callDate: Date,
+  guideId: string,
+  callId: string
+) {
+  const dateStr = callDate.toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
+  const reviewUrl = `${process.env.NEXT_PUBLIC_APP_URL}/guides/${guideId}?review=${callId}`;
+
+  const content = `
+    <h1 style="color: #0d9488; font-size: 24px; margin-bottom: 20px;">How was your call with ${guideName}?</h1>
+    <p>Hi ${seekerName},</p>
+    <p>You had a call with <strong>${guideName}</strong> on ${dateStr}. We'd love to hear how it went!</p>
+    <p>Your feedback helps other seekers find the right guide and helps guides improve their support.</p>
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${reviewUrl}"
+         style="display: inline-block; background: #0d9488; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600;">
+        Leave a Review
+      </a>
+    </div>
+    <p style="color: #6b7280; font-size: 14px;">It only takes a minute and makes a big difference.</p>
+  `;
+
+  try {
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to,
+      subject: `How was your call with ${guideName}?`,
+      html: baseTemplate(content),
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to send review request email:", error);
+    return { success: false, error };
+  }
+}
+
+// New review received - sent to guide
+export async function sendNewReviewEmail(
+  to: string,
+  guideName: string,
+  reviewerName: string,
+  rating: number,
+  comment?: string
+) {
+  const stars = "\u2605".repeat(rating) + "\u2606".repeat(5 - rating);
+
+  const content = `
+    <h1 style="color: #0d9488; font-size: 24px; margin-bottom: 20px;">${reviewerName} left you a review</h1>
+    <p>Hi ${guideName},</p>
+    <p>You received a new review!</p>
+    <div style="background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center;">
+      <p style="margin: 0 0 10px 0; font-size: 24px; color: #f59e0b;">${stars}</p>
+      <p style="margin: 0; font-weight: 600;">${rating} out of 5 stars</p>
+    </div>
+    ${
+      comment
+        ? `
+      <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin: 20px 0;">
+        <p style="margin: 0; color: #6b7280; font-style: italic;">&ldquo;${comment}&rdquo;</p>
+      </div>
+    `
+        : ""
+    }
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/guide"
+         style="display: inline-block; background: #0d9488; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600;">
+        View Your Dashboard
+      </a>
+    </div>
+  `;
+
+  try {
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to,
+      subject: `New ${rating}-star review from ${reviewerName}`,
+      html: baseTemplate(content),
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to send new review email:", error);
+    return { success: false, error };
+  }
+}
+
+// Payout sent - sent to guide after call completion payout
+export async function sendPayoutEmail(
+  to: string,
+  guideName: string,
+  amount: number,
+  callId?: string
+) {
+  const content = `
+    <h1 style="color: #0d9488; font-size: 24px; margin-bottom: 20px;">Payout Sent!</h1>
+    <p>Hi ${guideName},</p>
+    <p>A payout of <strong>$${amount.toFixed(2)}</strong> has been sent to your connected bank account.</p>
+    <div style="background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center;">
+      <p style="margin: 0; font-size: 28px; font-weight: 700; color: #0d9488;">$${amount.toFixed(2)}</p>
+    </div>
+    <p style="color: #6b7280;">Funds typically arrive in your bank account within 2-3 business days via Stripe.</p>
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/guide/earnings"
+         style="display: inline-block; background: #0d9488; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600;">
+        View Earnings
+      </a>
+    </div>
+  `;
+
+  try {
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to,
+      subject: `Payout sent: $${amount.toFixed(2)}`,
+      html: baseTemplate(content),
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to send payout email:", error);
     return { success: false, error };
   }
 }

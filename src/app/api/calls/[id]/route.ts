@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { stripe } from "@/lib/stripe";
 import { v4 as uuidv4 } from "uuid";
-import { sendCallCancelledEmail } from "@/lib/email";
+import { sendCallCancelledEmail, sendPayoutEmail } from "@/lib/email";
 
 export async function PATCH(
   req: NextRequest,
@@ -153,6 +153,16 @@ export async function PATCH(
         });
 
         console.log(`Payout created for call ${call.id}: $${call.contributorPayout}`);
+
+        // Send payout notification email to guide
+        if (updated.guide?.email) {
+          sendPayoutEmail(
+            updated.guide.email,
+            updated.guide.name || "Guide",
+            call.contributorPayout,
+            call.id
+          ).catch((err) => console.error("Failed to send payout email:", err));
+        }
       } catch (payoutError) {
         // Log but don't fail the call update
         console.error("Error creating payout:", payoutError);

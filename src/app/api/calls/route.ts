@@ -87,20 +87,24 @@ export async function POST(req: NextRequest) {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       })
-      .select("*, seeker:User!Call_patientId_fkey(*), guide:User!Call_contributorId_fkey(*, profile:Profile(*))")
+      .select("*, seeker:User!Call_patientId_fkey(*, profile:Profile(activeProcedureType)), guide:User!Call_contributorId_fkey(*, profile:Profile(*))")
       .single();
 
     if (error) throw error;
 
     // Send email notification to guide
     if (call.guide?.email) {
+      const seekerCondition = (call.seeker?.profile as any)?.activeProcedureType || undefined;
       sendCallBookedEmail(
         call.guide.email,
         call.guide.name || "Guide",
         call.seeker?.name || "A seeker",
         new Date(call.scheduledAt),
         call.durationMinutes,
-        call.questionsInAdvance
+        call.questionsInAdvance,
+        undefined,
+        false,
+        seekerCondition ? { seekerCondition } : undefined
       ).catch((err) => console.error("Failed to send call booked email:", err));
     }
 

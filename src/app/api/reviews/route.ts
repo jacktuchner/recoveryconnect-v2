@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { v4 as uuidv4 } from "uuid";
+import { sendNewReviewEmail } from "@/lib/email";
 
 export async function GET(req: NextRequest) {
   try {
@@ -130,6 +131,26 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) throw error;
+
+    // Send notification email to the guide (subject)
+    const { data: subject } = await supabase
+      .from("User")
+      .select("email, name")
+      .eq("id", subjectId)
+      .single();
+
+    if (subject?.email) {
+      const reviewerName = review.author?.showRealName
+        ? (review.author?.name || "A seeker")
+        : (review.author?.displayName || "A seeker");
+      sendNewReviewEmail(
+        subject.email,
+        subject.name || "Guide",
+        reviewerName,
+        rating,
+        comment || undefined
+      ).catch((err) => console.error("Failed to send new review email:", err));
+    }
 
     return NextResponse.json(review, { status: 201 });
   } catch (error) {
