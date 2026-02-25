@@ -25,7 +25,7 @@ export function getPublicDisplayName(user: {
     return `${user.name[0].toUpperCase()}. (Anonymous)`;
   }
 
-  return "Anonymous Contributor";
+  return "Anonymous Guide";
 }
 
 /**

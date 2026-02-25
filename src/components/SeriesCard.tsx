@@ -6,7 +6,7 @@ import { useState } from "react";
 interface SeriesCardProps {
   id: string;
   title: string;
-  contributorName: string;
+  guideName: string;
   procedureType: string;
   recordingCount: number;
   totalDuration?: number;
@@ -60,7 +60,7 @@ function formatDuration(seconds: number): string {
 export default function SeriesCard({
   id,
   title,
-  contributorName,
+  guideName,
   procedureType,
   recordingCount,
   totalDuration,
@@ -124,7 +124,7 @@ export default function SeriesCard({
           <h3 className="font-semibold text-gray-900 group-hover:text-purple-700 transition-colors line-clamp-2 mb-1">
             {title}
           </h3>
-          <p className="text-sm text-gray-500 mb-3">{contributorName}</p>
+          <p className="text-sm text-gray-500 mb-3">{guideName}</p>
 
           <div className="flex flex-wrap gap-1.5 mb-3">
             <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">

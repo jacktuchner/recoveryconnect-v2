@@ -44,25 +44,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Subscriber check for patients
-    const { data: currentUser } = await supabase
-      .from("User")
-      .select("role, subscriptionStatus")
-      .eq("id", userId)
-      .single();
-
-    if (
-      currentUser &&
-      currentUser.role === "SEEKER" &&
-      currentUser.subscriptionStatus !== "active" &&
-      currentUser.subscriptionStatus !== "trialing"
-    ) {
-      return NextResponse.json(
-        { error: "Messaging requires an active subscription" },
-        { status: 403 }
-      );
-    }
-
     const now = new Date().toISOString();
 
     // Insert message

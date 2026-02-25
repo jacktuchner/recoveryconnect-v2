@@ -53,7 +53,7 @@ export async function PATCH(
       .eq("id", application.userId)
       .single();
 
-    // Patients who applied become BOTH (keep patient access). Already-CONTRIBUTOR stays CONTRIBUTOR.
+    // Seekers who applied become BOTH (keep seeker access). Already-GUIDE stays GUIDE.
     const newRole = currentUser?.role === "SEEKER" ? "BOTH" : currentUser?.role === "BOTH" ? "BOTH" : "GUIDE";
 
     // Update user: set role and contributorStatus = APPROVED
@@ -73,7 +73,7 @@ export async function PATCH(
   } else if (action === "reject") {
     updates.status = "REJECTED";
 
-    // Update user: set contributorStatus = REJECTED, role back to PATIENT
+    // Update user: set contributorStatus = REJECTED, role back to SEEKER
     const { error: userError } = await supabase
       .from("User")
       .update({

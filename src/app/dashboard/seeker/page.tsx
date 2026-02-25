@@ -592,7 +592,7 @@ export default function SeekerDashboard() {
             {pendingCallReviews.map((call: any) => (
               <div key={call.id} className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-amber-100">
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{call.contributor?.name}</p>
+                  <p className="text-sm font-medium text-gray-900">{call.guide?.name}</p>
                   <p className="text-xs text-gray-500">
                     {new Date(call.scheduledAt).toLocaleDateString()} &middot; {call.durationMinutes} min
                   </p>
@@ -615,8 +615,8 @@ export default function SeekerDashboard() {
                 return (
                   <CallReviewForm
                     callId={call.id}
-                    contributorId={call.contributorId || call.contributor?.id}
-                    contributorName={call.contributor?.name || "Guide"}
+                    guideId={call.guideId || call.guide?.id}
+                    guideName={call.guide?.name || "Guide"}
                     onReviewSubmitted={(review) => {
                       setMyReviews((prev) => [review, ...prev]);
                       setReviewingCallId(null);
@@ -1061,7 +1061,7 @@ export default function SeekerDashboard() {
         )}
       </section>
 
-      <PurchaseHistory role="patient" />
+      <PurchaseHistory role="seeker" />
 
       {/* Recovery Journal */}
       {activeProcedure && (
@@ -1184,7 +1184,7 @@ export default function SeekerDashboard() {
                 <div key={call.id} className="border border-gray-200 rounded-xl overflow-hidden">
                   <div className="flex items-center justify-between p-4 bg-gray-50">
                     <div>
-                      <p className="font-medium">{call.contributor?.name}</p>
+                      <p className="font-medium">{call.guide?.name}</p>
                       <p className="text-sm text-gray-500">
                         {new Date(call.scheduledAt).toLocaleDateString()} at{" "}
                         {new Date(call.scheduledAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
@@ -1274,8 +1274,8 @@ export default function SeekerDashboard() {
                     <div className="p-4 border-t border-gray-200">
                       <CallReviewForm
                         callId={call.id}
-                        contributorId={call.contributorId || call.contributor?.id}
-                        contributorName={call.contributor?.name || "Guide"}
+                        guideId={call.guideId || call.guide?.id}
+                        guideName={call.guide?.name || "Guide"}
                         onReviewSubmitted={(review) => {
                           setMyReviews((prev) => [review, ...prev]);
                           setReviewingCallId(null);
@@ -1330,8 +1330,8 @@ export default function SeekerDashboard() {
                   <CallReviewForm
                     callId={review.callId}
                     recordingId={review.recordingId}
-                    contributorId={review.subjectId}
-                    contributorName={review.subject?.name || "Guide"}
+                    guideId={review.subjectId}
+                    guideName={review.subject?.name || "Guide"}
                     editMode
                     existingReview={review}
                     onReviewSubmitted={(updated) => {

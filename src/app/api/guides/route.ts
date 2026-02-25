@@ -19,37 +19,37 @@ export async function GET(req: NextRequest) {
       .select("id, name, displayName, showRealName, bio, role, contributorStatus, profile:Profile(*), recordings:Recording(*), reviewsReceived:Review!Review_subjectId_fkey(*)", { count: "exact" })
       .in("role", ["GUIDE", "BOTH"]);
 
-    const { data: allContributors, count, error } = await query;
+    const { data: allGuides, count, error } = await query;
 
     if (error) throw error;
 
-    // Filter contributors - must have a profile
-    let filteredContributors = (allContributors || []).filter((c: any) => c.profile !== null);
+    // Filter guides - must have a profile
+    let filteredGuides = (allGuides || []).filter((c: any) => c.profile !== null);
 
     // Filter by availableForCalls (for guides page)
     if (availableForCalls) {
-      // Get IDs of contributors who have at least one availability slot
+      // Get IDs of guides who have at least one availability slot
       const { data: availabilityData } = await supabase
         .from("Availability")
         .select("contributorId");
 
-      const contributorIdsWithAvailability = new Set(
+      const guideIdsWithAvailability = new Set(
         (availabilityData || []).map((a: any) => a.contributorId)
       );
 
-      filteredContributors = filteredContributors.filter((c: any) => {
+      filteredGuides = filteredGuides.filter((c: any) => {
         const profile = c.profile;
         return (
           profile?.isAvailableForCalls === true &&
           profile?.hourlyRate > 0 &&
-          contributorIdsWithAvailability.has(c.id)
+          guideIdsWithAvailability.has(c.id)
         );
       });
     }
 
     // Filter by procedure if specified
     if (procedure) {
-      filteredContributors = filteredContributors.filter((c: any) => {
+      filteredGuides = filteredGuides.filter((c: any) => {
         const types = c.profile?.procedureTypes;
         if (Array.isArray(types) && types.length > 0) {
           return types.includes(procedure);
@@ -58,16 +58,16 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    const total = filteredContributors.length;
+    const total = filteredGuides.length;
 
     // Paginate
-    const paginatedContributors = filteredContributors.slice(
+    const paginatedGuides = filteredGuides.slice(
       (page - 1) * limit,
       page * limit
     );
 
     const session = await getServerSession(authOptions);
-    let results: unknown[] = paginatedContributors;
+    let results: unknown[] = paginatedGuides;
 
     if (session?.user) {
       const { data: userProfile } = await supabase
@@ -88,7 +88,7 @@ export async function GET(req: NextRequest) {
         const seekerFactors = activeProcProfile.complicatingFactors || userProfile.complicatingFactors || [];
         const seekerDetails = activeProcProfile.procedureDetails || userProfile.procedureDetails;
 
-        results = paginatedContributors
+        results = paginatedGuides
           .map((c: any) => {
             if (!c.profile)
               return { ...c, matchScore: 0, matchBreakdown: [] };
@@ -137,7 +137,7 @@ export async function GET(req: NextRequest) {
     }));
 
     return NextResponse.json({
-      contributors: transformedResults,
+      guides: transformedResults,
       pagination: {
         page,
         limit,
@@ -146,7 +146,7 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Error fetching contributors:", error);
+    console.error("Error fetching guides:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

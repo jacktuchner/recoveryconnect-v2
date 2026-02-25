@@ -6,12 +6,12 @@ import { useSession } from "next-auth/react";
 export default function FooterSeekerLinks() {
   const { data: session } = useSession();
   const role = (session?.user as any)?.role;
-  const isContributorOnly = role === "GUIDE";
+  const isGuideOnly = role === "GUIDE";
 
-  // Contributor-only users don't need patient links
-  if (isContributorOnly) return null;
+  // Guide-only users don't need seeker links
+  if (isGuideOnly) return null;
 
-  const isPatient = role === "SEEKER" || role === "BOTH" || role === "ADMIN";
+  const isSeeker = role === "SEEKER" || role === "BOTH" || role === "ADMIN";
 
   return (
     <div>
@@ -20,7 +20,7 @@ export default function FooterSeekerLinks() {
         <li><Link href="/watch" className="hover:text-white">Watch Stories</Link></li>
         <li><Link href="/guides" className="hover:text-white">Book a Guide</Link></li>
         <li><Link href="/how-it-works" className="hover:text-white">How It Works</Link></li>
-        {isPatient ? (
+        {isSeeker ? (
           <li><Link href="/dashboard/seeker" className="hover:text-white">Seeker Dashboard</Link></li>
         ) : !session ? (
           <li><Link href="/auth/register" className="hover:text-white">Create Account</Link></li>

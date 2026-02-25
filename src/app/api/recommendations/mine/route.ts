@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
 
     const userId = (session.user as Record<string, string>).id;
 
-    // Get all endorsements by this contributor
+    // Get all endorsements by this guide
     const { data: endorsements, error: endorseError } = await supabase
       .from("RecommendationEndorsement")
       .select("recommendationId, comment, recoveryPhase")
@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
     const { data: recommendations, error: recError } = await supabase
       .from("Recommendation")
       .select(
-        "*, endorsements:RecommendationEndorsement(id, contributorId, comment, recoveryPhase, contributor:User!RecommendationEndorsement_contributorId_fkey(id, name, image))"
+        "*, endorsements:RecommendationEndorsement(id, contributorId, comment, recoveryPhase, guide:User!RecommendationEndorsement_contributorId_fkey(id, name, image))"
       )
       .in("id", recIds)
       .eq("status", "ACTIVE")

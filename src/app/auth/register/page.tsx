@@ -10,7 +10,7 @@ function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const roleParam = searchParams.get("role");
-  const defaultRole = (roleParam === "guide" || roleParam === "contributor") ? "GUIDE" : "SEEKER";
+  const defaultRole = (roleParam === "guide") ? "GUIDE" : "SEEKER";
 
   const [form, setForm] = useState({
     name: "",

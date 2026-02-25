@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
 
     let query = supabase
       .from("Recording")
-      .select("*, contributor:User!Recording_contributorId_fkey(id, name, email)", { count: "exact" });
+      .select("*, guide:User!Recording_contributorId_fkey(id, name, email)", { count: "exact" });
 
     if (status) {
       query = query.eq("status", status);

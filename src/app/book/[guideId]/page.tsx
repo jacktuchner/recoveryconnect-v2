@@ -88,11 +88,11 @@ export default function BookCallPage() {
   useEffect(() => {
     async function load() {
       try {
-        const [contribRes, availRes] = await Promise.all([
+        const [guideRes, availRes] = await Promise.all([
           fetch(`/api/guides/${guideId}`),
           fetch(`/api/guides/${guideId}/availability`),
         ]);
-        if (contribRes.ok) setGuide(await contribRes.json());
+        if (guideRes.ok) setGuide(await guideRes.json());
         if (availRes.ok) {
           const availData = await availRes.json();
           setAvailability(availData.slots || []);

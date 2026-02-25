@@ -12,7 +12,7 @@ export async function GET() {
 
     const userId = (session.user as Record<string, string>).id;
 
-    // Get patients who have shared their journal with this contributor
+    // Get seekers who have shared their journal with this guide
     const { data: shares, error } = await supabase
       .from("JournalShare")
       .select("patientId, createdAt")
@@ -22,24 +22,24 @@ export async function GET() {
     if (error) throw error;
 
     if (!shares || shares.length === 0) {
-      return NextResponse.json({ patients: [] });
+      return NextResponse.json({ seekers: [] });
     }
 
-    const patientIds = shares.map((s: any) => s.patientId);
+    const seekerIds = shares.map((s: any) => s.patientId);
 
-    // Get patient details
-    const { data: patients, error: patientsError } = await supabase
+    // Get seeker details
+    const { data: seekers, error: seekersError } = await supabase
       .from("User")
       .select("id, name, image")
-      .in("id", patientIds);
+      .in("id", seekerIds);
 
-    if (patientsError) throw patientsError;
+    if (seekersError) throw seekersError;
 
-    // Get shared entry counts per patient
+    // Get shared entry counts per seeker
     const { data: entryCounts, error: countError } = await supabase
       .from("JournalEntry")
       .select("patientId")
-      .in("patientId", patientIds)
+      .in("patientId", seekerIds)
       .eq("isShared", true);
 
     if (countError) throw countError;
@@ -49,20 +49,20 @@ export async function GET() {
       countMap[e.patientId] = (countMap[e.patientId] || 0) + 1;
     }
 
-    const patientMap = new Map((patients || []).map((p: any) => [p.id, p]));
+    const seekerMap = new Map((seekers || []).map((p: any) => [p.id, p]));
 
     const result = shares.map((s: any) => {
-      const patient = patientMap.get(s.patientId) as any;
+      const seeker = seekerMap.get(s.patientId) as any;
       return {
-        patientId: s.patientId,
-        name: patient?.name || "Patient",
-        image: patient?.image || null,
+        seekerId: s.patientId,
+        name: seeker?.name || "Seeker",
+        image: seeker?.image || null,
         sharedEntryCount: countMap[s.patientId] || 0,
         sharedAt: s.createdAt,
       };
     });
 
-    return NextResponse.json({ patients: result });
+    return NextResponse.json({ seekers: result });
   } catch (error) {
     console.error("Error fetching received journal shares:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

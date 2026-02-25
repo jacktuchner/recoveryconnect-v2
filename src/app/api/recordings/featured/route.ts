@@ -7,7 +7,7 @@ export async function GET() {
     const { data: recordings, error } = await supabase
       .from("Recording")
       .select(
-        "id, title, description, category, procedureType, ageRange, activityLevel, price, durationSeconds, isVideo, viewCount, contributor:User!Recording_contributorId_fkey(id, name), reviews:Review(rating)"
+        "id, title, description, category, procedureType, ageRange, activityLevel, price, durationSeconds, isVideo, viewCount, guide:User!Recording_contributorId_fkey(id, name), reviews:Review(rating)"
       )
       .eq("status", "PUBLISHED")
       .order("createdAt", { ascending: false })

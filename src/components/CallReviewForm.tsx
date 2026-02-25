@@ -5,8 +5,8 @@ import { useState } from "react";
 interface CallReviewFormProps {
   callId?: string;
   recordingId?: string;
-  contributorId: string;
-  contributorName: string;
+  guideId: string;
+  guideName: string;
   onReviewSubmitted: (review: any) => void;
   onCancel?: () => void;
   // Edit mode
@@ -23,8 +23,8 @@ interface CallReviewFormProps {
 export default function CallReviewForm({
   callId,
   recordingId,
-  contributorId,
-  contributorName,
+  guideId,
+  guideName,
   onReviewSubmitted,
   onCancel,
   editMode = false,
@@ -110,7 +110,7 @@ export default function CallReviewForm({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            subjectId: contributorId,
+            subjectId: guideId,
             callId: callId || undefined,
             recordingId: recordingId || undefined,
             rating,
@@ -138,7 +138,7 @@ export default function CallReviewForm({
   return (
     <form onSubmit={handleSubmit} className="bg-gray-50 rounded-lg p-4 space-y-3">
       <p className="text-sm font-medium text-gray-700">
-        {editMode ? "Edit your review" : `Review your experience with ${contributorName}`}
+        {editMode ? "Edit your review" : `Review your experience with ${guideName}`}
       </p>
 
       <div className="grid grid-cols-3 gap-4">

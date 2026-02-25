@@ -43,7 +43,7 @@ export async function PATCH(
       .from("Recording")
       .update(updateData)
       .eq("id", id)
-      .select("*, contributor:User!Recording_contributorId_fkey(id, name, email)")
+      .select("*, guide:User!Recording_contributorId_fkey(id, name, email)")
       .single();
 
     if (error) throw error;
@@ -81,7 +81,7 @@ export async function GET(
 
     const { data: recording, error } = await supabase
       .from("Recording")
-      .select("*, contributor:User!Recording_contributorId_fkey(id, name, email, profile:Profile(*))")
+      .select("*, guide:User!Recording_contributorId_fkey(id, name, email, profile:Profile(*))")
       .eq("id", id)
       .single();
 

@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "This session has already started" }, { status: 400 });
     }
 
-    // Check if user is the contributor (can't join own session)
+    // Check if user is the guide (can't join own session)
     if (groupSession.contributorId === userId) {
       return NextResponse.json({ error: "You cannot join your own session" }, { status: 400 });
     }
@@ -68,48 +68,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "This session is full" }, { status: 400 });
     }
 
-    // Check if subscriber and session is free for subscribers
-    const { data: user } = await supabase
-      .from("User")
-      .select("subscriptionStatus, email, name")
-      .eq("id", userId)
-      .single();
-
-    const isActiveSubscriber = user?.subscriptionStatus === "active";
-
-    if (isActiveSubscriber && groupSession.freeForSubscribers) {
-      // Free registration for subscribers
-      const { error: participantError } = await supabase
-        .from("GroupSessionParticipant")
-        .insert({
-          id: uuidv4(),
-          groupSessionId,
-          userId,
-          pricePaid: 0,
-          wasSubscriber: true,
-          status: "REGISTERED",
-          createdAt: new Date().toISOString(),
-        });
-
-      if (participantError) {
-        console.error("Error creating subscriber participant:", participantError);
-        throw participantError;
-      }
-
-      // Send confirmation email
-      if (user.email) {
-        await sendGroupSessionSignupEmail(
-          user.email,
-          user.name || "there",
-          groupSession.title,
-          new Date(groupSession.scheduledAt)
-        );
-      }
-
-      return NextResponse.json({ registered: true });
-    }
-
-    // Non-subscriber: create Stripe checkout session
+    // Create Stripe checkout session
     const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL;
 
     const checkoutSession = await stripe.checkout.sessions.create({

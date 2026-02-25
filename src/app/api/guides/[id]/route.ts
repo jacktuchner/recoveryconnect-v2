@@ -12,7 +12,7 @@ export async function GET(
   try {
     const { id } = await params;
 
-    const { data: contributor, error } = await supabase
+    const { data: guide, error } = await supabase
       .from("User")
       .select("*, profile:Profile(*), recordings:Recording(*, reviews:Review(*, author:User!Review_authorId_fkey(name, displayName, showRealName)))")
       .eq("id", id)
@@ -21,29 +21,29 @@ export async function GET(
     if (error) {
       console.error("Supabase error:", error);
       return NextResponse.json(
-        { error: "Contributor not found", details: error.message },
+        { error: "Guide not found", details: error.message },
         { status: 404 }
       );
     }
 
-    if (!contributor) {
+    if (!guide) {
       return NextResponse.json(
-        { error: "Contributor not found" },
+        { error: "Guide not found" },
         { status: 404 }
       );
     }
 
     // Filter recordings to only published ones and sort
-    if (contributor.recordings) {
-      contributor.recordings = contributor.recordings
+    if (guide.recordings) {
+      guide.recordings = guide.recordings
         .filter((r: any) => r.status === "PUBLISHED")
         .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     }
 
     // Collect all reviews from recordings for reviewsReceived
     const allReviews: any[] = [];
-    if (contributor.recordings) {
-      contributor.recordings.forEach((rec: any) => {
+    if (guide.recordings) {
+      guide.recordings.forEach((rec: any) => {
         if (rec.reviews) {
           rec.reviews.forEach((review: any) => {
             allReviews.push(review);
@@ -53,7 +53,7 @@ export async function GET(
     }
 
     // Sort and limit reviews, and transform author names
-    contributor.reviewsReceived = allReviews
+    guide.reviewsReceived = allReviews
       .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, 10)
       .map((review: any) => ({
@@ -86,8 +86,8 @@ export async function GET(
         .eq("contributorId", id)
         .eq("status", "COMPLETED"),
 
-      // Availability slots (only if contributor is available for calls)
-      contributor.profile?.isAvailableForCalls
+      // Availability slots (only if guide is available for calls)
+      guide.profile?.isAvailableForCalls
         ? supabase
             .from("Availability")
             .select("id, dayOfWeek, startTime, endTime, timezone")
@@ -96,7 +96,7 @@ export async function GET(
             .order("startTime")
         : Promise.resolve({ data: null }),
 
-      // Recommendations endorsed by this contributor
+      // Recommendations endorsed by this guide
       supabase
         .from("RecommendationEndorsement")
         .select("comment, recoveryPhase, recommendation:Recommendation!RecommendationEndorsement_recommendationId_fkey(id, name, category, procedureType, description, location, url, priceRange, endorsementCount, helpfulCount, status)")
@@ -123,12 +123,12 @@ export async function GET(
         myRecoveryPhase: e.recoveryPhase,
       }));
 
-    // Match score: only for logged-in patients with a profile
+    // Match score: only for logged-in seekers with a profile
     let matchScore: number | undefined;
     let matchBreakdown: { attribute: string; matched: boolean; weight: number }[] | undefined;
 
     const session = await getServerSession(authOptions);
-    if (session?.user && contributor.profile) {
+    if (session?.user && guide.profile) {
       const userId = (session.user as any).id;
       // Don't compute match score for own profile
       if (userId !== id) {
@@ -159,14 +159,14 @@ export async function GET(
               lifestyleContext: seekerProfile.lifestyleContext || [],
             },
             {
-              procedureType: contributor.profile.procedureType,
-              procedureTypes: contributor.profile.procedureTypes,
-              procedureDetails: contributor.profile.procedureDetails,
-              ageRange: contributor.profile.ageRange,
-              activityLevel: contributor.profile.activityLevel,
-              recoveryGoals: contributor.profile.recoveryGoals || [],
-              complicatingFactors: contributor.profile.complicatingFactors || [],
-              lifestyleContext: contributor.profile.lifestyleContext || [],
+              procedureType: guide.profile.procedureType,
+              procedureTypes: guide.profile.procedureTypes,
+              procedureDetails: guide.profile.procedureDetails,
+              ageRange: guide.profile.ageRange,
+              activityLevel: guide.profile.activityLevel,
+              recoveryGoals: guide.profile.recoveryGoals || [],
+              complicatingFactors: guide.profile.complicatingFactors || [],
+              lifestyleContext: guide.profile.lifestyleContext || [],
             }
           );
           matchScore = result.score;
@@ -175,10 +175,10 @@ export async function GET(
       }
     }
 
-    // Transform contributor name to public display name
-    const publicName = getPublicDisplayName(contributor);
+    // Transform guide name to public display name
+    const publicName = getPublicDisplayName(guide);
 
-    const { passwordHash, displayName, showRealName, ...safe } = contributor as Record<string, unknown>;
+    const { passwordHash, displayName, showRealName, ...safe } = guide as Record<string, unknown>;
     return NextResponse.json({
       ...safe,
       name: publicName,
@@ -189,7 +189,7 @@ export async function GET(
       ...(matchScore !== undefined && { matchScore, matchBreakdown }),
     });
   } catch (error) {
-    console.error("Error fetching contributor:", error);
+    console.error("Error fetching guide:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

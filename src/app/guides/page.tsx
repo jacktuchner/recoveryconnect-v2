@@ -28,7 +28,7 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: "most_reviews", label: "Most Reviews" },
 ];
 
-interface Contributor {
+interface Guide {
   id: string;
   name: string;
   bio?: string;
@@ -50,28 +50,28 @@ interface Contributor {
   matchBreakdown?: { attribute: string; matched: boolean; weight: number }[];
 }
 
-function GuideCard({ contributor }: { contributor: Contributor }) {
-  const profile = contributor.profile || {};
-  const averageRating = contributor.reviewsReceived?.length
-    ? contributor.reviewsReceived.reduce((a, r) => a + r.rating, 0) / contributor.reviewsReceived.length
+function GuideCard({ guide }: { guide: Guide }) {
+  const profile = guide.profile || {};
+  const averageRating = guide.reviewsReceived?.length
+    ? guide.reviewsReceived.reduce((a, r) => a + r.rating, 0) / guide.reviewsReceived.length
     : undefined;
-  const reviewCount = contributor.reviewsReceived?.length || 0;
+  const reviewCount = guide.reviewsReceived?.length || 0;
 
   return (
-    <Link href={`/guides/${contributor.id}`} className="block group">
+    <Link href={`/guides/${guide.id}`} className="block group">
       <div className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg hover:border-cyan-200 transition-all h-full flex flex-col">
         <div className="flex items-start gap-4 mb-4">
           <div className="w-16 h-16 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
             <span className="text-white font-bold text-xl">
-              {contributor.name?.[0]?.toUpperCase() || "?"}
+              {guide.name?.[0]?.toUpperCase() || "?"}
             </span>
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5">
               <h3 className="font-semibold text-gray-900 group-hover:text-cyan-700 transition-colors text-lg">
-                {contributor.name}
+                {guide.name}
               </h3>
-              {contributor.contributorStatus === "APPROVED" && <VerifiedBadge />}
+              {guide.contributorStatus === "APPROVED" && <VerifiedBadge />}
             </div>
             <div className="flex flex-wrap gap-1 mt-0.5">
               {(profile.procedureTypes?.length ? profile.procedureTypes : (profile.procedureType ? [profile.procedureType] : [])).map((proc: string) => (
@@ -88,25 +88,25 @@ function GuideCard({ contributor }: { contributor: Contributor }) {
               </span>
             )}
           </div>
-          {contributor.matchScore !== undefined && (
+          {guide.matchScore !== undefined && (
             <div className="flex items-center flex-shrink-0">
               <span className={`text-sm font-bold px-2.5 py-1 rounded-full ${
-                contributor.matchScore >= 80 ? "bg-green-100 text-green-700" :
-                contributor.matchScore >= 60 ? "bg-yellow-100 text-yellow-700" :
+                guide.matchScore >= 80 ? "bg-green-100 text-green-700" :
+                guide.matchScore >= 60 ? "bg-yellow-100 text-yellow-700" :
                 "bg-gray-100 text-gray-600"
               }`}>
-                {contributor.matchScore}% match
+                {guide.matchScore}% match
               </span>
-              {contributor.matchBreakdown && (
-                <MatchScoreTooltip breakdown={contributor.matchBreakdown} />
+              {guide.matchBreakdown && (
+                <MatchScoreTooltip breakdown={guide.matchBreakdown} />
               )}
             </div>
           )}
         </div>
 
-        {contributor.bio && (
+        {guide.bio && (
           <p className="text-sm text-gray-600 mb-3 line-clamp-2 italic">
-            &ldquo;{contributor.bio}&rdquo;
+            &ldquo;{guide.bio}&rdquo;
           </p>
         )}
 
@@ -185,7 +185,7 @@ function GuidesContent() {
   });
   const [sortBy, setSortBy] = useState<SortOption>("match");
   const [searchQuery, setSearchQuery] = useState("");
-  const [contributors, setContributors] = useState<Contributor[]>([]);
+  const [guides, setGuides] = useState<Guide[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
@@ -227,7 +227,7 @@ function GuidesContent() {
       const res = await fetch(`/api/guides?${params}`);
       if (!res.ok) throw new Error("Failed to load guides.");
       const data = await res.json();
-      setContributors(data.contributors || []);
+      setGuides(data.guides || []);
       setPagination(data.pagination || { page: 1, totalPages: 1, total: 0 });
     } catch (err) {
       console.error("Error fetching guides:", err);
@@ -246,8 +246,8 @@ function GuidesContent() {
     setPagination((prev) => ({ ...prev, page: 1 }));
   }
 
-  // Filter contributors client-side
-  const filteredContributors = contributors.filter((c) => {
+  // Filter guides client-side
+  const filteredGuides = guides.filter((c) => {
     // Search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
@@ -281,8 +281,8 @@ function GuidesContent() {
     return true;
   });
 
-  // Sort contributors
-  const sortedContributors = [...filteredContributors].sort((a, b) => {
+  // Sort guides
+  const sortedGuides = [...filteredGuides].sort((a, b) => {
     switch (sortBy) {
       case "match":
         return (b.matchScore || 0) - (a.matchScore || 0);
@@ -484,7 +484,7 @@ function GuidesContent() {
                     onClick={() => setShowMobileFilters(false)}
                     className="w-full mt-6 py-3 bg-cyan-600 text-white rounded-lg font-medium"
                   >
-                    Show {sortedContributors.length} results
+                    Show {sortedGuides.length} results
                   </button>
                 </div>
               </div>
@@ -494,7 +494,7 @@ function GuidesContent() {
             <div className="flex-1">
               {!loading && (
                 <p className="text-sm text-gray-500 mb-4">
-                  {sortedContributors.length} guide{sortedContributors.length !== 1 ? "s" : ""} available
+                  {sortedGuides.length} guide{sortedGuides.length !== 1 ? "s" : ""} available
                 </p>
               )}
 
@@ -504,7 +504,7 @@ function GuidesContent() {
                     <div key={i} className="bg-white rounded-xl border border-gray-200 h-64 animate-pulse" />
                   ))}
                 </div>
-              ) : sortedContributors.length === 0 ? (
+              ) : sortedGuides.length === 0 ? (
                 <div className="text-center py-16 bg-white rounded-xl border border-gray-200">
                   <svg className="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -514,8 +514,8 @@ function GuidesContent() {
                 </div>
               ) : (
                 <div className="grid sm:grid-cols-2 gap-6">
-                  {sortedContributors.map((c) => (
-                    <GuideCard key={c.id} contributor={c} />
+                  {sortedGuides.map((c) => (
+                    <GuideCard key={c.id} guide={c} />
                   ))}
                 </div>
               )}

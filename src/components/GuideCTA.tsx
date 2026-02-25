@@ -10,11 +10,11 @@ export default function GuideCTA({ variant = "dark" }: { variant?: "dark" | "lig
   const { data: session } = useSession();
 
   const role = (session?.user as any)?.role;
-  const contributorStatus = (session?.user as any)?.contributorStatus;
-  const isAlreadyContributor = role === "GUIDE" || role === "BOTH" || role === "ADMIN";
+  const guideStatus = (session?.user as any)?.guideStatus;
+  const isAlreadyGuide = role === "GUIDE" || role === "BOTH" || role === "ADMIN";
 
-  // Approved contributor — link to dashboard
-  if (isAlreadyContributor && contributorStatus === "APPROVED") {
+  // Approved guide — link to dashboard
+  if (isAlreadyGuide && guideStatus === "APPROVED") {
     return (
       <Link href="/dashboard/guide" className={btnClass}>
         Go to Guide Dashboard
@@ -32,7 +32,7 @@ export default function GuideCTA({ variant = "dark" }: { variant?: "dark" | "lig
   }
 
   // Pending review — show status message
-  if (contributorStatus === "PENDING_REVIEW") {
+  if (guideStatus === "PENDING_REVIEW") {
     return (
       <div className="flex flex-col items-center gap-2">
         <p className={variant === "light" ? "text-amber-700 font-medium text-sm" : "text-amber-200 font-medium text-sm"}>
@@ -46,7 +46,7 @@ export default function GuideCTA({ variant = "dark" }: { variant?: "dark" | "lig
   }
 
   // Rejected — show rejection notice with reapply
-  if (contributorStatus === "REJECTED") {
+  if (guideStatus === "REJECTED") {
     return (
       <div className="flex flex-col items-center gap-2">
         <p className={variant === "light" ? "text-red-600 text-sm" : "text-red-200 text-sm"}>
@@ -59,7 +59,7 @@ export default function GuideCTA({ variant = "dark" }: { variant?: "dark" | "lig
     );
   }
 
-  // Patient — link to application form
+  // Seeker — link to application form
   if (role === "SEEKER") {
     return (
       <Link href="/guide-application" className={btnClass}>

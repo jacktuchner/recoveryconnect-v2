@@ -21,7 +21,7 @@ export async function GET() {
 
     if (callsError) throw callsError;
 
-    // Get contributor payout payments
+    // Get guide payout payments
     const { data: payments, error: paymentsError } = await supabase
       .from("Payment")
       .select("id, amount, type, status, createdAt, metadata")
@@ -66,7 +66,7 @@ export async function GET() {
       recentTransactions,
     });
   } catch (error) {
-    console.error("Error fetching contributor earnings:", error);
+    console.error("Error fetching guide earnings:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

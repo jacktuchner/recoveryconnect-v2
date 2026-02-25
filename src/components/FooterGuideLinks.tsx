@@ -8,8 +8,8 @@ export default function FooterGuideLinks() {
   const { data: session } = useSession();
   const router = useRouter();
   const role = (session?.user as any)?.role;
-  const isContributor = role === "GUIDE" || role === "BOTH" || role === "ADMIN";
-  const isPatient = role === "SEEKER";
+  const isGuide = role === "GUIDE" || role === "BOTH" || role === "ADMIN";
+  const isSeeker = role === "SEEKER";
 
   async function handleUpgrade() {
     if (!confirm("Would you like to become a guide? You'll be able to share your recovery experience and help other seekers.")) return;
@@ -24,9 +24,9 @@ export default function FooterGuideLinks() {
 
   return (
     <ul className="space-y-2 text-sm">
-      {isContributor ? (
+      {isGuide ? (
         <li><Link href="/dashboard/guide" className="hover:text-white">Guide Dashboard</Link></li>
-      ) : isPatient ? (
+      ) : isSeeker ? (
         <li><button onClick={handleUpgrade} className="hover:text-white">Become a Guide</button></li>
       ) : (
         <li><Link href="/auth/register?role=guide" className="hover:text-white">Become a Guide</Link></li>

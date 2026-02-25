@@ -11,7 +11,7 @@ interface TimelineRecording {
   durationSeconds?: number;
   price: number;
   weekNumber?: number;
-  contributor?: {
+  guide?: {
     name: string;
   };
 }
@@ -96,7 +96,7 @@ export default function RecoveryTimeline({ procedureType, currentWeek }: Recover
         <h2 className="text-xl font-bold mb-4">Recovery Timeline</h2>
         <p className="text-gray-500 text-sm">
           No timeline recordings available yet for {procedureType || "your procedure"}.
-          Check back soon as contributors add new content.
+          Check back soon as guides add new content.
         </p>
       </div>
     );
@@ -210,7 +210,7 @@ export default function RecoveryTimeline({ procedureType, currentWeek }: Recover
                   </span>
                 </div>
                 <p className="text-xs text-gray-500 mb-2">
-                  By {rec.contributor?.name || "Anonymous"}
+                  By {rec.guide?.name || "Anonymous"}
                   {rec.durationSeconds && ` · ${formatDuration(rec.durationSeconds)}`}
                 </p>
                 {rec.description && (

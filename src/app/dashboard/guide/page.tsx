@@ -103,7 +103,7 @@ export default function GuideOverviewPage() {
 
       <SharedJournalsSection />
 
-      <PurchaseHistory role="contributor" />
+      <PurchaseHistory role="guide" />
 
       {/* Reviews Received */}
       <section className="bg-white rounded-xl border border-gray-200 p-6 mb-8">

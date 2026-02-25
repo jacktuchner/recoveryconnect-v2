@@ -8,7 +8,7 @@ import SharedProfileSection from "@/components/guide/SharedProfileSection";
 import BioIntroVideoSection from "@/components/guide/BioIntroVideoSection";
 
 
-export default function ContributorProfilePage() {
+export default function GuideProfilePage() {
   const { data: session } = useSession();
   const [profile, setProfile] = useState<any>(null);
   const [sharedForm, setSharedForm] = useState({

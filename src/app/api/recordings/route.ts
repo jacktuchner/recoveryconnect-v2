@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
 
     let query = supabase
       .from("Recording")
-      .select("*, contributor:User!Recording_contributorId_fkey(id, name, displayName, showRealName, bio, contributorStatus, profile:Profile(*)), reviews:Review(*)", { count: "exact" })
+      .select("*, guide:User!Recording_contributorId_fkey(id, name, displayName, showRealName, bio, contributorStatus, profile:Profile(*)), reviews:Review(*)", { count: "exact" })
       .eq("status", "PUBLISHED");
 
     if (procedure) query = query.eq("procedureType", procedure);
@@ -75,11 +75,11 @@ export async function GET(req: NextRequest) {
               {
                 procedureType: rec.procedureType,
                 ageRange: rec.ageRange,
-                gender: rec.gender || rec.contributor?.profile?.gender,
+                gender: rec.gender || rec.guide?.profile?.gender,
                 activityLevel: rec.activityLevel,
                 recoveryGoals: rec.recoveryGoals,
-                complicatingFactors: rec.contributor?.profile?.complicatingFactors || [],
-                lifestyleContext: rec.contributor?.profile?.lifestyleContext || [],
+                complicatingFactors: rec.guide?.profile?.complicatingFactors || [],
+                lifestyleContext: rec.guide?.profile?.lifestyleContext || [],
               }
             );
             return {
@@ -92,13 +92,13 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Transform contributor names to public display names
+    // Transform guide names to public display names
     const transformedRecordings = (enrichedRecordings as any[]).map((rec) => ({
       ...rec,
-      contributor: rec.contributor
+      guide: rec.guide
         ? {
-            ...rec.contributor,
-            name: getPublicDisplayName(rec.contributor),
+            ...rec.guide,
+            name: getPublicDisplayName(rec.guide),
             displayName: undefined,
             showRealName: undefined,
           }
@@ -144,15 +144,15 @@ export async function POST(req: NextRequest) {
 
     if (!["GUIDE", "BOTH", "ADMIN"].includes(user.role)) {
       return NextResponse.json(
-        { error: "Only contributors can create recordings" },
+        { error: "Only guides can create recordings" },
         { status: 403 }
       );
     }
 
-    // Gate content creation: require approved contributor status
+    // Gate content creation: require approved guide status
     if (user.role !== "ADMIN" && user.contributorStatus !== "APPROVED") {
       return NextResponse.json(
-        { error: "Your contributor application must be approved before creating content" },
+        { error: "Your guide application must be approved before creating content" },
         { status: 403 }
       );
     }
@@ -177,7 +177,7 @@ export async function POST(req: NextRequest) {
       faqPromptId,
       transcription,
       transcriptionStatus,
-      procedureType: overrideProcedure, // Optional override for contributors with multiple procedures
+      procedureType: overrideProcedure, // Optional override for guides with multiple procedures
       timeSinceSurgery, // Time since this specific surgery
     } = body;
 
@@ -188,7 +188,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Use override procedure if provided (for contributors with multiple procedures)
+    // Use override procedure if provided (for guides with multiple procedures)
     const recordingProcedure = overrideProcedure || user.profile.procedureType;
 
     const { data: recording, error } = await supabase
@@ -218,7 +218,7 @@ export async function POST(req: NextRequest) {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       })
-      .select("*, contributor:User!Recording_contributorId_fkey(*, profile:Profile(*))")
+      .select("*, guide:User!Recording_contributorId_fkey(*, profile:Profile(*))")
       .single();
 
     if (error) throw error;

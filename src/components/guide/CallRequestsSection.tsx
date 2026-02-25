@@ -59,7 +59,7 @@ export default function CallRequestsSection({ calls, onCallUpdate }: CallRequest
               <div key={call.id} className="border border-gray-200 rounded-xl overflow-hidden">
                 <div className="flex items-center justify-between p-4 bg-gray-50">
                   <div>
-                    <p className="font-medium">{call.patient?.name || "Seeker"}</p>
+                    <p className="font-medium">{call.seeker?.name || "Seeker"}</p>
                     <p className="text-sm text-gray-500">
                       {new Date(call.scheduledAt).toLocaleDateString()} at{" "}
                       {new Date(call.scheduledAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}

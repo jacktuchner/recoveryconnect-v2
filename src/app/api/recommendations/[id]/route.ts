@@ -12,18 +12,11 @@ export async function GET(
 
     const session = await getServerSession(authOptions);
     const userId = session?.user ? (session.user as Record<string, string>).id : null;
-    const userRole = (session?.user as any)?.role;
-    const isContributor = userRole === "GUIDE" || userRole === "BOTH" || userRole === "ADMIN";
-    const isSubscriber = (session?.user as any)?.subscriptionStatus === "active";
-
-    if (!isContributor && !isSubscriber) {
-      return NextResponse.json({ error: "Subscription required" }, { status: 403 });
-    }
 
     const { data: recommendation, error } = await supabase
       .from("Recommendation")
       .select(
-        "*, endorsements:RecommendationEndorsement(id, contributorId, comment, recoveryPhase, source, createdAt, contributor:User!RecommendationEndorsement_contributorId_fkey(id, name, image)), createdBy:User!Recommendation_createdById_fkey(id, name, image)"
+        "*, endorsements:RecommendationEndorsement(id, contributorId, comment, recoveryPhase, source, createdAt, guide:User!RecommendationEndorsement_contributorId_fkey(id, name, image)), createdBy:User!Recommendation_createdById_fkey(id, name, image)"
       )
       .eq("id", id)
       .eq("status", "ACTIVE")

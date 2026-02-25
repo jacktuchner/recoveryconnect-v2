@@ -11,15 +11,6 @@ export async function GET(
   try {
     const { id } = await params;
 
-    const session = await getServerSession(authOptions);
-    const userRole = (session?.user as any)?.role;
-    const isContributor = userRole === "GUIDE" || userRole === "BOTH" || userRole === "ADMIN";
-    const isSubscriber = (session?.user as any)?.subscriptionStatus === "active";
-
-    if (!isContributor && !isSubscriber) {
-      return NextResponse.json({ error: "Subscription required" }, { status: 403 });
-    }
-
     const { data: comments, error } = await supabase
       .from("RecommendationComment")
       .select("id, content, createdAt, user:User!RecommendationComment_userId_fkey(id, name, image)")
@@ -48,13 +39,6 @@ export async function POST(
     }
 
     const userId = (session.user as Record<string, string>).id;
-    const userRole = (session.user as any).role;
-    const isContributor = userRole === "GUIDE" || userRole === "BOTH" || userRole === "ADMIN";
-    const isSubscriber = (session.user as any).subscriptionStatus === "active";
-
-    if (!isContributor && !isSubscriber) {
-      return NextResponse.json({ error: "Subscription required" }, { status: 403 });
-    }
 
     const body = await req.json();
     const content = body.content?.trim();

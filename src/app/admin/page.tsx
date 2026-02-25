@@ -7,7 +7,7 @@ interface Stats {
   pendingRecordings: number;
   publishedRecordings: number;
   totalUsers: number;
-  totalContributors: number;
+  totalGuides: number;
   pendingReports: number;
   totalCalls: number;
 }
@@ -62,7 +62,7 @@ export default function AdminDashboard() {
         <Link href="/admin/users" className="bg-white rounded-xl border border-gray-200 p-5 hover:border-teal-300 transition-colors">
           <p className="text-sm text-gray-500">Total Users</p>
           <p className="text-3xl font-bold text-teal-600">{stats?.totalUsers || 0}</p>
-          <p className="text-xs text-gray-400 mt-1">{stats?.totalContributors || 0} contributors</p>
+          <p className="text-xs text-gray-400 mt-1">{stats?.totalGuides || 0} guides</p>
         </Link>
 
         <Link href="/admin/reports" className="bg-white rounded-xl border border-gray-200 p-5 hover:border-teal-300 transition-colors">

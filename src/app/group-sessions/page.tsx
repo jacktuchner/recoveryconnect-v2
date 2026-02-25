@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { PROCEDURE_TYPES } from "@/lib/constants";
 
@@ -14,10 +13,9 @@ interface GroupSession {
   durationMinutes: number;
   maxCapacity: number;
   pricePerPerson: number;
-  freeForSubscribers: boolean;
   status: string;
   participantCount: number;
-  contributor: {
+  guide: {
     id: string;
     name: string;
     image?: string;
@@ -31,14 +29,10 @@ function parseDate(s: string): Date {
 }
 
 export default function GroupSessionsPage() {
-  const { data: session } = useSession();
   const [sessions, setSessions] = useState<GroupSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("");
   const [sort, setSort] = useState<"soonest" | "price_low" | "price_high">("soonest");
-
-  const userSubscriptionStatus = (session?.user as any)?.subscriptionStatus;
-  const isSubscriber = userSubscriptionStatus === "active";
 
   useEffect(() => {
     async function load() {
@@ -103,24 +97,6 @@ export default function GroupSessionsPage() {
           </select>
         </div>
 
-        {/* Subscription CTA for non-subscribers */}
-        {!isSubscriber && (
-          <div className="bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-200 rounded-xl p-5 mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <p className="font-semibold text-teal-900">Subscribers join group sessions for free</p>
-              <p className="text-sm text-teal-700 mt-1">
-                Get unlimited access to recordings plus free group sessions with a subscription.
-              </p>
-            </div>
-            <Link
-              href="/how-it-works#pricing"
-              className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 text-sm font-medium text-center"
-            >
-              View Plans
-            </Link>
-          </div>
-        )}
-
         {/* Session Grid */}
         {loading ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -158,21 +134,15 @@ export default function GroupSessionsPage() {
                     <span className="text-xs bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full font-medium">
                       {s.procedureType}
                     </span>
-                    {s.freeForSubscribers && isSubscriber ? (
-                      <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">
-                        Free
-                      </span>
-                    ) : (
-                      <span className="text-sm font-semibold text-gray-900">
-                        ${s.pricePerPerson}
-                      </span>
-                    )}
+                    <span className="text-sm font-semibold text-gray-900">
+                      ${s.pricePerPerson}
+                    </span>
                   </div>
 
                   <h3 className="font-semibold text-gray-900 mb-1">{s.title}</h3>
 
                   <p className="text-sm text-gray-500 mb-3">
-                    with {s.contributor?.name || "Mentor"}
+                    with {s.guide?.name || "Mentor"}
                   </p>
 
                   <div className="space-y-1.5 text-sm text-gray-600">
@@ -202,9 +172,6 @@ export default function GroupSessionsPage() {
                     </div>
                   </div>
 
-                  {s.freeForSubscribers && !isSubscriber && (
-                    <p className="text-xs text-green-600 mt-2">Free with subscription</p>
-                  )}
                 </Link>
               );
             })}

@@ -93,7 +93,7 @@ export default function MessagesPage() {
           </div>
           <p className="text-gray-500 mb-2">No messages yet</p>
           <p className="text-sm text-gray-400">
-            Start a conversation from a contributor&apos;s profile page.
+            Start a conversation from a guide&apos;s profile page.
           </p>
         </div>
       ) : (

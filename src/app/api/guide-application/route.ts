@@ -37,11 +37,11 @@ export async function POST(req: NextRequest) {
   }
 
   const userId = (session.user as any).id;
-  const contributorStatus = (session.user as any).contributorStatus;
+  const guideStatus = (session.user as any).contributorStatus;
 
   // Block if already approved
-  if (contributorStatus === "APPROVED") {
-    return NextResponse.json({ error: "You are already an approved contributor" }, { status: 400 });
+  if (guideStatus === "APPROVED") {
+    return NextResponse.json({ error: "You are already an approved guide" }, { status: 400 });
   }
 
   const body = await req.json();
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
 
   if (!agreementAccepted || !agreementSignature?.trim() || !agreementSignatureImage) {
     return NextResponse.json(
-      { error: "You must type your name, draw your signature, and accept the Contributor Agreement to apply" },
+      { error: "You must type your name, draw your signature, and accept the Guide Agreement to apply" },
       { status: 400 }
     );
   }
@@ -124,7 +124,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Set contributorStatus to PENDING_REVIEW. Role stays PATIENT until admin approves.
+  // Set contributorStatus to PENDING_REVIEW. Role stays SEEKER until admin approves.
   const { error: userError } = await supabase
     .from("User")
     .update({

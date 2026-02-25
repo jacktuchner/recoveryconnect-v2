@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 
-interface SharedPatient {
-  patientId: string;
+interface SharedSeeker {
+  seekerId: string;
   name: string;
   image: string | null;
   sharedEntryCount: number;
@@ -30,9 +30,9 @@ function parseDate(s: string): Date {
 }
 
 export default function SharedJournalsSection() {
-  const [patients, setPatients] = useState<SharedPatient[]>([]);
+  const [seekers, setSeekers] = useState<SharedSeeker[]>([]);
   const [loading, setLoading] = useState(true);
-  const [expandedPatient, setExpandedPatient] = useState<string | null>(null);
+  const [expandedSeeker, setExpandedSeeker] = useState<string | null>(null);
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [entriesLoading, setEntriesLoading] = useState(false);
 
@@ -42,7 +42,7 @@ export default function SharedJournalsSection() {
         const res = await fetch("/api/journal/shares/received");
         if (res.ok) {
           const data = await res.json();
-          setPatients(data.patients || []);
+          setSeekers(data.seekers || []);
         }
       } catch (err) {
         console.error("Error fetching shared journals:", err);
@@ -53,17 +53,17 @@ export default function SharedJournalsSection() {
     fetch_();
   }, []);
 
-  async function togglePatient(patientId: string) {
-    if (expandedPatient === patientId) {
-      setExpandedPatient(null);
+  async function toggleSeeker(seekerId: string) {
+    if (expandedSeeker === seekerId) {
+      setExpandedSeeker(null);
       setEntries([]);
       return;
     }
 
-    setExpandedPatient(patientId);
+    setExpandedSeeker(seekerId);
     setEntriesLoading(true);
     try {
-      const res = await fetch(`/api/journal/shared/${patientId}`);
+      const res = await fetch(`/api/journal/shared/${seekerId}`);
       if (res.ok) {
         setEntries(await res.json());
       } else {
@@ -80,48 +80,48 @@ export default function SharedJournalsSection() {
     return null;
   }
 
-  if (patients.length === 0) {
+  if (seekers.length === 0) {
     return null;
   }
 
   return (
     <section className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
-      <h2 className="text-xl font-bold mb-1">Shared Patient Journals</h2>
+      <h2 className="text-xl font-bold mb-1">Shared Seeker Journals</h2>
       <p className="text-sm text-gray-500 mb-4">
-        Patients who have shared their recovery journal with you.
+        Seekers who have shared their recovery journal with you.
       </p>
 
       <div className="space-y-3">
-        {patients.map((patient) => (
-          <div key={patient.patientId} className="border border-gray-200 rounded-xl overflow-hidden">
+        {seekers.map((seeker) => (
+          <div key={seeker.seekerId} className="border border-gray-200 rounded-xl overflow-hidden">
             <button
-              onClick={() => togglePatient(patient.patientId)}
+              onClick={() => toggleSeeker(seeker.seekerId)}
               className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors text-left"
             >
               <div className="flex items-center gap-3">
-                {patient.image ? (
+                {seeker.image ? (
                   <img
-                    src={patient.image}
+                    src={seeker.image}
                     alt=""
                     className="w-9 h-9 rounded-full object-cover"
                   />
                 ) : (
                   <div className="w-9 h-9 bg-teal-100 rounded-full flex items-center justify-center">
                     <span className="text-teal-700 text-sm font-medium">
-                      {patient.name?.[0]?.toUpperCase() || "?"}
+                      {seeker.name?.[0]?.toUpperCase() || "?"}
                     </span>
                   </div>
                 )}
                 <div>
-                  <p className="font-medium text-gray-900">{patient.name}</p>
+                  <p className="font-medium text-gray-900">{seeker.name}</p>
                   <p className="text-xs text-gray-500">
-                    {patient.sharedEntryCount} shared {patient.sharedEntryCount === 1 ? "entry" : "entries"}
+                    {seeker.sharedEntryCount} shared {seeker.sharedEntryCount === 1 ? "entry" : "entries"}
                   </p>
                 </div>
               </div>
               <svg
                 className={`w-5 h-5 text-gray-400 transition-transform ${
-                  expandedPatient === patient.patientId ? "rotate-180" : ""
+                  expandedSeeker === seeker.seekerId ? "rotate-180" : ""
                 }`}
                 fill="none"
                 stroke="currentColor"
@@ -131,7 +131,7 @@ export default function SharedJournalsSection() {
               </svg>
             </button>
 
-            {expandedPatient === patient.patientId && (
+            {expandedSeeker === seeker.seekerId && (
               <div className="border-t border-gray-200 p-4 bg-gray-50">
                 {entriesLoading ? (
                   <p className="text-sm text-gray-500">Loading entries...</p>

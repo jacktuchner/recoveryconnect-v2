@@ -54,16 +54,16 @@ function arrayOverlap(a: string[], b: string[]): number {
 
 export function calculateMatchScore(
   seeker: ProfileAttributes,
-  contributor: ProfileAttributes
+  guide: ProfileAttributes
 ): MatchResult {
   const breakdown: MatchResult["breakdown"] = [];
 
   // Procedure type (required match) — check procedureTypes array if available
   const seekerProc = seeker.procedureType.toLowerCase();
-  const contributorTypes = contributor.procedureTypes?.length
-    ? contributor.procedureTypes.map((t) => t.toLowerCase())
-    : [contributor.procedureType.toLowerCase()];
-  const procMatch = contributorTypes.includes(seekerProc);
+  const guideTypes = guide.procedureTypes?.length
+    ? guide.procedureTypes.map((t) => t.toLowerCase())
+    : [guide.procedureType.toLowerCase()];
+  const procMatch = guideTypes.includes(seekerProc);
   breakdown.push({
     attribute: "Procedure type",
     matched: procMatch,
@@ -72,9 +72,9 @@ export function calculateMatchScore(
 
   // Procedure details
   const detailMatch =
-    seeker.procedureDetails && contributor.procedureDetails
+    seeker.procedureDetails && guide.procedureDetails
       ? seeker.procedureDetails.toLowerCase() ===
-        contributor.procedureDetails.toLowerCase()
+        guide.procedureDetails.toLowerCase()
       : false;
   breakdown.push({
     attribute: "Procedure details",
@@ -83,7 +83,7 @@ export function calculateMatchScore(
   });
 
   // Age range (proximity-based)
-  const ageScore = ageProximity(seeker.ageRange, contributor.ageRange);
+  const ageScore = ageProximity(seeker.ageRange, guide.ageRange);
   breakdown.push({
     attribute: "Age range",
     matched: ageScore >= 0.7,
@@ -91,7 +91,7 @@ export function calculateMatchScore(
   });
 
   // Activity level
-  const activityMatch = seeker.activityLevel === contributor.activityLevel;
+  const activityMatch = seeker.activityLevel === guide.activityLevel;
   breakdown.push({
     attribute: "Activity level",
     matched: activityMatch,
@@ -100,9 +100,9 @@ export function calculateMatchScore(
 
   // Gender
   const seekerGender = seeker.gender;
-  const contributorGender = contributor.gender;
-  const genderNeutral = !seekerGender || !contributorGender || seekerGender === "OTHER" || contributorGender === "OTHER";
-  const genderScore = genderNeutral ? 0.5 : seekerGender === contributorGender ? 1.0 : 0.0;
+  const guideGender = guide.gender;
+  const genderNeutral = !seekerGender || !guideGender || seekerGender === "OTHER" || guideGender === "OTHER";
+  const genderScore = genderNeutral ? 0.5 : seekerGender === guideGender ? 1.0 : 0.0;
   breakdown.push({
     attribute: "Gender",
     matched: genderScore >= 0.5,
@@ -112,7 +112,7 @@ export function calculateMatchScore(
   // Recovery goals
   const goalsOverlap = arrayOverlap(
     seeker.recoveryGoals,
-    contributor.recoveryGoals
+    guide.recoveryGoals
   );
   breakdown.push({
     attribute: "Recovery goals",
@@ -123,7 +123,7 @@ export function calculateMatchScore(
   // Complicating factors
   const complicationsOverlap = arrayOverlap(
     seeker.complicatingFactors,
-    contributor.complicatingFactors
+    guide.complicatingFactors
   );
   breakdown.push({
     attribute: "Complicating factors",
@@ -134,7 +134,7 @@ export function calculateMatchScore(
   // Lifestyle context
   const lifestyleOverlap = arrayOverlap(
     seeker.lifestyleContext,
-    contributor.lifestyleContext
+    guide.lifestyleContext
   );
   breakdown.push({
     attribute: "Lifestyle context",

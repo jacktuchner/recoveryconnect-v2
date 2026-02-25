@@ -65,17 +65,7 @@ export async function PATCH(
     if (body.isFlare !== undefined) updates.isFlare = body.isFlare;
     if (body.energyLevel !== undefined) updates.energyLevel = body.energyLevel;
     if (body.isShared !== undefined) {
-      if (body.isShared === true) {
-        // Only subscribers can share entries
-        const { data: user } = await supabase
-          .from("User")
-          .select("subscriptionStatus")
-          .eq("id", userId)
-          .single();
-        updates.isShared = user?.subscriptionStatus === "active";
-      } else {
-        updates.isShared = false;
-      }
+      updates.isShared = !!body.isShared;
     }
 
     updates.updatedAt = new Date().toISOString();

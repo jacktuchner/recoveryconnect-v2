@@ -109,25 +109,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check subscriber status for patients
-    const { data: currentUser } = await supabase
-      .from("User")
-      .select("role, subscriptionStatus")
-      .eq("id", userId)
-      .single();
-
-    if (
-      currentUser &&
-      (currentUser.role === "SEEKER") &&
-      currentUser.subscriptionStatus !== "active" &&
-      currentUser.subscriptionStatus !== "trialing"
-    ) {
-      return NextResponse.json(
-        { error: "Messaging requires an active subscription" },
-        { status: 403 }
-      );
-    }
-
     // Check if conversation already exists (either direction)
     const { data: existing } = await supabase
       .from("Conversation")

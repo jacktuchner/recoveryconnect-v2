@@ -12,7 +12,7 @@ interface Endorsement {
   recoveryPhase?: string;
   source: string;
   createdAt: string;
-  contributor: { id: string; name: string; image?: string };
+  guide: { id: string; name: string; image?: string };
 }
 
 interface Recommendation {
@@ -38,18 +38,13 @@ function parseDate(s: string): Date {
 
 export default function RecommendationDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { data: session, status: sessionStatus } = useSession();
+  const { data: session } = useSession();
   const [recommendation, setRecommendation] = useState<Recommendation | null>(null);
   const [loading, setLoading] = useState(true);
   const [voting, setVoting] = useState(false);
   const [comments, setComments] = useState<{ id: string; content: string; createdAt: string; user: { id: string; name: string; image?: string } }[]>([]);
   const [newComment, setNewComment] = useState("");
   const [submittingComment, setSubmittingComment] = useState(false);
-
-  const userRole = (session?.user as any)?.role;
-  const isContributor = userRole === "GUIDE" || userRole === "BOTH" || userRole === "ADMIN";
-  const isSubscriber = (session?.user as any)?.subscriptionStatus === "active";
-  const hasAccess = isContributor || isSubscriber;
 
   useEffect(() => {
     async function load() {
@@ -114,28 +109,6 @@ export default function RecommendationDetailPage({ params }: { params: Promise<{
 
   const categoryLabel = (value: string) =>
     RECOMMENDATION_CATEGORIES.find((c) => c.value === value)?.label || value;
-
-  if (sessionStatus !== "loading" && !hasAccess) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-3xl mx-auto px-4 py-16 text-center">
-          <svg className="w-16 h-16 text-teal-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-          </svg>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">Subscriber-Only Feature</h3>
-          <p className="text-gray-500 mb-6 max-w-md mx-auto">
-            Recovery recommendations are available exclusively to subscribers.
-          </p>
-          <Link
-            href="/how-it-works#pricing"
-            className="bg-teal-600 text-white px-6 py-3 rounded-lg hover:bg-teal-700 font-medium inline-block"
-          >
-            View Subscription Plans
-          </Link>
-        </div>
-      </div>
-    );
-  }
 
   if (loading) {
     return (
@@ -278,24 +251,24 @@ export default function RecommendationDetailPage({ params }: { params: Promise<{
                 <div key={endorsement.id} className="border-b border-gray-100 last:border-0 pb-4 last:pb-0">
                   <div className="flex items-center gap-3 mb-2">
                     <Link
-                      href={`/guides/${endorsement.contributor.id}`}
+                      href={`/guides/${endorsement.guide.id}`}
                       className="flex items-center gap-2 hover:text-teal-600"
                     >
                       <div className="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center">
-                        {endorsement.contributor.image ? (
+                        {endorsement.guide.image ? (
                           <img
-                            src={endorsement.contributor.image}
-                            alt={endorsement.contributor.name}
+                            src={endorsement.guide.image}
+                            alt={endorsement.guide.name}
                             className="w-8 h-8 rounded-full object-cover"
                           />
                         ) : (
                           <span className="text-teal-700 text-sm font-medium">
-                            {endorsement.contributor.name?.[0]?.toUpperCase() || "?"}
+                            {endorsement.guide.name?.[0]?.toUpperCase() || "?"}
                           </span>
                         )}
                       </div>
                       <span className="text-sm font-medium text-gray-900">
-                        {endorsement.contributor.name}
+                        {endorsement.guide.name}
                       </span>
                     </Link>
                     {endorsement.recoveryPhase && (

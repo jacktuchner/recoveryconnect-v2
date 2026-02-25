@@ -109,7 +109,7 @@ function WatchContent() {
       const query = searchQuery.toLowerCase();
       const matchesSearch =
         rec.title?.toLowerCase().includes(query) ||
-        rec.contributor?.name?.toLowerCase().includes(query) ||
+        rec.guide?.name?.toLowerCase().includes(query) ||
         rec.description?.toLowerCase().includes(query);
       if (!matchesSearch) return false;
     }
@@ -149,7 +149,7 @@ function WatchContent() {
       const query = searchQuery.toLowerCase();
       const matchesSearch =
         s.title?.toLowerCase().includes(query) ||
-        s.contributor?.name?.toLowerCase().includes(query) ||
+        s.guide?.name?.toLowerCase().includes(query) ||
         s.description?.toLowerCase().includes(query);
       if (!matchesSearch) return false;
     }
@@ -388,7 +388,7 @@ function WatchContent() {
                         key={s.id}
                         id={s.id}
                         title={s.title}
-                        contributorName={s.contributor?.name || "Anonymous"}
+                        guideName={s.guide?.name || "Anonymous"}
                         procedureType={s.procedureType}
                         recordingCount={s.recordingCount}
                         totalDuration={s.totalDuration}
@@ -434,7 +434,7 @@ function WatchContent() {
                       key={rec.id}
                       id={rec.id}
                       title={rec.title}
-                      contributorName={rec.contributor?.name || "Anonymous"}
+                      guideName={rec.guide?.name || "Anonymous"}
                       procedureType={rec.procedureType}
                       ageRange={rec.ageRange}
                       activityLevel={rec.activityLevel}
@@ -449,7 +449,7 @@ function WatchContent() {
                       }
                       matchScore={rec.matchScore}
                       matchBreakdown={rec.matchBreakdown}
-                      contributorVerified={rec.contributor?.contributorStatus === "APPROVED"}
+                      guideVerified={rec.guide?.contributorStatus === "APPROVED"}
                     />
                   ))}
                 </div>

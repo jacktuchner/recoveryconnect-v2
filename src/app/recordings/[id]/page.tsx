@@ -91,8 +91,8 @@ export default function RecordingDetailPage() {
     loadRecording();
   }, [id]);
 
-  // Check if user is the contributor (always has access)
-  const isContributor = recording?.contributorId === userId;
+  // Check if user is the guide (always has access)
+  const isGuide = recording?.contributorId === userId;
 
   async function submitReview() {
     if (!recording) return;
@@ -147,10 +147,10 @@ export default function RecordingDetailPage() {
     <ContentAcknowledgmentModal>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Link
-          href={isContributor ? "/dashboard/guide" : "/watch"}
+          href={isGuide ? "/dashboard/guide" : "/watch"}
           className="text-sm text-teal-600 hover:text-teal-700 mb-4 inline-block"
         >
-          &larr; {isContributor ? "Back to Dashboard" : "Back to Stories"}
+          &larr; {isGuide ? "Back to Dashboard" : "Back to Stories"}
         </Link>
 
         {/* Disclaimer Banner */}
@@ -212,17 +212,17 @@ export default function RecordingDetailPage() {
               <TranscriptSection transcription={recording.transcription} />
             )}
 
-            {/* Contributor Info */}
+            {/* Guide Info */}
             <div className="bg-gray-50 rounded-lg p-4 mb-6">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center">
                   <span className="text-teal-700 font-semibold">
-                    {recording.contributor?.name?.[0]?.toUpperCase() || "?"}
+                    {recording.guide?.name?.[0]?.toUpperCase() || "?"}
                   </span>
                 </div>
                 <div>
                   <Link href={`/guides/${recording.contributorId}`} className="font-semibold hover:text-teal-700">
-                    {recording.contributor?.name || "Anonymous"}
+                    {recording.guide?.name || "Anonymous"}
                   </Link>
                   {avgRating && (
                     <p className="text-sm text-gray-500">
@@ -246,15 +246,15 @@ export default function RecordingDetailPage() {
             </div>
 
             {/* Book a Call CTA */}
-            {recording.contributor?.profile?.isAvailableForCalls && !isContributor && (
+            {recording.guide?.profile?.isAvailableForCalls && !isGuide && (
               <div className="bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-200 rounded-xl p-5 mb-6">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
                     <p className="font-semibold text-gray-900">
-                      Want personalized advice from {recording.contributor.name?.split(" ")[0]}?
+                      Want personalized advice from {recording.guide.name?.split(" ")[0]}?
                     </p>
                     <p className="text-sm text-gray-600 mt-0.5">
-                      Book a 1-on-1 video call &middot; ${(recording.contributor.profile.hourlyRate / 2).toFixed(0)}/30min
+                      Book a 1-on-1 video call &middot; ${(recording.guide.profile.hourlyRate / 2).toFixed(0)}/30min
                     </p>
                   </div>
                   <Link
@@ -282,7 +282,7 @@ export default function RecordingDetailPage() {
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-bold">Reviews ({recording.reviews?.length || 0})</h2>
-                {session && !isContributor && (
+                {session && !isGuide && (
                   <button
                     onClick={() => setShowReviewForm(!showReviewForm)}
                     className="text-sm text-teal-600 hover:text-teal-700 font-medium"

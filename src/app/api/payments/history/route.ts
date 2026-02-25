@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
 
     const userId = (session.user as Record<string, string>).id;
     const { searchParams } = new URL(req.url);
-    const role = searchParams.get("role") || "patient";
+    const role = searchParams.get("role") || "seeker";
     const page = parseInt(searchParams.get("page") || "1");
     const limit = 10;
     const offset = (page - 1) * limit;
@@ -24,8 +24,8 @@ export async function GET(req: NextRequest) {
       .order("createdAt", { ascending: false })
       .range(offset, offset + limit - 1);
 
-    if (role === "patient") {
-      query = query.in("type", ["RECORDING_PURCHASE", "CALL_PAYMENT", "SUBSCRIPTION", "GROUP_SESSION_PAYMENT"]);
+    if (role === "seeker") {
+      query = query.in("type", ["RECORDING_PURCHASE", "CALL_PAYMENT", "GROUP_SESSION_PAYMENT"]);
     } else {
       query = query.eq("type", "GUIDE_PAYOUT");
     }

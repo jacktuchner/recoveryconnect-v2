@@ -14,7 +14,7 @@ interface Recording {
   procedureType: string;
   transcription: string | null;
   createdAt: string;
-  contributor: {
+  guide: {
     id: string;
     name: string;
     email: string;
@@ -153,7 +153,7 @@ export default function AdminRecordingsPage() {
                   </div>
 
                   <div className="flex items-center gap-4 text-sm text-gray-500 mb-3">
-                    <span>By: {recording.contributor?.name || "Unknown"}</span>
+                    <span>By: {recording.guide?.name || "Unknown"}</span>
                     <span>•</span>
                     <span>{recording.category.replace(/_/g, " ")}</span>
                     <span>•</span>

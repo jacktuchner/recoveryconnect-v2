@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const procedureType = searchParams.get("procedureType");
-    const contributorId = searchParams.get("contributorId");
+    const guideId = searchParams.get("contributorId");
     const participating = searchParams.get("participating");
 
     const session = await getServerSession(authOptions);
@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
       // Get sessions where user is a participant
       const { data: participantRecords, error: partError } = await supabase
         .from("GroupSessionParticipant")
-        .select("groupSessionId, status, pricePaid, wasSubscriber")
+        .select("groupSessionId, status, pricePaid")
         .eq("userId", userId)
         .in("status", ["REGISTERED", "ATTENDED"]);
 
@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
 
       const { data: sessions, error: sessError } = await supabase
         .from("GroupSession")
-        .select("*, contributor:User!GroupSession_contributorId_fkey(id, name, image)")
+        .select("*, guide:User!GroupSession_contributorId_fkey(id, name, image)")
         .in("id", sessionIds)
         .order("scheduledAt", { ascending: true });
 
@@ -77,7 +77,7 @@ export async function GET(req: NextRequest) {
     // Default: list upcoming sessions
     let query = supabase
       .from("GroupSession")
-      .select("*, contributor:User!GroupSession_contributorId_fkey(id, name, image)")
+      .select("*, guide:User!GroupSession_contributorId_fkey(id, name, image)")
       .in("status", ["SCHEDULED", "CONFIRMED"])
       .gt("scheduledAt", new Date().toISOString())
       .order("scheduledAt", { ascending: true });
@@ -86,8 +86,8 @@ export async function GET(req: NextRequest) {
       query = query.eq("procedureType", procedureType);
     }
 
-    if (contributorId) {
-      query = query.eq("contributorId", contributorId);
+    if (guideId) {
+      query = query.eq("contributorId", guideId);
     }
 
     const { data: sessions, error } = await query;
@@ -128,7 +128,7 @@ export async function POST(req: NextRequest) {
     const userRole = (session.user as any).role;
 
     if (userRole !== "GUIDE" && userRole !== "BOTH" && userRole !== "ADMIN") {
-      return NextResponse.json({ error: "Only contributors can create group sessions" }, { status: 403 });
+      return NextResponse.json({ error: "Only guides can create group sessions" }, { status: 403 });
     }
 
     const body = await req.json();
@@ -216,7 +216,6 @@ export async function POST(req: NextRequest) {
         maxCapacity,
         minAttendees: DEFAULT_MIN_ATTENDEES,
         pricePerPerson,
-        freeForSubscribers: true,
         status: "SCHEDULED",
         createdAt: now,
         updatedAt: now,

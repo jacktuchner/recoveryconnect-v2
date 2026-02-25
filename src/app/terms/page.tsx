@@ -107,21 +107,21 @@ export default function TermsOfServicePage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">8. Payments and Subscriptions</h2>
-            <h3 className="font-medium text-gray-900 mt-4 mb-2">Individual Purchases</h3>
-            <p>Recording purchases grant you permanent access to that recording. Prices are set by guides and displayed before purchase.</p>
-
-            <h3 className="font-medium text-gray-900 mt-4 mb-2">Subscriptions</h3>
-            <p>Subscriptions provide unlimited access to all recordings for the duration of your subscription. Subscriptions auto-renew at the end of each billing period (monthly or annually) unless cancelled. You can cancel anytime through the subscription management portal, and you will retain access until the end of your current billing period.</p>
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">8. Payments</h2>
+            <h3 className="font-medium text-gray-900 mt-4 mb-2">Free Content</h3>
+            <p>All recordings, series, and recommendations on Kizu are free to access. No account is required to browse content.</p>
 
             <h3 className="font-medium text-gray-900 mt-4 mb-2">Live Calls</h3>
-            <p>Call payments are separate from subscriptions and recording purchases. Pricing is based on the guide&apos;s hourly rate and session duration.</p>
+            <p>Pricing for 1-on-1 calls is based on the guide&apos;s hourly rate and session duration. Payment is collected via Stripe at the time of booking.</p>
+
+            <h3 className="font-medium text-gray-900 mt-4 mb-2">Group Sessions</h3>
+            <p>Group session pricing is set by the guide. Payment is collected via Stripe at the time of registration.</p>
 
             <h3 className="font-medium text-gray-900 mt-4 mb-2">Guide Payouts</h3>
-            <p>Guides receive 75% of individual recording purchases and series sales. For subscriptions, 75% of subscription revenue is pooled monthly and distributed proportionally based on unique subscriber views of each guide&apos;s content. Call payouts are based on the session price minus the platform fee.</p>
+            <p>Guides receive 75% of call and group session revenue. The platform retains a 25% fee. Payouts are processed via Stripe Connect.</p>
 
             <h3 className="font-medium text-gray-900 mt-4 mb-2">Refunds</h3>
-            <p>If you are unsatisfied with a purchase, contact us to discuss your situation. Refund requests are handled on a case-by-case basis. Subscription refunds are generally not provided for partial billing periods.</p>
+            <p>If you are unsatisfied with a purchase, contact us to discuss your situation. Refund requests are handled on a case-by-case basis.</p>
           </section>
 
           <section>

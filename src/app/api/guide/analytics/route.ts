@@ -29,7 +29,7 @@ export async function GET() {
 
     const userId = (session.user as Record<string, string>).id;
 
-    // Verify user is a contributor
+    // Verify user is a guide
     const { data: user } = await supabase
       .from("User")
       .select("role")
@@ -50,7 +50,7 @@ export async function GET() {
       callsResult,
       paymentsResult,
       recordingsResult,
-      subscriberViewsResult,
+      ,
       recordingAccessResult,
       reviewsResult,
       groupSessionsResult,
@@ -58,53 +58,50 @@ export async function GET() {
       seriesResult,
       recommendationsResult,
     ] = await Promise.all([
-      // 1. All calls for this contributor
+      // 1. All calls for this guide
       supabase
         .from("Call")
         .select("id, contributorPayout, scheduledAt, durationMinutes, status, price, platformFee")
         .eq("contributorId", userId),
 
-      // 2. Contributor payout payments
+      // 2. Guide payout payments
       supabase
         .from("Payment")
         .select("id, amount, type, status, createdAt, metadata")
         .eq("userId", userId)
         .eq("type", "GUIDE_PAYOUT"),
 
-      // 3. All recordings by this contributor
+      // 3. All recordings by this guide
       supabase
         .from("Recording")
         .select("id, title, status, viewCount, price, category, createdAt, procedureType")
         .eq("contributorId", userId),
 
-      // 4. Subscriber views for this contributor's recordings
-      supabase
-        .from("SubscriberView")
-        .select("id, recordingId, viewedAt, Recording!inner(contributorId)")
-        .eq("Recording.contributorId", userId),
+      // 4. (placeholder — slot kept for destructuring alignment)
+      Promise.resolve({ data: [], error: null }),
 
-      // 5. Recording access (purchases) for this contributor's recordings
+      // 5. Recording access (purchases) for this guide's recordings
       supabase
         .from("RecordingAccess")
         .select("id, recordingId, grantedAt, Recording!inner(contributorId)")
         .eq("Recording.contributorId", userId),
 
-      // 6. Reviews where this contributor is the subject
+      // 6. Reviews where this guide is the subject
       supabase
         .from("Review")
         .select("id, rating, matchRelevance, helpfulness, comment, createdAt")
         .eq("subjectId", userId),
 
-      // 7. Group sessions by this contributor
+      // 7. Group sessions by this guide
       supabase
         .from("GroupSession")
-        .select("id, title, scheduledAt, durationMinutes, maxCapacity, pricePerPerson, status, freeForSubscribers")
+        .select("id, title, scheduledAt, durationMinutes, maxCapacity, pricePerPerson, status")
         .eq("contributorId", userId),
 
       // 8. Group session participants (joined via group sessions)
       supabase
         .from("GroupSessionParticipant")
-        .select("id, groupSessionId, pricePaid, wasSubscriber, status, createdAt, GroupSession!inner(contributorId)")
+        .select("id, groupSessionId, pricePaid, status, createdAt, GroupSession!inner(contributorId)")
         .eq("GroupSession.contributorId", userId),
 
       // 9. Recording series
@@ -123,7 +120,6 @@ export async function GET() {
     const calls = callsResult.data || [];
     const payments = paymentsResult.data || [];
     const recordings = recordingsResult.data || [];
-    const subscriberViews = subscriberViewsResult.data || [];
     const recordingAccesses = recordingAccessResult.data || [];
     const reviews = reviewsResult.data || [];
     const groupSessions = groupSessionsResult.data || [];
@@ -177,18 +173,8 @@ export async function GET() {
     // === ENGAGEMENT ===
     const totalViews = recordings.reduce((sum: number, r: any) => sum + (r.viewCount || 0), 0);
     const totalPurchases = recordingAccesses.length;
-    const totalSubscriberViews = subscriberViews.length;
-
-    // Monthly views from SubscriberView timestamps
     const monthlyViewsMap: Record<string, number> = {};
     months.forEach((m) => (monthlyViewsMap[m.key] = 0));
-
-    subscriberViews.forEach((sv: any) => {
-      const mk = toMonthKey(sv.viewedAt);
-      if (monthlyViewsMap[mk] !== undefined) {
-        monthlyViewsMap[mk]++;
-      }
-    });
 
     const monthlyViews = months.map((m) => ({
       month: m.label,
@@ -321,7 +307,6 @@ export async function GET() {
       engagement: {
         totalViews,
         totalPurchases,
-        totalSubscriberViews,
         monthlyViews,
         topRecordings,
       },
@@ -362,7 +347,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error("Error fetching contributor analytics:", error);
+    console.error("Error fetching guide analytics:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

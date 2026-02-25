@@ -83,7 +83,7 @@ async function runMinimumCheck(results: { confirmed: number; cancelled: number; 
           })
           .eq("id", session.id);
 
-        // Email all participants + contributor
+        // Email all participants + guide
         const { data: participants } = await supabase
           .from("GroupSessionParticipant")
           .select("userId, user:User!GroupSessionParticipant_userId_fkey(email, name)")
@@ -102,17 +102,17 @@ async function runMinimumCheck(results: { confirmed: number; cancelled: number; 
           }
         }
 
-        // Email contributor too
-        const { data: contributor } = await supabase
+        // Email guide too
+        const { data: guide } = await supabase
           .from("User")
           .select("email, name")
           .eq("id", session.contributorId)
           .single();
 
-        if (contributor?.email) {
+        if (guide?.email) {
           await sendGroupSessionConfirmedEmail(
-            contributor.email,
-            contributor.name || "there",
+            guide.email,
+            guide.name || "there",
             session.title,
             new Date(session.scheduledAt),
             videoRoomUrl
@@ -170,17 +170,17 @@ async function runMinimumCheck(results: { confirmed: number; cancelled: number; 
           }
         }
 
-        // Notify contributor
-        const { data: contributor } = await supabase
+        // Notify guide
+        const { data: guide } = await supabase
           .from("User")
           .select("email, name")
           .eq("id", session.contributorId)
           .single();
 
-        if (contributor?.email) {
+        if (guide?.email) {
           await sendGroupSessionCancelledEmail(
-            contributor.email,
-            contributor.name || "there",
+            guide.email,
+            guide.name || "there",
             session.title,
             "The minimum number of participants was not met"
           );
@@ -231,17 +231,17 @@ async function runReminders(results: { day: number; hour: number; errors: string
         }
       }
 
-      // Send to contributor too
-      const { data: contributor } = await supabase
+      // Send to guide too
+      const { data: guide } = await supabase
         .from("User")
         .select("email, name")
         .eq("id", session.contributorId)
         .single();
 
-      if (contributor?.email && session.videoRoomUrl) {
+      if (guide?.email && session.videoRoomUrl) {
         await sendGroupSessionReminderEmail(
-          contributor.email,
-          contributor.name || "there",
+          guide.email,
+          guide.name || "there",
           session.title,
           new Date(session.scheduledAt),
           session.videoRoomUrl,
@@ -293,16 +293,16 @@ async function runReminders(results: { day: number; hour: number; errors: string
         }
       }
 
-      const { data: contributor } = await supabase
+      const { data: guide } = await supabase
         .from("User")
         .select("email, name")
         .eq("id", session.contributorId)
         .single();
 
-      if (contributor?.email && session.videoRoomUrl) {
+      if (guide?.email && session.videoRoomUrl) {
         await sendGroupSessionReminderEmail(
-          contributor.email,
-          contributor.name || "there",
+          guide.email,
+          guide.name || "there",
           session.title,
           new Date(session.scheduledAt),
           session.videoRoomUrl,
@@ -348,7 +348,7 @@ async function runAutoComplete(results: { count: number; errors: string[] }) {
         .in("status", ["REGISTERED", "ATTENDED"]);
 
       const totalRevenue = (participants || []).reduce((sum, p) => sum + p.pricePaid, 0);
-      const contributorPayout = totalRevenue * 0.75;
+      const guidePayout = totalRevenue * 0.75;
 
       // Mark as completed
       await supabase
@@ -366,20 +366,20 @@ async function runAutoComplete(results: { count: number; errors: string[] }) {
         .eq("groupSessionId", session.id)
         .eq("status", "REGISTERED");
 
-      // Create contributor payout if there's revenue
-      if (contributorPayout > 0) {
-        const { data: contributor } = await supabase
+      // Create guide payout if there's revenue
+      if (guidePayout > 0) {
+        const { data: guide } = await supabase
           .from("User")
           .select("stripeConnectId, stripeConnectOnboarded")
           .eq("id", session.contributorId)
           .single();
 
-        if (contributor?.stripeConnectId && contributor.stripeConnectOnboarded) {
+        if (guide?.stripeConnectId && guide.stripeConnectOnboarded) {
           try {
             const transfer = await stripe.transfers.create({
-              amount: Math.round(contributorPayout * 100),
+              amount: Math.round(guidePayout * 100),
               currency: "usd",
-              destination: contributor.stripeConnectId,
+              destination: guide.stripeConnectId,
               transfer_group: `group_session_${session.id}`,
               metadata: {
                 groupSessionId: session.id,
@@ -391,7 +391,7 @@ async function runAutoComplete(results: { count: number; errors: string[] }) {
               id: uuidv4(),
               userId: session.contributorId,
               type: "GUIDE_PAYOUT",
-              amount: contributorPayout,
+              amount: guidePayout,
               currency: "usd",
               status: "COMPLETED",
               stripePaymentId: transfer.id,

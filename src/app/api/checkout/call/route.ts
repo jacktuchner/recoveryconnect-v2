@@ -22,14 +22,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Get the contributor
-    const { data: contributor, error: contribError } = await supabase
+    // Get the guide
+    const { data: guide, error: contribError } = await supabase
       .from("User")
       .select("*, profile:Profile(*)")
       .eq("id", contributorId)
       .single();
 
-    if (contribError || !contributor?.profile?.isAvailableForCalls) {
+    if (contribError || !guide?.profile?.isAvailableForCalls) {
       return NextResponse.json(
         { error: "This guide is not available for calls" },
         { status: 400 }
@@ -56,14 +56,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Validate against contributor's availability
+    // Validate against guide's availability
     const { data: availabilitySlots } = await supabase
       .from("Availability")
       .select("*")
       .eq("contributorId", contributorId);
 
     if (availabilitySlots && availabilitySlots.length > 0) {
-      // Contributor has set availability - validate the requested time
+      // Guide has set availability - validate the requested time
       const dayOfWeek = scheduledDate.getDay();
       const requestedTime = scheduledDate.toLocaleTimeString("en-US", {
         hour12: false,
@@ -149,7 +149,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Calculate pricing
-    const rate = contributor.profile.hourlyRate || 50;
+    const rate = guide.profile.hourlyRate || 50;
     const price = duration === 60 ? rate : rate / 2;
 
     // Create Stripe Checkout session
@@ -170,7 +170,7 @@ export async function POST(req: NextRequest) {
           price_data: {
             currency: "usd",
             product_data: {
-              name: `${duration}-minute call with ${contributor.name || "Guide"}`,
+              name: `${duration}-minute call with ${guide.name || "Guide"}`,
               description: `Scheduled for ${formattedDate}`,
               metadata: {
                 contributorId,

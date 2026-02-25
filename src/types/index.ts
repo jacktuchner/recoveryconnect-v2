@@ -4,24 +4,24 @@ export type UserWithProfile = User & {
   profile: Profile | null;
 };
 
-export type RecordingWithContributor = Recording & {
-  contributor: User & { profile: Profile | null };
+export type RecordingWithGuide = Recording & {
+  guide: User & { profile: Profile | null };
   reviews: Review[];
 };
 
-export type ContributorWithProfile = User & {
+export type GuideWithProfile = User & {
   profile: Profile;
   recordings: Recording[];
   reviewsReceived: Review[];
 };
 
 export type CallWithParticipants = Call & {
-  patient: User;
-  contributor: User & { profile: Profile | null };
+  seeker: User;
+  guide: User & { profile: Profile | null };
   reviews: Review[];
 };
 
-export type MatchedContributor = ContributorWithProfile & {
+export type MatchedGuide = GuideWithProfile & {
   matchScore: number;
   matchBreakdown: {
     attribute: string;

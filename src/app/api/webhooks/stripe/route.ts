@@ -44,19 +44,6 @@ export async function POST(req: NextRequest) {
         console.log("Checkout session expired:", event.data.object.id);
         break;
 
-      case "customer.subscription.created":
-      case "customer.subscription.updated":
-        await handleSubscriptionUpdated(event.data.object as Stripe.Subscription);
-        break;
-
-      case "customer.subscription.deleted":
-        await handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
-        break;
-
-      case "invoice.payment_failed":
-        await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice);
-        break;
-
       default:
         console.log(`Unhandled event type: ${event.type}`);
     }
@@ -94,10 +81,10 @@ async function handleRecordingPurchase(
   const accessId = uuidv4();
   const amount = (session.amount_total || 0) / 100;
 
-  // Fetch recording with contributor info
+  // Fetch recording with guide info
   const { data: recording, error: recordingError } = await supabase
     .from("Recording")
-    .select("*, contributor:User!Recording_contributorId_fkey(id, stripeConnectId, stripeConnectOnboarded)")
+    .select("*, guide:User!Recording_contributorId_fkey(id, stripeConnectId, stripeConnectOnboarded)")
     .eq("id", recordingId)
     .single();
 
@@ -106,8 +93,8 @@ async function handleRecordingPurchase(
     throw recordingError || new Error("Recording not found");
   }
 
-  // Calculate payout amounts (75% to contributor, 25% platform fee)
-  const contributorPayout = amount * 0.75;
+  // Calculate payout amounts (75% to guide, 25% platform fee)
+  const guidePayout = amount * 0.75;
   const platformFee = amount * 0.25;
 
   // Create payment record with payout tracking
@@ -120,7 +107,7 @@ async function handleRecordingPurchase(
     status: "COMPLETED",
     stripePaymentId: session.payment_intent as string,
     stripeSessionId: session.id,
-    metadata: { recordingId, contributorPayout, platformFee },
+    metadata: { recordingId, contributorPayout: guidePayout, platformFee },
     createdAt: new Date().toISOString(),
   });
 
@@ -143,17 +130,17 @@ async function handleRecordingPurchase(
     throw accessError;
   }
 
-  // Transfer payout to contributor if they have Stripe Connect set up
-  if (recording.contributor?.stripeConnectId && recording.contributor?.stripeConnectOnboarded) {
+  // Transfer payout to guide if they have Stripe Connect set up
+  if (recording.guide?.stripeConnectId && recording.guide?.stripeConnectOnboarded) {
     try {
       const transfer = await stripe.transfers.create({
-        amount: Math.round(contributorPayout * 100), // Convert to cents
+        amount: Math.round(guidePayout * 100), // Convert to cents
         currency: "usd",
-        destination: recording.contributor.stripeConnectId,
+        destination: recording.guide.stripeConnectId,
         transfer_group: `recording_${recording.id}`,
         metadata: {
           recordingId: recording.id,
-          contributorId: recording.contributor.id,
+          contributorId: recording.guide.id,
           buyerId: userId,
         },
       });
@@ -161,9 +148,9 @@ async function handleRecordingPurchase(
       // Record the payout
       await supabase.from("Payment").insert({
         id: uuidv4(),
-        userId: recording.contributor.id,
+        userId: recording.guide.id,
         type: "GUIDE_PAYOUT",
-        amount: contributorPayout,
+        amount: guidePayout,
         currency: "usd",
         status: "COMPLETED",
         stripePaymentId: transfer.id,
@@ -171,7 +158,7 @@ async function handleRecordingPurchase(
         createdAt: new Date().toISOString(),
       });
 
-      console.log(`Payout created for recording ${recording.id}: $${contributorPayout.toFixed(2)}`);
+      console.log(`Payout created for recording ${recording.id}: $${guidePayout.toFixed(2)}`);
     } catch (payoutError) {
       // Log but don't fail the purchase - the recording access was still granted
       console.error("Error creating recording payout:", payoutError);
@@ -195,22 +182,22 @@ async function handleCallPayment(
     throw new Error("Missing scheduledAt in call payment metadata");
   }
 
-  // Get contributor to calculate pricing
-  const { data: contributor, error: contribError } = await supabase
+  // Get guide to calculate pricing
+  const { data: guide, error: guideError } = await supabase
     .from("User")
     .select("*, profile:Profile(*)")
     .eq("id", contributorId)
     .single();
 
-  if (contribError || !contributor?.profile) {
+  if (guideError || !guide?.profile) {
     throw new Error("Guide not found");
   }
 
-  const rate = contributor.profile.hourlyRate || 50;
+  const rate = guide.profile.hourlyRate || 50;
   const duration = parseInt(durationMinutes || "30");
   const price = (session.amount_total || 0) / 100;
   const platformFee = price * (PLATFORM_FEE_PERCENT / 100);
-  const contributorPayout = price - platformFee;
+  const guidePayout = price - platformFee;
 
   const paymentId = uuidv4();
   const callId = uuidv4();
@@ -225,7 +212,7 @@ async function handleCallPayment(
     status: "COMPLETED",
     stripePaymentId: session.payment_intent as string,
     stripeSessionId: session.id,
-    metadata: { contributorId, callId, description: `${duration}-min call with ${contributor.name || "Guide"}` },
+    metadata: { contributorId, callId, description: `${duration}-min call with ${guide.name || "Guide"}` },
     createdAt: new Date().toISOString(),
   });
 
@@ -262,7 +249,7 @@ async function handleCallPayment(
     questionsInAdvance: questionsInAdvance || null,
     price,
     platformFee,
-    contributorPayout,
+    contributorPayout: guidePayout,
     status: "CONFIRMED",
     videoRoomUrl,
     createdAt: new Date().toISOString(),
@@ -282,10 +269,10 @@ async function handleCallPayment(
     .single();
 
   // Notification email to guide (no confirm/decline needed)
-  if (contributor.email) {
+  if (guide.email) {
     sendCallBookedEmail(
-      contributor.email,
-      contributor.name || "Guide",
+      guide.email,
+      guide.name || "Guide",
       seeker?.name || "A seeker",
       new Date(scheduledAt),
       duration,
@@ -299,7 +286,7 @@ async function handleCallPayment(
     sendCallBookedEmail(
       seeker.email,
       seeker.name || "there",
-      contributor.name || "your guide",
+      guide.name || "your guide",
       new Date(scheduledAt),
       duration,
       undefined,
@@ -320,10 +307,10 @@ async function handleSeriesPurchase(
   const paymentId = uuidv4();
   const amount = (session.amount_total || 0) / 100;
 
-  // Fetch series with contributor info
+  // Fetch series with guide info
   const { data: series, error: seriesError } = await supabase
     .from("RecordingSeries")
-    .select("*, contributor:User!RecordingSeries_contributorId_fkey(id, stripeConnectId, stripeConnectOnboarded)")
+    .select("*, guide:User!RecordingSeries_contributorId_fkey(id, stripeConnectId, stripeConnectOnboarded)")
     .eq("id", seriesId)
     .single();
 
@@ -332,8 +319,8 @@ async function handleSeriesPurchase(
     throw seriesError || new Error("Series not found");
   }
 
-  // Calculate payout amounts (75% to contributor, 25% platform fee)
-  const contributorPayout = amount * 0.75;
+  // Calculate payout amounts (75% to guide, 25% platform fee)
+  const guidePayout = amount * 0.75;
   const platformFee = amount * 0.25;
 
   // Create payment record
@@ -346,7 +333,7 @@ async function handleSeriesPurchase(
     status: "COMPLETED",
     stripePaymentId: session.payment_intent as string,
     stripeSessionId: session.id,
-    metadata: { seriesId, contributorPayout, platformFee, type: "series_purchase" },
+    metadata: { seriesId, contributorPayout: guidePayout, platformFee, type: "series_purchase" },
     createdAt: new Date().toISOString(),
   });
 
@@ -395,17 +382,17 @@ async function handleSeriesPurchase(
     }
   }
 
-  // Transfer payout to contributor if they have Stripe Connect set up
-  if (series.contributor?.stripeConnectId && series.contributor?.stripeConnectOnboarded) {
+  // Transfer payout to guide if they have Stripe Connect set up
+  if (series.guide?.stripeConnectId && series.guide?.stripeConnectOnboarded) {
     try {
       const transfer = await stripe.transfers.create({
-        amount: Math.round(contributorPayout * 100), // Convert to cents
+        amount: Math.round(guidePayout * 100), // Convert to cents
         currency: "usd",
-        destination: series.contributor.stripeConnectId,
+        destination: series.guide.stripeConnectId,
         transfer_group: `series_${series.id}`,
         metadata: {
           seriesId: series.id,
-          contributorId: series.contributor.id,
+          contributorId: series.guide.id,
           buyerId: userId,
         },
       });
@@ -413,9 +400,9 @@ async function handleSeriesPurchase(
       // Record the payout
       await supabase.from("Payment").insert({
         id: uuidv4(),
-        userId: series.contributor.id,
+        userId: series.guide.id,
         type: "GUIDE_PAYOUT",
-        amount: contributorPayout,
+        amount: guidePayout,
         currency: "usd",
         status: "COMPLETED",
         stripePaymentId: transfer.id,
@@ -423,7 +410,7 @@ async function handleSeriesPurchase(
         createdAt: new Date().toISOString(),
       });
 
-      console.log(`Payout created for series ${series.id}: $${contributorPayout.toFixed(2)}`);
+      console.log(`Payout created for series ${series.id}: $${guidePayout.toFixed(2)}`);
     } catch (payoutError) {
       // Log but don't fail the purchase - the series access was still granted
       console.error("Error creating series payout:", payoutError);
@@ -468,7 +455,6 @@ async function handleGroupSessionPayment(
     groupSessionId,
     userId,
     pricePaid: amount,
-    wasSubscriber: false,
     paymentId,
     stripeSessionId: session.id,
     status: "REGISTERED",
@@ -502,126 +488,20 @@ async function handleGroupSessionPayment(
     );
   }
 
-  // Notify contributor of new participant
+  // Notify guide of new participant
   if (groupSession) {
-    const { data: contributor } = await supabase
+    const { data: guide } = await supabase
       .from("User")
       .select("email, name")
       .eq("id", groupSession.contributorId)
       .single();
 
-    if (contributor?.email) {
-      // Reuse the signup email pattern but for the contributor
-      console.log(`New participant ${user?.name} signed up for group session ${groupSession.title} (contributor: ${contributor.email})`);
+    if (guide?.email) {
+      // Reuse the signup email pattern but for the guide
+      console.log(`New participant ${user?.name} signed up for group session ${groupSession.title} (guide: ${guide.email})`);
     }
   }
 
   console.log(`Group session payment completed: user ${userId}, session ${groupSessionId}`);
 }
 
-async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
-  const userId = subscription.metadata?.userId;
-  if (!userId) {
-    console.error("No userId in subscription metadata:", subscription.id);
-    return;
-  }
-
-  const status = subscription.status; // "active", "trialing", "past_due", "canceled", etc.
-  const plan = subscription.metadata?.plan || null;
-  const periodEndTimestamp = subscription.items.data[0]?.current_period_end;
-  const periodEnd = periodEndTimestamp
-    ? new Date(periodEndTimestamp * 1000).toISOString()
-    : null;
-  const cancelAtPeriodEnd = subscription.cancel_at_period_end;
-
-  const { error: updateError } = await supabase
-    .from("User")
-    .update({
-      subscriptionStatus: status,
-      subscriptionPlan: plan,
-      stripeSubscriptionId: subscription.id,
-      subscriptionCurrentPeriodEnd: periodEnd,
-      subscriptionCancelAtPeriodEnd: cancelAtPeriodEnd,
-    })
-    .eq("id", userId);
-
-  if (updateError) {
-    console.error("Error updating user subscription:", updateError);
-    throw updateError;
-  }
-
-  // Create payment record for new subscriptions
-  if (status === "active" && subscription.latest_invoice) {
-    const invoiceId = typeof subscription.latest_invoice === "string"
-      ? subscription.latest_invoice
-      : subscription.latest_invoice.id;
-
-    const amount = subscription.items.data[0]?.price?.unit_amount
-      ? subscription.items.data[0].price.unit_amount / 100
-      : 0;
-
-    await supabase.from("Payment").insert({
-      id: uuidv4(),
-      userId,
-      type: "SUBSCRIPTION",
-      amount,
-      currency: "usd",
-      status: "COMPLETED",
-      stripePaymentId: invoiceId,
-      metadata: { subscriptionId: subscription.id, plan, description: `${plan === "annual" ? "Annual" : "Monthly"} Subscription` },
-      createdAt: new Date().toISOString(),
-    });
-
-  }
-
-  console.log(`Subscription ${status} for user ${userId}: ${subscription.id}`);
-}
-
-async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
-  const userId = subscription.metadata?.userId;
-  if (!userId) {
-    console.error("No userId in subscription metadata:", subscription.id);
-    return;
-  }
-
-  const { error: updateError } = await supabase
-    .from("User")
-    .update({
-      subscriptionStatus: "canceled",
-      subscriptionCancelAtPeriodEnd: false,
-    })
-    .eq("id", userId);
-
-  if (updateError) {
-    console.error("Error updating user subscription:", updateError);
-    throw updateError;
-  }
-
-  console.log(`Subscription deleted for user ${userId}: ${subscription.id}`);
-}
-
-async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
-  const customerId = typeof invoice.customer === "string"
-    ? invoice.customer
-    : invoice.customer?.id;
-
-  if (!customerId) return;
-
-  const { data: user, error } = await supabase
-    .from("User")
-    .select("id")
-    .eq("stripeCustomerId", customerId)
-    .single();
-
-  if (error || !user) {
-    console.error("Could not find user for customer:", customerId);
-    return;
-  }
-
-  await supabase
-    .from("User")
-    .update({ subscriptionStatus: "past_due" })
-    .eq("id", user.id);
-
-  console.log(`Invoice payment failed for user ${user.id}`);
-}

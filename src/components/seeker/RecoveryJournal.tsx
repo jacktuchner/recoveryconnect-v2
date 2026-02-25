@@ -27,7 +27,6 @@ interface RecoveryJournalProps {
   procedureType: string;
   surgeryDate: string | null;
   currentWeek: number | undefined;
-  isSubscriber?: boolean;
   conditionCategory?: string;
 }
 
@@ -36,7 +35,7 @@ function parseDate(s: string): Date {
   return new Date(s);
 }
 
-export default function RecoveryJournal({ procedureType, surgeryDate, currentWeek, isSubscriber, conditionCategory }: RecoveryJournalProps) {
+export default function RecoveryJournal({ procedureType, surgeryDate, currentWeek, conditionCategory }: RecoveryJournalProps) {
   const isChronicPain = conditionCategory === "CHRONIC_PAIN";
   const milestonePresets = isChronicPain ? JOURNAL_MILESTONE_PRESETS_CHRONIC_PAIN : JOURNAL_MILESTONE_PRESETS;
   const [entries, setEntries] = useState<JournalEntry[]>([]);
@@ -665,42 +664,33 @@ export default function RecoveryJournal({ procedureType, surgeryDate, currentWee
           </div>
 
           {/* Share Toggle */}
-          {isSubscriber ? (
-            <>
-              <label className="flex items-center gap-3 cursor-pointer">
-                <button
-                  type="button"
-                  onClick={() => setFormShared(!formShared)}
-                  className={`relative w-10 h-6 rounded-full transition-colors ${formShared ? "bg-teal-500" : "bg-gray-300"}`}
-                >
-                  <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${formShared ? "left-[18px]" : "left-0.5"}`} />
-                </button>
-                <span className="text-sm text-gray-700 flex items-center gap-1.5">
-                  {formShared ? (
-                    <svg className="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
-                    </svg>
-                  ) : (
-                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
-                  )}
-                  {formShared ? "Shared with contributors" : "Private"}
-                </span>
-              </label>
-              {formShared && (
-                <p className="text-xs text-gray-500 ml-[52px]">
-                  Choose which contributors can see shared entries in{" "}
-                  <Link href="/dashboard/seeker/settings" className="text-teal-600 hover:text-teal-700 underline">
-                    Settings &gt; Journal Sharing
-                  </Link>.
-                </p>
+          <label className="flex items-center gap-3 cursor-pointer">
+            <button
+              type="button"
+              onClick={() => setFormShared(!formShared)}
+              className={`relative w-10 h-6 rounded-full transition-colors ${formShared ? "bg-teal-500" : "bg-gray-300"}`}
+            >
+              <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${formShared ? "left-[18px]" : "left-0.5"}`} />
+            </button>
+            <span className="text-sm text-gray-700 flex items-center gap-1.5">
+              {formShared ? (
+                <svg className="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
               )}
-            </>
-          ) : (
-            <p className="text-xs text-gray-500">
-              <Link href="/how-it-works#pricing" className="text-teal-600 hover:text-teal-700 underline">Subscribe</Link>{" "}
-              to share journal entries with your contributors.
+              {formShared ? "Shared with guides" : "Private"}
+            </span>
+          </label>
+          {formShared && (
+            <p className="text-xs text-gray-500 ml-[52px]">
+              Choose which guides can see shared entries in{" "}
+              <Link href="/settings" className="text-teal-600 hover:text-teal-700 underline">
+                Settings &gt; Journal Sharing
+              </Link>.
             </p>
           )}
 

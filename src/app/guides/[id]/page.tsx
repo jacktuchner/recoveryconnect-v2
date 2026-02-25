@@ -32,7 +32,7 @@ const activityLabels: Record<string, string> = {
 export default function GuideDetailPage() {
   const { id } = useParams();
   const { data: session } = useSession();
-  const [contributor, setContributor] = useState<any>(null);
+  const [guide, setGuide] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedProcedure, setSelectedProcedure] = useState<string | null>(null);
@@ -41,13 +41,13 @@ export default function GuideDetailPage() {
   const isOwnProfile = session?.user && (session.user as any).id === id;
 
 
-  async function loadContributor() {
+  async function loadGuide() {
     setLoading(true);
     setError(null);
     try {
       const res = await fetch(`/api/guides/${id}`);
       if (!res.ok) throw new Error("Failed to load guide profile.");
-      setContributor(await res.json());
+      setGuide(await res.json());
     } catch (err) {
       console.error(err);
       setError("Failed to load guide profile.");
@@ -57,7 +57,7 @@ export default function GuideDetailPage() {
   }
 
   useEffect(() => {
-    loadContributor();
+    loadGuide();
   }, [id]);
 
   if (loading) return <div className="max-w-4xl mx-auto px-4 py-8">Loading...</div>;
@@ -65,32 +65,32 @@ export default function GuideDetailPage() {
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 flex items-center justify-between">
         <p className="text-sm text-red-700">{error}</p>
-        <button onClick={loadContributor} className="text-sm text-red-600 hover:text-red-700 font-medium">Retry</button>
+        <button onClick={loadGuide} className="text-sm text-red-600 hover:text-red-700 font-medium">Retry</button>
       </div>
     </div>
   );
-  if (!contributor) return <div className="max-w-4xl mx-auto px-4 py-8">Guide not found.</div>;
+  if (!guide) return <div className="max-w-4xl mx-auto px-4 py-8">Guide not found.</div>;
 
 
-  const avgRating = contributor.reviewsReceived?.length
-    ? (contributor.reviewsReceived.reduce((a: number, r: any) => a + r.rating, 0) / contributor.reviewsReceived.length).toFixed(1)
+  const avgRating = guide.reviewsReceived?.length
+    ? (guide.reviewsReceived.reduce((a: number, r: any) => a + r.rating, 0) / guide.reviewsReceived.length).toFixed(1)
     : null;
 
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <Link
-        href={isOwnProfile ? "/dashboard/guide/profile" : "/browse?tab=contributors"}
+        href={isOwnProfile ? "/dashboard/guide/profile" : "/browse?tab=guides"}
         className="text-sm text-teal-600 hover:text-teal-700 mb-4 inline-block"
       >
         &larr; {isOwnProfile ? "Back to Dashboard" : "Back to Guides"}
       </Link>
 
       {/* Intro Video */}
-      {contributor.profile?.introVideoUrl && (
+      {guide.profile?.introVideoUrl && (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6">
           <video
-            src={contributor.profile.introVideoUrl}
+            src={guide.profile.introVideoUrl}
             controls
             autoPlay
             muted
@@ -99,10 +99,10 @@ export default function GuideDetailPage() {
           />
           <div className="px-4 py-2 bg-gray-50 border-t border-gray-100">
             <p className="text-sm text-gray-600">
-              Meet {contributor.name?.split(" ")[0] || "this guide"}
-              {contributor.profile.introVideoDuration && (
+              Meet {guide.name?.split(" ")[0] || "this guide"}
+              {guide.profile.introVideoDuration && (
                 <span className="text-gray-400 ml-2">
-                  ({Math.floor(contributor.profile.introVideoDuration / 60)}:{(contributor.profile.introVideoDuration % 60).toString().padStart(2, "0")})
+                  ({Math.floor(guide.profile.introVideoDuration / 60)}:{(guide.profile.introVideoDuration % 60).toString().padStart(2, "0")})
                 </span>
               )}
             </p>
@@ -115,32 +115,32 @@ export default function GuideDetailPage() {
         <div className="flex items-start gap-4 mb-6">
           <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center flex-shrink-0">
             <span className="text-teal-700 font-bold text-2xl">
-              {contributor.name?.[0]?.toUpperCase() || "?"}
+              {guide.name?.[0]?.toUpperCase() || "?"}
             </span>
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-2xl font-bold">{contributor.name}</h1>
-              {contributor.contributorStatus === "APPROVED" && <VerifiedBadge />}
-              {contributor.matchScore !== undefined && (
+              <h1 className="text-2xl font-bold">{guide.name}</h1>
+              {guide.contributorStatus === "APPROVED" && <VerifiedBadge />}
+              {guide.matchScore !== undefined && (
                 <div className="flex items-center">
                   <span className={`text-sm font-bold px-2.5 py-1 rounded-full ${
-                    contributor.matchScore >= 80 ? "bg-green-100 text-green-700" :
-                    contributor.matchScore >= 60 ? "bg-yellow-100 text-yellow-700" :
+                    guide.matchScore >= 80 ? "bg-green-100 text-green-700" :
+                    guide.matchScore >= 60 ? "bg-yellow-100 text-yellow-700" :
                     "bg-gray-100 text-gray-600"
                   }`}>
-                    {contributor.matchScore}% match
+                    {guide.matchScore}% match
                   </span>
-                  {contributor.matchBreakdown && (
-                    <MatchScoreTooltip breakdown={contributor.matchBreakdown} />
+                  {guide.matchBreakdown && (
+                    <MatchScoreTooltip breakdown={guide.matchBreakdown} />
                   )}
                 </div>
               )}
             </div>
             <div className="flex flex-wrap gap-1.5 mt-1">
-              {(contributor.profile?.procedureTypes?.length > 0
-                ? contributor.profile.procedureTypes
-                : (contributor.profile?.procedureType ? [contributor.profile.procedureType] : [])
+              {(guide.profile?.procedureTypes?.length > 0
+                ? guide.profile.procedureTypes
+                : (guide.profile?.procedureType ? [guide.profile.procedureType] : [])
               ).map((proc: string) => (
                 <span key={proc} className="text-sm bg-teal-50 text-teal-700 px-2.5 py-0.5 rounded-full">{proc}</span>
               ))}
@@ -148,101 +148,101 @@ export default function GuideDetailPage() {
             <div className="flex items-center gap-2 mt-1 flex-wrap">
               {avgRating && (
                 <span className="text-sm text-gray-500">
-                  {avgRating} avg rating &middot; {contributor.reviewsReceived.length} reviews
+                  {avgRating} avg rating &middot; {guide.reviewsReceived.length} reviews
                 </span>
               )}
-              {contributor.completedCallCount > 0 && (
+              {guide.completedCallCount > 0 && (
                 <span className="text-sm bg-purple-50 text-purple-600 px-2 py-0.5 rounded-full">
-                  {contributor.completedCallCount} calls completed
+                  {guide.completedCallCount} calls completed
                 </span>
               )}
             </div>
           </div>
           {!isOwnProfile && (
             <div className="flex flex-col gap-2 flex-shrink-0">
-              {contributor.profile?.isAvailableForCalls && (
+              {guide.profile?.isAvailableForCalls && (
                 <Link
-                  href={`/book/${contributor.id}`}
+                  href={`/book/${guide.id}`}
                   className="bg-teal-600 text-white px-6 py-3 rounded-lg hover:bg-teal-700 font-semibold text-base text-center shadow-md hover:shadow-lg transition-all"
                 >
-                  Book a Call &middot; ${(contributor.profile.hourlyRate / 2).toFixed(0)}/30min
+                  Book a Call &middot; ${(guide.profile.hourlyRate / 2).toFixed(0)}/30min
                 </Link>
               )}
-              <MessageButton contributorId={contributor.id} />
+              <MessageButton guideId={guide.id} />
             </div>
           )}
         </div>
 
         <div className="flex flex-wrap gap-2 mb-4">
           <span className="text-sm bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
-            {contributor.profile?.ageRange}
+            {guide.profile?.ageRange}
           </span>
-          {contributor.profile?.gender && (
+          {guide.profile?.gender && (
             <span className="text-sm bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
-              {GENDERS.find((g) => g.value === contributor.profile.gender)?.label || contributor.profile.gender}
+              {GENDERS.find((g) => g.value === guide.profile.gender)?.label || guide.profile.gender}
             </span>
           )}
           <span className="text-sm bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
-            {activityLabels[contributor.profile?.activityLevel] || contributor.profile?.activityLevel}
+            {activityLabels[guide.profile?.activityLevel] || guide.profile?.activityLevel}
           </span>
-          {(contributor.profile?.surgeryDate || contributor.profile?.timeSinceSurgery) && (
+          {(guide.profile?.surgeryDate || guide.profile?.timeSinceSurgery) && (
             <span className="text-sm bg-blue-50 text-blue-600 px-3 py-1 rounded-full">
-              {contributor.profile.surgeryDate
-                ? (isChronicPainCondition(contributor.profile?.procedureType || contributor.profile?.procedureTypes?.[0] || "")
-                    ? getTimeSinceDiagnosisLabel(contributor.profile.surgeryDate)
-                    : getTimeSinceSurgeryLabel(contributor.profile.surgeryDate))
-                : `${contributor.profile.timeSinceSurgery} post-op`}
+              {guide.profile.surgeryDate
+                ? (isChronicPainCondition(guide.profile?.procedureType || guide.profile?.procedureTypes?.[0] || "")
+                    ? getTimeSinceDiagnosisLabel(guide.profile.surgeryDate)
+                    : getTimeSinceSurgeryLabel(guide.profile.surgeryDate))
+                : `${guide.profile.timeSinceSurgery} post-op`}
             </span>
           )}
-          {contributor.profile?.isAvailableForCalls && (
+          {guide.profile?.isAvailableForCalls && (
             <span className="text-sm bg-green-50 text-green-600 px-3 py-1 rounded-full">
               Available for calls
             </span>
           )}
         </div>
 
-        {contributor.profile?.recoveryGoals?.length > 0 && (
+        {guide.profile?.recoveryGoals?.length > 0 && (
           <div className="mb-4">
             <p className="text-sm text-gray-500 mb-1">
-              {isChronicPainCondition(contributor.profile?.procedureType || contributor.profile?.procedureTypes?.[0] || "")
+              {isChronicPainCondition(guide.profile?.procedureType || guide.profile?.procedureTypes?.[0] || "")
                 ? "Goals:" : "Recovery Goals:"}
             </p>
             <div className="flex flex-wrap gap-1.5">
-              {contributor.profile.recoveryGoals.map((g: string) => (
+              {guide.profile.recoveryGoals.map((g: string) => (
                 <span key={g} className="text-xs bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full">{g}</span>
               ))}
             </div>
           </div>
         )}
 
-        {contributor.bio && <p className="text-gray-600">{contributor.bio}</p>}
+        {guide.bio && <p className="text-gray-600">{guide.bio}</p>}
       </div>
 
       {/* Procedure Details */}
       {(() => {
-        if (!contributor.profile) return null;
+        if (!guide.profile) return null;
 
-        const procedures: string[] = contributor.profile.procedureTypes?.length > 0
-          ? contributor.profile.procedureTypes
-          : (contributor.profile.procedureType ? [contributor.profile.procedureType] : []);
+        const procedures: string[] = guide.profile.procedureTypes?.length > 0
+          ? guide.profile.procedureTypes
+          : (guide.profile.procedureType ? [guide.profile.procedureType] : []);
         const hasMultiple = procedures.length > 1;
-        const activeProc = selectedProcedure || contributor.profile.activeProcedureType || contributor.profile.procedureType;
+        const activeProc = selectedProcedure || guide.profile.activeProcedureType || guide.profile.procedureType;
 
-        const procProfiles = contributor.profile.procedureProfiles || {};
-        const lifestyle: string[] = contributor.profile.lifestyleContext || [];
+        const procProfiles = guide.profile.procedureProfiles || {};
+        const lifestyle: string[] = guide.profile.lifestyleContext || [];
 
         // Normalize: get instances array for a procedure type
         function getInstances(proc: string): any[] {
           const val = procProfiles[proc];
           if (Array.isArray(val)) return val;
           if (val && typeof val === "object" && Object.keys(val).length > 0) return [val];
-          if (proc === contributor.profile.procedureType) {
+          if (proc === guide.profile.procedureType) {
             return [{
-              procedureDetails: contributor.profile.procedureDetails,
-              surgeryDate: contributor.profile.surgeryDate,
-              timeSinceSurgery: contributor.profile.timeSinceSurgery,
-              recoveryGoals: contributor.profile.recoveryGoals || [],
-              complicatingFactors: contributor.profile.complicatingFactors || [],
+              procedureDetails: guide.profile.procedureDetails,
+              surgeryDate: guide.profile.surgeryDate,
+              timeSinceSurgery: guide.profile.timeSinceSurgery,
+              recoveryGoals: guide.profile.recoveryGoals || [],
+              complicatingFactors: guide.profile.complicatingFactors || [],
             }];
           }
           return [];
@@ -357,12 +357,12 @@ export default function GuideDetailPage() {
       })()}
 
       {/* Availability Schedule */}
-      {contributor.profile?.isAvailableForCalls && contributor.availability?.length > 0 && (
+      {guide.profile?.isAvailableForCalls && guide.availability?.length > 0 && (
         <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
           <h2 className="text-lg font-bold mb-4">Availability</h2>
           <div className="space-y-2">
             {Object.entries(
-              (contributor.availability as { dayOfWeek: number; startTime: string; endTime: string; timezone: string }[])
+              (guide.availability as { dayOfWeek: number; startTime: string; endTime: string; timezone: string }[])
                 .reduce<Record<number, { startTime: string; endTime: string }[]>>((acc, slot) => {
                   if (!acc[slot.dayOfWeek]) acc[slot.dayOfWeek] = [];
                   acc[slot.dayOfWeek].push({ startTime: slot.startTime, endTime: slot.endTime });
@@ -381,14 +381,14 @@ export default function GuideDetailPage() {
               </div>
             ))}
           </div>
-          {contributor.availability?.[0]?.timezone && (
+          {guide.availability?.[0]?.timezone && (
             <p className="text-xs text-gray-400 mt-3">
-              Times shown in {contributor.availability[0].timezone}
+              Times shown in {guide.availability[0].timezone}
             </p>
           )}
           {!isOwnProfile && (
             <Link
-              href={`/book/${contributor.id}`}
+              href={`/book/${guide.id}`}
               className="mt-4 inline-flex items-center gap-2 bg-teal-600 text-white px-6 py-3 rounded-lg hover:bg-teal-700 font-semibold text-base shadow-md hover:shadow-lg transition-all"
             >
               Book a Call
@@ -399,17 +399,17 @@ export default function GuideDetailPage() {
 
       {/* Recordings */}
       <section className="mb-8">
-        <h2 className="text-xl font-bold mb-4">Recordings ({contributor.recordings?.length || 0})</h2>
-        {contributor.recordings?.length === 0 ? (
+        <h2 className="text-xl font-bold mb-4">Recordings ({guide.recordings?.length || 0})</h2>
+        {guide.recordings?.length === 0 ? (
           <p className="text-gray-400">No recordings yet.</p>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {contributor.recordings.map((rec: any) => (
+            {guide.recordings.map((rec: any) => (
               <RecordingCard
                 key={rec.id}
                 id={rec.id}
                 title={rec.title}
-                contributorName={contributor.name || "Anonymous"}
+                guideName={guide.name || "Anonymous"}
                 procedureType={rec.procedureType}
                 ageRange={rec.ageRange}
                 activityLevel={rec.activityLevel}
@@ -422,7 +422,7 @@ export default function GuideDetailPage() {
                     ? rec.reviews.reduce((a: number, r: any) => a + r.rating, 0) / rec.reviews.length
                     : undefined
                 }
-                contributorVerified={contributor.contributorStatus === "APPROVED"}
+                guideVerified={guide.contributorStatus === "APPROVED"}
               />
             ))}
           </div>
@@ -430,11 +430,11 @@ export default function GuideDetailPage() {
       </section>
 
       {/* Series / Bundles */}
-      {contributor.series?.length > 0 && (
+      {guide.series?.length > 0 && (
         <section className="mb-8">
-          <h2 className="text-xl font-bold mb-4">Series ({contributor.series.length})</h2>
+          <h2 className="text-xl font-bold mb-4">Series ({guide.series.length})</h2>
           <div className="grid sm:grid-cols-2 gap-6">
-            {contributor.series.map((s: any) => (
+            {guide.series.map((s: any) => (
                 <Link key={s.id} href={`/series/${s.id}`} className="block group">
                   <div className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-lg hover:border-teal-200 transition-all h-full">
                     <div className="flex items-start justify-between gap-2 mb-2">
@@ -459,11 +459,11 @@ export default function GuideDetailPage() {
       )}
 
       {/* Recommendations */}
-      {contributor.recommendations?.length > 0 && (
+      {guide.recommendations?.length > 0 && (
         <section className="mb-8">
-          <h2 className="text-xl font-bold mb-4">Recommendations ({contributor.recommendations.length})</h2>
+          <h2 className="text-xl font-bold mb-4">Recommendations ({guide.recommendations.length})</h2>
           <div className="grid sm:grid-cols-2 gap-4">
-            {contributor.recommendations.map((rec: any) => (
+            {guide.recommendations.map((rec: any) => (
               <Link
                 key={rec.id}
                 href={`/recommendations/${rec.id}`}
@@ -497,12 +497,12 @@ export default function GuideDetailPage() {
 
       {/* Reviews */}
       <section>
-        <h2 className="text-xl font-bold mb-4">Reviews ({contributor.reviewsReceived?.length || 0})</h2>
-        {contributor.reviewsReceived?.length === 0 ? (
+        <h2 className="text-xl font-bold mb-4">Reviews ({guide.reviewsReceived?.length || 0})</h2>
+        {guide.reviewsReceived?.length === 0 ? (
           <p className="text-gray-400">No reviews yet.</p>
         ) : (
           <div className="space-y-4">
-            {contributor.reviewsReceived
+            {guide.reviewsReceived
               .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
               .map((r: any) => (
               <div key={r.id} className="bg-white rounded-lg border border-gray-200 p-4">

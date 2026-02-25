@@ -23,13 +23,12 @@ interface GroupSession {
   pricePerPerson: number;
   status: string;
   videoRoomUrl?: string;
-  freeForSubscribers: boolean;
   participantCount?: number;
 }
 
 interface Props {
   sessions: GroupSession[];
-  contributorProcedures: string[];
+  guideProcedures: string[];
   onSessionsUpdate: (sessions: GroupSession[]) => void;
 }
 
@@ -48,7 +47,7 @@ function datetimeLocalToISO(dtLocal: string): string {
   return new Date(y, m - 1, d, h, min).toISOString();
 }
 
-export default function GroupSessionsSection({ sessions, contributorProcedures, onSessionsUpdate }: Props) {
+export default function GroupSessionsSection({ sessions, guideProcedures, onSessionsUpdate }: Props) {
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -61,7 +60,7 @@ export default function GroupSessionsSection({ sessions, contributorProcedures, 
   const [form, setForm] = useState({
     title: "",
     description: "",
-    procedureType: contributorProcedures[0] || "",
+    procedureType: guideProcedures[0] || "",
     scheduledAt: "",
     durationMinutes: 60,
     maxCapacity: 10,
@@ -100,7 +99,7 @@ export default function GroupSessionsSection({ sessions, contributorProcedures, 
       setForm({
         title: "",
         description: "",
-        procedureType: contributorProcedures[0] || "",
+        procedureType: guideProcedures[0] || "",
         scheduledAt: "",
         durationMinutes: 60,
         maxCapacity: 10,
@@ -187,7 +186,7 @@ export default function GroupSessionsSection({ sessions, contributorProcedures, 
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="text-xl font-bold">Group Sessions</h2>
-          <p className="text-sm text-gray-500 mt-1">Host group recovery sessions for multiple patients</p>
+          <p className="text-sm text-gray-500 mt-1">Host group recovery sessions for multiple seekers</p>
         </div>
         {!showForm && (
           <button
@@ -240,7 +239,7 @@ export default function GroupSessionsSection({ sessions, contributorProcedures, 
                 onChange={(e) => setForm((f) => ({ ...f, procedureType: e.target.value }))}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
               >
-                {(contributorProcedures.length > 0 ? contributorProcedures : PROCEDURE_TYPES as unknown as string[]).map((p) => (
+                {(guideProcedures.length > 0 ? guideProcedures : PROCEDURE_TYPES as unknown as string[]).map((p) => (
                   <option key={p} value={p}>{p}</option>
                 ))}
               </select>
@@ -296,8 +295,6 @@ export default function GroupSessionsSection({ sessions, contributorProcedures, 
             </div>
           </div>
 
-          <p className="text-xs text-green-600">Subscribers join for free (compensated from subscription pool)</p>
-
           <div className="flex gap-3 pt-2">
             <button
               onClick={createSession}
@@ -344,7 +341,6 @@ export default function GroupSessionsSection({ sessions, contributorProcedures, 
                     <p className="text-sm text-gray-500">
                       <span className="text-teal-600 font-medium">{s.participantCount || 0}</span>/{s.maxCapacity} signed up
                       {" "}&middot; ${s.pricePerPerson}/person
-                      {s.freeForSubscribers && <span className="text-green-600 ml-1">(free for subscribers)</span>}
                     </p>
                     <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full mt-1 inline-block">
                       {s.procedureType}

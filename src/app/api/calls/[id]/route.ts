@@ -23,7 +23,7 @@ export async function PATCH(
 
     const { data: call, error: fetchError } = await supabase
       .from("Call")
-      .select("*, contributor:User!Call_contributorId_fkey(stripeConnectId, stripeConnectOnboarded)")
+      .select("*, guide:User!Call_contributorId_fkey(stripeConnectId, stripeConnectOnboarded)")
       .eq("id", id)
       .single();
 
@@ -88,7 +88,7 @@ export async function PATCH(
         updatedAt: new Date().toISOString(),
       })
       .eq("id", id)
-      .select("*, patient:User!Call_patientId_fkey(*), contributor:User!Call_contributorId_fkey(*, profile:Profile(*))")
+      .select("*, seeker:User!Call_patientId_fkey(*), guide:User!Call_contributorId_fkey(*, profile:Profile(*))")
       .single();
 
     if (error) throw error;
@@ -98,8 +98,8 @@ export async function PATCH(
 
     if (status === "CANCELLED") {
       // Send cancellation email to BOTH parties
-      const guide = updated.contributor;
-      const seeker = updated.patient;
+      const guide = updated.guide;
+      const seeker = updated.seeker;
 
       if (seeker?.email) {
         sendCallCancelledEmail(
@@ -124,14 +124,14 @@ export async function PATCH(
       }
     }
 
-    // If call is completed and contributor has Stripe Connect, create payout
-    if (status === "COMPLETED" && call.contributor?.stripeConnectId && call.contributor?.stripeConnectOnboarded) {
+    // If call is completed and guide has Stripe Connect, create payout
+    if (status === "COMPLETED" && call.guide?.stripeConnectId && call.guide?.stripeConnectOnboarded) {
       try {
-        // Create a transfer to the contributor's Connect account
+        // Create a transfer to the guide's Connect account
         const transfer = await stripe.transfers.create({
           amount: Math.round(call.contributorPayout * 100), // Convert to cents
           currency: "usd",
-          destination: call.contributor.stripeConnectId,
+          destination: call.guide.stripeConnectId,
           metadata: {
             callId: call.id,
             contributorId: call.contributorId,

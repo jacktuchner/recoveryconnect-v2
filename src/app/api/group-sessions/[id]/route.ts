@@ -17,7 +17,7 @@ export async function GET(
 
     const { data: groupSession, error } = await supabase
       .from("GroupSession")
-      .select("*, contributor:User!GroupSession_contributorId_fkey(id, name, image, bio, profile:Profile(procedureTypes, timeSinceSurgery))")
+      .select("*, guide:User!GroupSession_contributorId_fkey(id, name, image, bio, profile:Profile(procedureTypes, timeSinceSurgery))")
       .eq("id", id)
       .single();
 
@@ -38,7 +38,7 @@ export async function GET(
     if (userId) {
       const { data: participant } = await supabase
         .from("GroupSessionParticipant")
-        .select("id, status, pricePaid, wasSubscriber")
+        .select("id, status, pricePaid")
         .eq("groupSessionId", id)
         .eq("userId", userId)
         .in("status", ["REGISTERED", "ATTENDED"])

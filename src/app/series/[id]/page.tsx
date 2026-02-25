@@ -122,12 +122,12 @@ export default function SeriesDetailPage() {
           </div>
         </div>
 
-        {/* Contributor Info */}
+        {/* Guide Info */}
         <div className="border-b border-gray-200 p-6">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
               <span className="text-purple-700 font-semibold text-lg">
-                {series.contributor?.name?.[0]?.toUpperCase() || "?"}
+                {series.guide?.name?.[0]?.toUpperCase() || "?"}
               </span>
             </div>
             <div>
@@ -135,10 +135,10 @@ export default function SeriesDetailPage() {
                 href={`/guides/${series.contributorId}`}
                 className="font-semibold hover:text-purple-700"
               >
-                {series.contributor?.name || "Anonymous"}
+                {series.guide?.name || "Anonymous"}
               </Link>
-              {series.contributor?.bio && (
-                <p className="text-sm text-gray-500 line-clamp-1">{series.contributor.bio}</p>
+              {series.guide?.bio && (
+                <p className="text-sm text-gray-500 line-clamp-1">{series.guide.bio}</p>
               )}
             </div>
           </div>
@@ -195,12 +195,12 @@ export default function SeriesDetailPage() {
         </div>
 
         {/* Book a Call CTA */}
-        {series.contributor && !series.isContributor && (
+        {series.guide && !series.isGuide && (
           <div className="p-6 bg-gradient-to-r from-teal-50 to-cyan-50 border-t border-teal-100">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <div>
                 <p className="font-semibold text-gray-900">
-                  Want personalized advice from {series.contributor.name?.split(" ")[0]}?
+                  Want personalized advice from {series.guide.name?.split(" ")[0]}?
                 </p>
                 <p className="text-sm text-gray-600">
                   Book a 1-on-1 video call for real-time Q&A

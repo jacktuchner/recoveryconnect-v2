@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
-// GET - Public endpoint to fetch a contributor's availability
+// GET - Public endpoint to fetch a guide's availability
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -9,23 +9,23 @@ export async function GET(
   try {
     const { id } = await params;
 
-    // Verify the contributor exists and is available for calls
-    const { data: contributor, error: contribError } = await supabase
+    // Verify the guide exists and is available for calls
+    const { data: guide, error: contribError } = await supabase
       .from("User")
       .select("id, profile:Profile(isAvailableForCalls)")
       .eq("id", id)
       .single();
 
-    if (contribError || !contributor) {
+    if (contribError || !guide) {
       return NextResponse.json(
-        { error: "Contributor not found" },
+        { error: "Guide not found" },
         { status: 404 }
       );
     }
 
-    if (!(contributor.profile as any)?.isAvailableForCalls) {
+    if (!(guide.profile as any)?.isAvailableForCalls) {
       return NextResponse.json(
-        { error: "Contributor is not available for calls" },
+        { error: "Guide is not available for calls" },
         { status: 400 }
       );
     }
@@ -63,7 +63,7 @@ export async function GET(
       blockedDates: (blockedResult.data || []).map((d: any) => d.date),
     });
   } catch (error) {
-    console.error("Error fetching contributor availability:", error);
+    console.error("Error fetching guide availability:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

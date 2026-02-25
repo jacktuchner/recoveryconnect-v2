@@ -34,7 +34,7 @@ export default function PrivacyPolicyPage() {
             <p>Guides upload audio and video recordings. We store this content on secure cloud infrastructure. Recordings may be transcribed for accessibility and search purposes.</p>
 
             <h3 className="font-medium text-gray-900 mt-4 mb-2">Usage Data</h3>
-            <p>We collect information about how you use the platform, including pages visited, recordings viewed, and features used. This helps us improve the service and, for subscribers, distribute revenue to guides based on content views.</p>
+            <p>We collect information about how you use the platform, including pages visited, recordings viewed, and features used. This helps us improve the service.</p>
           </section>
 
           <section>
@@ -44,7 +44,7 @@ export default function PrivacyPolicyPage() {
               <li>To match you with relevant guides and content based on your profile</li>
               <li>To process payments and guide payouts</li>
               <li>To send transactional emails (booking confirmations, payment receipts, call reminders)</li>
-              <li>To track subscriber content views for fair guide payout distribution</li>
+              <li>To track content views and engagement metrics</li>
               <li>To moderate content and enforce community standards</li>
               <li>To improve and develop new features for the platform</li>
             </ul>

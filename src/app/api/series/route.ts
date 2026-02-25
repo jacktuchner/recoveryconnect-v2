@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const procedure = searchParams.get("procedure");
-    const contributorId = searchParams.get("contributorId");
+    const guideId = searchParams.get("contributorId");
     const status = searchParams.get("status"); // null means all statuses for own series
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "12");
@@ -19,13 +19,13 @@ export async function GET(req: NextRequest) {
     // Check if user is viewing their own series
     const session = await getServerSession(authOptions);
     const userId = (session?.user as any)?.id;
-    const isOwnSeries = contributorId && userId === contributorId;
+    const isOwnSeries = guideId && userId === guideId;
 
     let query = supabase
       .from("RecordingSeries")
       .select(
         `*,
-        contributor:User!RecordingSeries_contributorId_fkey(id, name, displayName, showRealName, profile:Profile(*)),
+        guide:User!RecordingSeries_contributorId_fkey(id, name, displayName, showRealName, profile:Profile(*)),
         recordings:SeriesRecording(
           id, sequenceNumber,
           recording:Recording(id, title, price, durationSeconds, isVideo, status, ageRange, activityLevel, recoveryGoals)
@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
     // If isOwnSeries and no status, don't filter by status (show all)
 
     if (procedure) query = query.eq("procedureType", procedure);
-    if (contributorId) query = query.eq("contributorId", contributorId);
+    if (guideId) query = query.eq("contributorId", guideId);
 
     const { data: series, count, error } = await query
       .order("createdAt", { ascending: false })
@@ -88,9 +88,9 @@ export async function GET(req: NextRequest) {
         const seekerGoals = activeProcProfile.recoveryGoals || userProfile.recoveryGoals || [];
         const seekerFactors = activeProcProfile.complicatingFactors || userProfile.complicatingFactors || [];
 
-        // Use the first recording's attributes as representative, or fall back to contributor profile
+        // Use the first recording's attributes as representative, or fall back to guide profile
         const firstRec = sortedRecordings[0];
-        const contributorProfile = s.contributor?.profile;
+        const guideProfile = s.guide?.profile;
 
         const score = calculateMatchScore(
           {
@@ -103,11 +103,11 @@ export async function GET(req: NextRequest) {
           },
           {
             procedureType: s.procedureType,
-            ageRange: firstRec?.ageRange || contributorProfile?.ageRange || "",
-            activityLevel: firstRec?.activityLevel || contributorProfile?.activityLevel || "",
-            recoveryGoals: firstRec?.recoveryGoals || contributorProfile?.recoveryGoals || [],
-            complicatingFactors: contributorProfile?.complicatingFactors || [],
-            lifestyleContext: contributorProfile?.lifestyleContext || [],
+            ageRange: firstRec?.ageRange || guideProfile?.ageRange || "",
+            activityLevel: firstRec?.activityLevel || guideProfile?.activityLevel || "",
+            recoveryGoals: firstRec?.recoveryGoals || guideProfile?.recoveryGoals || [],
+            complicatingFactors: guideProfile?.complicatingFactors || [],
+            lifestyleContext: guideProfile?.lifestyleContext || [],
           }
         );
         matchScore = score.score;
@@ -116,10 +116,10 @@ export async function GET(req: NextRequest) {
 
       return {
         ...s,
-        contributor: s.contributor
+        guide: s.guide
           ? {
-              id: s.contributor.id,
-              name: getPublicDisplayName(s.contributor),
+              id: s.guide.id,
+              name: getPublicDisplayName(s.guide),
             }
           : null,
         recordings: sortedRecordings,
@@ -156,7 +156,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// POST /api/series - Create a new series (contributors only)
+// POST /api/series - Create a new series (guides only)
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -166,7 +166,7 @@ export async function POST(req: NextRequest) {
 
     const userId = (session.user as Record<string, string>).id;
 
-    // Check user is a contributor
+    // Check user is a guide
     const { data: user, error: userError } = await supabase
       .from("User")
       .select("*, profile:Profile(*)")
@@ -179,7 +179,7 @@ export async function POST(req: NextRequest) {
 
     if (!["GUIDE", "BOTH", "ADMIN"].includes(user.role)) {
       return NextResponse.json(
-        { error: "Only contributors can create series" },
+        { error: "Only guides can create series" },
         { status: 403 }
       );
     }
@@ -219,7 +219,7 @@ export async function POST(req: NextRequest) {
 
     // Add recordings if provided
     if (recordingIds && recordingIds.length > 0) {
-      // Verify all recordings belong to this contributor
+      // Verify all recordings belong to this guide
       const { data: recordings, error: recError } = await supabase
         .from("Recording")
         .select("id")

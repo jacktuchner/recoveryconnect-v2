@@ -2,7 +2,7 @@
 
 ## Overview
 
-Kizu is a peer-to-peer surgical recovery support platform connecting seekers with recovery guides who've been through similar procedures. Built with Next.js 16, TypeScript, Supabase, and Stripe.
+Kizu is a peer-to-peer surgical recovery support platform connecting seekers with recovery guides who've been through similar procedures. Built with Next.js 16, TypeScript, Supabase, and Stripe. All content (recordings, series, recommendations) is free. Revenue comes from paid 1-on-1 calls and group sessions.
 
 ---
 
@@ -17,10 +17,10 @@ The core platform is built and functional. All planned features are implemented.
 | Layer | Technology |
 |-------|-----------|
 | Frontend | Next.js 16 (App Router), React 19, TailwindCSS 4 |
-| Backend | Next.js API Routes (68 endpoints) |
+| Backend | Next.js API Routes (68+ endpoints) |
 | Database | Supabase (PostgreSQL), Prisma (schema only) |
 | Auth | NextAuth.js v4 (credentials provider, JWT strategy) |
-| Payments | Stripe (Checkout, Subscriptions, Connect for payouts) |
+| Payments | Stripe (Checkout for calls/sessions, Connect for guide payouts) |
 | Email | Resend |
 | Video Calls | Daily.co |
 | File Storage | AWS S3 |
@@ -33,7 +33,7 @@ The core platform is built and functional. All planned features are implemented.
 
 | Role | Description |
 |------|------------|
-| **SEEKER** | Browse content, purchase recordings, book calls, join group sessions |
+| **SEEKER** | Browse free content, book calls, join group sessions, use community forum |
 | **GUIDE** | Create recordings, set availability, earn money, host group sessions |
 | **BOTH** | Full seeker + guide access |
 | **ADMIN** | Platform moderation, user management, content review |
@@ -47,11 +47,9 @@ The core platform is built and functional. All planned features are implemented.
 - [x] Recording workflow (DRAFT → PENDING_REVIEW → PUBLISHED → REJECTED)
 - [x] 6 recording categories (Weekly Timeline, Wish I Knew, Practical Tips, Mental Health, Return to Activity, Mistakes & Lessons)
 - [x] FAQ prompt selector for structured content
-- [x] Recording series (bundles with discount pricing)
+- [x] Recording series (bundles)
 - [x] Transcription via OpenAI Whisper
-- [x] Subscriber view tracking for payout distribution
-- [x] Individual purchase via Stripe Checkout
-- [x] Access control (subscription vs individual purchase)
+- [x] All recordings and series are free to watch
 
 ### Tier 2: Live 1-on-1 Calls (Implemented)
 - [x] Guide availability management (day/time slots, timezone)
@@ -65,7 +63,6 @@ The core platform is built and functional. All planned features are implemented.
 ### Tier 3: Group Sessions (Implemented)
 - [x] Guide-created group sessions
 - [x] Min/max capacity (4–20 attendees, min threshold default: 3)
-- [x] Free for subscribers option
 - [x] Lifecycle management (SCHEDULED → CONFIRMED → COMPLETED/CANCELLED)
 - [x] Auto-cancel if minimum not met (4 hours before start)
 - [x] Refund handling
@@ -76,7 +73,7 @@ The core platform is built and functional. All planned features are implemented.
 - [x] Endorsement system (multi-guide)
 - [x] Voting/helpful system
 - [x] Comments
-- [x] Subscriber-only access
+- [x] Open to all users (no login required to browse)
 
 ### Tier 5: Direct Messaging (Implemented)
 - [x] Conversation model (unique per user pair, lastMessageAt tracking)
@@ -86,21 +83,31 @@ The core platform is built and functional. All planned features are implemented.
 - [x] Fetch messages + mark as read (GET /api/conversations/[id])
 - [x] Send messages (POST /api/messages)
 - [x] Unread count endpoint for navbar badge (GET /api/messages/unread)
-- [x] Subscriber-only for seekers, guides reply free
 - [x] MessageButton on guide profiles
 - [x] Messages link + unread badge in navbar (polls every 15s)
 - [x] Chat UI with polling (3s), auto-scroll, read receipts
 - [x] Throttled email notifications (skip if last message <10 min ago)
 - [x] Privacy-aware display names throughout
 
+### Tier 6: Community Forum (Implemented)
+- [x] Forum threads with title, content, procedure type, thread type (DISCUSSION, QUESTION, TIP, MILESTONE)
+- [x] Replies with edit/delete (author or admin)
+- [x] Thread pinning (admin-only)
+- [x] Procedure-based filtering and search
+- [x] Reply counts
+- [x] API: GET/POST `/api/forum/threads`, GET/PATCH/DELETE `/api/forum/threads/[id]`
+- [x] API: GET/POST `/api/forum/threads/[id]/replies`, PATCH/DELETE replies
+- [x] API: POST `/api/forum/threads/[id]/pin`
+- [x] Pages: `/community` (thread list), `/community/[threadId]` (thread detail)
+
 ### Matching System (Implemented)
 - [x] Multi-factor matching algorithm
 - [x] Scores based on: procedure type, details, age range, activity level, recovery goals, complicating factors, lifestyle context
 - [x] Match scores displayed on recordings & guide cards
+- [x] Condition selector on /guides and /watch — seekers with 2+ conditions can switch which condition is used for match scoring without changing their active condition in the database
 
-### Subscriptions & Payments (Implemented)
-- [x] Monthly plan ($19.99) and Annual plan ($149.99)
-- [x] Stripe Checkout + Customer Portal
+### Payments (Implemented)
+- [x] Stripe Checkout for call bookings and group sessions
 - [x] Stripe Connect for guide payouts
 - [x] Payment tracking across all purchase types
 - [x] Earnings dashboard for guides
@@ -108,7 +115,7 @@ The core platform is built and functional. All planned features are implemented.
 ### Authentication (Implemented)
 - [x] Email/password registration with role selection
 - [x] Password reset flow (email via Resend)
-- [x] JWT sessions with role + subscription status
+- [x] JWT sessions with role
 - [x] Protected routes (dashboards, API)
 
 ### Admin Tools (Implemented)
@@ -122,7 +129,6 @@ The core platform is built and functional. All planned features are implemented.
 - [x] Welcome emails
 - [x] Call booking, confirmation, cancellation
 - [x] Group session lifecycle emails
-- [x] Subscription confirmation/cancellation
 - [x] Password reset
 - [x] Call reminders
 - [x] New message notifications (throttled)
@@ -139,9 +145,9 @@ ACL Reconstruction, Total Hip Replacement, Total Knee Replacement, Total Shoulde
 
 | Item | Price |
 |------|-------|
-| Individual recording | $4.99+ (guide sets) |
-| Monthly subscription | $19.99 |
-| Annual subscription | $149.99 |
+| Recordings & series | Free |
+| Recommendations | Free |
+| Community forum | Free |
 | Call rates | $40–$75/hour (guide sets) |
 | Group sessions | $10–$35/person (guide sets) |
 | Platform fee | 25% on all guide earnings |
@@ -154,9 +160,20 @@ ACL Reconstruction, Total Hip Replacement, Total Knee Replacement, Total Shoulde
 ### Public
 - `/` — Homepage
 - `/about` — About page
-- `/how-it-works` — Seeker/Guide explainer + pricing
+- `/how-it-works` — Seeker/Guide explainer
 - `/contact` — Contact page
 - `/privacy`, `/terms` — Legal
+- `/watch` — Browse recordings (filters, search, sorting, match scores)
+- `/recordings/[id]` — Recording detail
+- `/series/[id]` — Series detail
+- `/guides` — Browse guides for calls
+- `/guides/[id]` — Guide profile
+- `/group-sessions` — Browse group sessions
+- `/group-sessions/[id]` — Session detail + registration
+- `/recommendations` — Browse recommendations
+- `/recommendations/[id]` — Recommendation detail
+- `/community` — Community forum threads
+- `/community/[threadId]` — Thread detail + replies
 
 ### Auth
 - `/auth/signin` — Login
@@ -165,18 +182,8 @@ ACL Reconstruction, Total Hip Replacement, Total Knee Replacement, Total Shoulde
 - `/auth/reset-password` — Reset form
 
 ### Seeker
-- `/watch` — Browse recordings (filters, search, sorting, match scores)
-- `/recordings/[id]` — Recording detail
-- `/series/[id]` — Series detail
-- `/guides` — Browse guides for calls
-- `/guides/[id]` — Guide profile
+- `/dashboard/seeker` — Seeker dashboard (procedures, profile, journal, calls, reviews)
 - `/book/[guideId]` — Book a call
-- `/group-sessions` — Browse group sessions
-- `/group-sessions/[id]` — Session detail + registration
-- `/recommendations` — Browse recommendations (subscriber-only)
-- `/recommendations/[id]` — Recommendation detail
-- `/dashboard/seeker` — Seeker dashboard (tabbed layout)
-- `/dashboard/seeker/settings` — Settings (privacy, subscription, journal sharing, become a guide)
 - `/messages` — Conversations list
 - `/messages/[conversationId]` — Chat view
 
@@ -185,7 +192,12 @@ ACL Reconstruction, Total Hip Replacement, Total Knee Replacement, Total Shoulde
 - `/dashboard/guide/content` — Content management (recordings, series, group sessions, recommendations)
 - `/dashboard/guide/profile` — Profile editing (procedures, shared profile, bio & intro video)
 - `/dashboard/guide/analytics` — Earnings & engagement analytics
-- `/dashboard/guide/settings` — Settings (availability, payout settings, privacy settings, upgrade to seeker access)
+
+### Dashboard Router
+- `/dashboard` — Redirects to role-appropriate dashboard (seeker/guide)
+
+### Settings (Consolidated)
+- `/settings` — Unified settings page (privacy, password, Stripe Connect, journal sharing, role upgrade CTAs)
 
 ### Admin
 - `/admin` — Stats overview
@@ -193,6 +205,7 @@ ACL Reconstruction, Total Hip Replacement, Total Knee Replacement, Total Shoulde
 - `/admin/users` — Manage users
 - `/admin/reports` — Handle reports
 - `/admin/payments` — Payment history
+- `/admin/applications` — Guide application review
 
 ### Checkout
 - `/checkout/success` — Post-purchase success
@@ -212,8 +225,6 @@ NEXTAUTH_URL
 STRIPE_SECRET_KEY
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
 STRIPE_WEBHOOK_SECRET
-STRIPE_MONTHLY_PRICE_ID
-STRIPE_ANNUAL_PRICE_ID
 S3_BUCKET
 S3_REGION
 S3_ACCESS_KEY
@@ -244,13 +255,12 @@ DAILY_API_KEY
 - [x] Admin reports page: review type filter, review context display, "Delete Review" action
 
 ### Guide Dashboard Tabs (Implemented)
-- [x] Shared layout with tab bar (Overview, Content, Profile, Analytics, Settings)
+- [x] Shared layout with tab bar (Overview, Content, Profile, Analytics)
 - [x] Each tab fetches only its own data (no wasted API calls)
 - [x] Overview: stats cards, call requests, shared seeker journals, payout history, reviews received
 - [x] Content: recordings, series, group sessions, recommendations
 - [x] Profile: procedures, shared profile, bio & intro video, "View Public Profile" button
 - [x] Analytics: full earnings & engagement analytics (dedicated page)
-- [x] Settings: availability manager, payout settings, privacy settings, upgrade to seeker access
 - [x] Public profile back link is context-aware (dashboard vs browse)
 
 ### Recovery Journal (Implemented)
@@ -258,37 +268,36 @@ DAILY_API_KEY
 - [x] Per-procedure tracking with recovery week calculation from surgery date
 - [x] Share toggle per entry (isShared flag)
 - [x] Per-guide journal sharing — seekers grant access to specific guides via JournalShare table
-- [x] Journal sharing manager in seeker Settings (toggle switches per eligible guide)
+- [x] Journal sharing manager in Settings (toggle switches per eligible guide)
 - [x] In-journal hint linking to Settings when share toggle is enabled
 - [x] Shared seeker journals section on guide Overview (expandable per seeker, shows entries)
 - [x] API: GET/POST/DELETE `/api/journal/shares` (seeker manages shares)
 - [x] API: GET `/api/journal/shares/received` (guide sees who shared with them)
 - [x] API: GET `/api/journal/shared/[patientId]` (guide views entries, requires explicit share grant)
 
-### Seeker Dashboard Tabs (Implemented)
-- [x] Shared layout with tab bar (Dashboard, Settings)
-- [x] Dashboard: subscription banners, procedures, profile, purchase history, journal, calls, reviews
-- [x] Settings: privacy settings, subscription management, journal sharing controls, become a guide CTA
-- [x] Subscription portal redirects back to settings page
+### Contributor Vetting (Implemented)
+- [x] Guide application flow with experience details
+- [x] Admin review and approval/rejection
+- [x] Verified badges on approved guides
 
 ### Navigation (Implemented)
-- [x] Guide dropdown: Overview, Content, Profile, Analytics, Settings
-- [x] Seeker dropdown: Dashboard, Watch Stories, Find a Guide, Group Sessions, Recommendations, Settings
-- [x] BOTH/ADMIN: both dropdowns side by side
-- [x] GUIDE-only and SEEKER-only: single dropdown (consistent pattern)
-- [x] Logged-out: "Browse" dropdown
-- [x] Mobile menu: section headers with indented links for all roles
-- [x] Messages link with unread badge (top-level, cross-cutting)
+- [x] Simplified navbar: single "Browse" dropdown (Watch Stories, Find a Guide, Group Sessions, Recommended Products, Community)
+- [x] Direct top-level links: Dashboard, Messages, Settings, Sign Out
+- [x] Dashboard link is role-aware (routes to /dashboard which redirects appropriately)
+- [x] Admin link (purple, admin-only)
+- [x] Logged-out: Browse dropdown + How It Works + About + Sign In + Get Started
+- [x] Mobile menu: section headers with indented links
+- [x] Messages link with unread badge (polls every 15s)
 
 ---
 
 ## Launch Checklist
 
 ### Infrastructure (Do First)
-- [ ] Deploy latest code to Vercel (rebrand commit)
+- [ ] Deploy latest code to Vercel
 - [ ] Verify `thekizu.com` domain is live and SSL works
 - [ ] Verify Resend email sending from `support@thekizu.com`
-- [ ] Test Stripe checkout flow end-to-end (recording purchase, subscription, call booking)
+- [ ] Test Stripe checkout flow end-to-end (call booking, group session)
 - [ ] Test Stripe Connect onboarding for a guide
 - [ ] Verify Daily.co video calls work in production
 - [ ] Verify S3 uploads work (recording upload flow)
@@ -298,14 +307,12 @@ DAILY_API_KEY
 ### Content & Data
 - [ ] Create your own guide profile (first guide on the platform)
 - [ ] Upload 2-3 seed recordings so the platform isn't empty at launch
-- [ ] Test the full seeker flow: register → profile wizard → browse → purchase → watch
+- [ ] Test the full seeker flow: register → profile wizard → browse → watch → book call
 
 ### Payments
 - [ ] Switch Stripe from test mode to live mode
 - [ ] Update Stripe API keys in Vercel env vars (live keys)
 - [ ] Update Stripe webhook endpoint to `https://thekizu.com/api/webhooks/stripe`
-- [ ] Create live Stripe price IDs for monthly/annual subscriptions
-- [ ] Update `STRIPE_MONTHLY_PRICE_ID` and `STRIPE_ANNUAL_PRICE_ID` env vars
 
 ### SEO & Analytics
 - [ ] Add Google Analytics or Vercel Analytics

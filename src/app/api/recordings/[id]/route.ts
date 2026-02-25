@@ -14,7 +14,7 @@ export async function GET(
 
     const { data: recording, error } = await supabase
       .from("Recording")
-      .select("*, contributor:User!Recording_contributorId_fkey(*, profile:Profile(*)), reviews:Review(*, author:User!Review_authorId_fkey(*))")
+      .select("*, guide:User!Recording_contributorId_fkey(*, profile:Profile(*)), reviews:Review(*, author:User!Review_authorId_fkey(*))")
       .eq("id", id)
       .single();
 
@@ -27,7 +27,6 @@ export async function GET(
 
     // All recordings are now free — always grant access
     const hasAccess = true;
-    const isSubscriber = false;
 
     // Increment view count
     await supabase
@@ -48,7 +47,6 @@ export async function GET(
     return NextResponse.json({
       ...recording,
       hasAccess,
-      isSubscriber,
       series: publishedSeries.length > 0 ? publishedSeries[0] : null, // Return first series if multiple
     });
   } catch (error) {
@@ -60,7 +58,7 @@ export async function GET(
   }
 }
 
-// PUT /api/recordings/[id] - Update recording (contributor only)
+// PUT /api/recordings/[id] - Update recording (guide only)
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -121,7 +119,7 @@ export async function PUT(
   }
 }
 
-// DELETE /api/recordings/[id] - Delete recording (contributor only)
+// DELETE /api/recordings/[id] - Delete recording (guide only)
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }

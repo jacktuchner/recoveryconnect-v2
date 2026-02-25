@@ -16,7 +16,6 @@ interface AnalyticsData {
   engagement: {
     totalViews: number;
     totalPurchases: number;
-    totalSubscriberViews: number;
     monthlyViews: { month: string; views: number }[];
     topRecordings: { id: string; title: string; views: number; purchases: number }[];
   };
@@ -191,7 +190,7 @@ function formatCategory(cat: string): string {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-export default function ContributorAnalyticsPage() {
+export default function GuideAnalyticsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);

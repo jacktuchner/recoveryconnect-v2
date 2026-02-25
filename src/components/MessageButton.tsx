@@ -5,29 +5,17 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 
 interface MessageButtonProps {
-  contributorId: string;
+  guideId: string;
 }
 
-export default function MessageButton({ contributorId }: MessageButtonProps) {
+export default function MessageButton({ guideId }: MessageButtonProps) {
   const { data: session } = useSession();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
-  const user = session?.user as any;
-  const isSubscriber =
-    user?.subscriptionStatus === "active" ||
-    user?.subscriptionStatus === "trialing";
-  const isPatient = user?.role === "SEEKER";
-  const needsSubscription = isPatient && !isSubscriber;
-
   async function handleClick() {
     if (!session?.user) {
       router.push("/auth/signin");
-      return;
-    }
-
-    if (needsSubscription) {
-      router.push("/dashboard/seeker?tab=subscription");
       return;
     }
 
@@ -36,7 +24,7 @@ export default function MessageButton({ contributorId }: MessageButtonProps) {
       const res = await fetch("/api/conversations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ participantId: contributorId }),
+        body: JSON.stringify({ participantId: guideId }),
       });
 
       if (res.ok) {
@@ -62,7 +50,7 @@ export default function MessageButton({ contributorId }: MessageButtonProps) {
       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
       </svg>
-      {loading ? "..." : needsSubscription ? "Subscribe to Message" : "Message"}
+      {loading ? "..." : "Message"}
     </button>
   );
 }

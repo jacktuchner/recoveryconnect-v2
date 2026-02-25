@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { PROCEDURE_TYPES, CHRONIC_PAIN_CONDITIONS, TIME_SINCE_SURGERY, TIME_SINCE_DIAGNOSIS, GUIDE_AGREEMENT_CLAUSES, GUIDE_AGREEMENT_VERSION } from "@/lib/constants";
 
-export default function ContributorApplicationPage() {
+export default function GuideApplicationPage() {
   const { data: session, status: authStatus } = useSession();
   const router = useRouter();
 
@@ -14,7 +14,7 @@ export default function ContributorApplicationPage() {
   const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
   const [timeSince, setTimeSince] = useState("");
   const [experienceText, setExperienceText] = useState("");
-  const [whyContribute, setWhyContribute] = useState("");
+  const [whyGuide, setWhyGuide] = useState("");
   const [contentPlans, setContentPlans] = useState("");
   const [preferredContact, setPreferredContact] = useState("");
   const [proofFiles, setProofFiles] = useState<{ name: string; url: string }[]>([]);
@@ -162,8 +162,8 @@ export default function ContributorApplicationPage() {
     if (experienceText) {
       parts.push(`Experience: ${experienceText}`);
     }
-    if (whyContribute) {
-      parts.push(`Why I want to contribute: ${whyContribute}`);
+    if (whyGuide) {
+      parts.push(`Why I want to be a guide: ${whyGuide}`);
     }
     if (contentPlans) {
       parts.push(`What I plan to share: ${contentPlans}`);
@@ -463,16 +463,16 @@ export default function ContributorApplicationPage() {
 
         {/* Question 5: Why contribute */}
         <div>
-          <label htmlFor="whyContribute" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="whyGuide" className="block text-sm font-medium text-gray-700 mb-1">
             Why do you want to become a guide?
           </label>
           <p className="text-xs text-gray-500 mb-2">
             What motivates you to share your story? This helps us understand your goals.
           </p>
           <textarea
-            id="whyContribute"
-            value={whyContribute}
-            onChange={(e) => setWhyContribute(e.target.value)}
+            id="whyGuide"
+            value={whyGuide}
+            onChange={(e) => setWhyGuide(e.target.value)}
             rows={3}
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
             placeholder="I spent hours searching for real experiences before my surgery and couldn't find much. I want to be the resource I wish I had..."

@@ -23,7 +23,7 @@ function BrowseRedirect() {
 
     const queryString = params.toString();
 
-    if (tab === "contributors") {
+    if (tab === "contributors" || tab === "guides") {
       router.replace(`/guides${queryString ? `?${queryString}` : ""}`);
     } else {
       router.replace(`/watch${queryString ? `?${queryString}` : ""}`);

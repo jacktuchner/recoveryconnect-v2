@@ -18,16 +18,14 @@ interface GroupSessionDetail {
   pricePerPerson: number;
   status: string;
   videoRoomUrl?: string;
-  freeForSubscribers: boolean;
   participantCount: number;
   isRegistered: boolean;
   myParticipation?: {
     id: string;
     status: string;
     pricePaid: number;
-    wasSubscriber: boolean;
   };
-  contributor: {
+  guide: {
     id: string;
     name: string;
     image?: string;
@@ -98,7 +96,7 @@ export default function GroupSessionDetailPage() {
       }
 
       if (data.registered) {
-        // Subscriber - instant registration
+        // Instant registration (e.g. free session)
         const refreshRes = await fetch(`/api/group-sessions/${id}`);
         if (refreshRes.ok) setGroupSession(await refreshRes.json());
       } else if (data.url) {
@@ -163,8 +161,6 @@ export default function GroupSessionDetailPage() {
   const spotsLeft = groupSession.maxCapacity - groupSession.participantCount;
   const isFull = spotsLeft <= 0;
   const isInPast = date <= new Date();
-  const isSubscriber = (authSession?.user as any)?.subscriptionStatus === "active";
-  const isFreeForUser = isSubscriber && groupSession.freeForSubscribers;
   const canJoinCall = groupSession.isRegistered && groupSession.status === "CONFIRMED" && groupSession.videoRoomUrl;
 
   return (
@@ -196,26 +192,26 @@ export default function GroupSessionDetailPage() {
             <p className="text-gray-600 mb-4">{groupSession.description}</p>
           )}
 
-          {/* Contributor info */}
+          {/* Guide info */}
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center">
-              {groupSession.contributor?.image ? (
-                <img src={groupSession.contributor.image} alt="" className="w-10 h-10 rounded-full" />
+              {groupSession.guide?.image ? (
+                <img src={groupSession.guide.image} alt="" className="w-10 h-10 rounded-full" />
               ) : (
                 <span className="text-teal-700 font-medium">
-                  {groupSession.contributor?.name?.[0]?.toUpperCase() || "?"}
+                  {groupSession.guide?.name?.[0]?.toUpperCase() || "?"}
                 </span>
               )}
             </div>
             <div>
               <Link
-                href={`/guides/${groupSession.contributor?.id}`}
+                href={`/guides/${groupSession.guide?.id}`}
                 className="font-medium text-gray-900 hover:text-teal-600"
               >
-                {groupSession.contributor?.name || "Mentor"}
+                {groupSession.guide?.name || "Mentor"}
               </Link>
-              {groupSession.contributor?.bio && (
-                <p className="text-sm text-gray-500 line-clamp-1">{groupSession.contributor.bio}</p>
+              {groupSession.guide?.bio && (
+                <p className="text-sm text-gray-500 line-clamp-1">{groupSession.guide.bio}</p>
               )}
             </div>
           </div>
@@ -249,11 +245,7 @@ export default function GroupSessionDetailPage() {
             </div>
             <div className="text-right">
               <p className="text-sm text-gray-500 mb-1">Price</p>
-              {isFreeForUser ? (
-                <p className="text-lg font-semibold text-green-600">Free with subscription</p>
-              ) : (
-                <p className="text-lg font-semibold text-gray-900">${groupSession.pricePerPerson} per person</p>
-              )}
+              <p className="text-lg font-semibold text-gray-900">${groupSession.pricePerPerson} per person</p>
             </div>
           </div>
 
@@ -275,9 +267,6 @@ export default function GroupSessionDetailPage() {
             {" "}&middot; Minimum {groupSession.minAttendees} participants to run
           </p>
 
-          {!isFreeForUser && groupSession.freeForSubscribers && (
-            <p className="text-sm text-green-600 mt-2">Free with subscription</p>
-          )}
         </div>
 
         {/* Action area */}
@@ -334,7 +323,7 @@ export default function GroupSessionDetailPage() {
               disabled={signingUp}
               className="w-full bg-teal-600 text-white py-3 rounded-lg hover:bg-teal-700 font-medium disabled:opacity-50 transition-colors"
             >
-              {signingUp ? "Processing..." : isFreeForUser ? "Sign Up (Free)" : `Sign Up - $${groupSession.pricePerPerson}`}
+              {signingUp ? "Processing..." : `Sign Up - $${groupSession.pricePerPerson}`}
             </button>
           )}
         </div>

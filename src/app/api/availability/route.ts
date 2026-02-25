@@ -44,10 +44,10 @@ export async function POST(req: NextRequest) {
     const userId = (session.user as Record<string, string>).id;
     const userRole = (session.user as any).role;
 
-    // Only contributors can set availability
+    // Only guides can set availability
     if (userRole !== "GUIDE" && userRole !== "BOTH" && userRole !== "ADMIN") {
       return NextResponse.json(
-        { error: "Only contributors can set availability" },
+        { error: "Only guides can set availability" },
         { status: 403 }
       );
     }

@@ -42,7 +42,7 @@ export async function POST(
     // Get participant record
     const { data: participant, error: partError } = await supabase
       .from("GroupSessionParticipant")
-      .select("id, pricePaid, wasSubscriber, paymentId, stripeSessionId, status")
+      .select("id, pricePaid, paymentId, stripeSessionId, status")
       .eq("groupSessionId", id)
       .eq("userId", userId)
       .eq("status", "REGISTERED")

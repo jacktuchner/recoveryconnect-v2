@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
   if (currentRole === "SEEKER") {
     return NextResponse.json({
       redirect: "/guide-application",
-      message: "Please complete the contributor application",
+      message: "Please complete the guide application",
     });
   }
 

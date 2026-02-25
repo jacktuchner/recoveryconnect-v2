@@ -57,7 +57,7 @@ export async function DELETE(
       await supabase.from("Conversation").delete().in("id", convoIds);
     }
 
-    // 2. Journal
+    // 2. Journal (patientId, contributorId are DB column names)
     await supabase.from("JournalShare").delete().eq("patientId", id);
     await supabase.from("JournalShare").delete().eq("contributorId", id);
     await supabase.from("JournalEntry").delete().eq("patientId", id);
@@ -101,16 +101,15 @@ export async function DELETE(
       await supabase.from("Call").delete().in("id", callIds);
     }
 
-    // 7. Subscriber views & access (before Recordings and Payments)
-    await supabase.from("SubscriberView").delete().eq("userId", id);
+    // 7. Recording access (before Recordings and Payments)
     await supabase.from("RecordingAccess").delete().eq("userId", id);
     await supabase.from("SeriesAccess").delete().eq("userId", id);
 
-    // 8. Recordings (contributor's content)
+    // 8. Recordings (guide's content)
     const { data: recordings } = await supabase.from("Recording").select("id").eq("contributorId", id);
     if (recordings?.length) {
       const recIds = recordings.map((r: any) => r.id);
-      await supabase.from("SubscriberView").delete().in("recordingId", recIds);
+      // Clean up recording-related data
       await supabase.from("RecordingAccess").delete().in("recordingId", recIds);
       await supabase.from("Review").delete().in("recordingId", recIds);
       await supabase.from("Report").delete().in("recordingId", recIds);
@@ -118,7 +117,7 @@ export async function DELETE(
       await supabase.from("Recording").delete().in("id", recIds);
     }
 
-    // 9. Series (contributor's series)
+    // 9. Series (guide's series)
     const { data: seriesList } = await supabase.from("RecordingSeries").select("id").eq("contributorId", id);
     if (seriesList?.length) {
       const seriesIds = seriesList.map((s: any) => s.id);
@@ -137,7 +136,7 @@ export async function DELETE(
     await supabase.from("Report").delete().eq("reporterId", id);
     await supabase.from("Report").delete().eq("userId", id);
 
-    // 13. Auth, profile, application
+    // 13. Auth, profile, guide application
     await supabase.from("Account").delete().eq("userId", id);
     await supabase.from("Session").delete().eq("userId", id);
     await supabase.from("ContributorApplication").delete().eq("userId", id);
@@ -176,7 +175,7 @@ export async function PATCH(
 
     if (!role || !["SEEKER", "GUIDE", "BOTH", "ADMIN"].includes(role)) {
       return NextResponse.json(
-        { error: "Invalid role. Must be PATIENT, CONTRIBUTOR, BOTH, or ADMIN" },
+        { error: "Invalid role. Must be SEEKER, GUIDE, BOTH, or ADMIN" },
         { status: 400 }
       );
     }

@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
       "audio/x-m4a",
       "video/webm",
       "video/mp4",
-      // Document proof uploads (contributor applications)
+      // Document proof uploads (guide applications)
       "image/jpeg",
       "image/png",
       "image/webp",

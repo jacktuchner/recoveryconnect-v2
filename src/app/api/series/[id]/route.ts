@@ -19,7 +19,7 @@ export async function GET(
       .from("RecordingSeries")
       .select(
         `*,
-        contributor:User!RecordingSeries_contributorId_fkey(id, name, displayName, showRealName, bio, profile:Profile(*)),
+        guide:User!RecordingSeries_contributorId_fkey(id, name, displayName, showRealName, bio, profile:Profile(*)),
         recordings:SeriesRecording(
           id, sequenceNumber,
           recording:Recording(id, title, description, price, durationSeconds, isVideo, status, mediaUrl, thumbnailUrl, category, procedureType, ageRange, activityLevel)
@@ -38,8 +38,7 @@ export async function GET(
 
     // All series are now free — always grant access
     const hasAccess = true;
-    const isSubscriber = false;
-    const isContributor = userId === series.contributorId;
+    const isGuide = userId === series.contributorId;
 
     // Sort recordings by sequence number
     const sortedRecordings = (series.recordings || [])
@@ -48,7 +47,7 @@ export async function GET(
         ...sr.recording,
         sequenceNumber: sr.sequenceNumber,
       }))
-      .filter((r: any) => r && (r.status === "PUBLISHED" || isContributor));
+      .filter((r: any) => r && (r.status === "PUBLISHED" || isGuide));
 
     // Calculate pricing
     const totalValue = sortedRecordings.reduce((sum: number, r: any) => sum + (r?.price || 0), 0);
@@ -60,12 +59,12 @@ export async function GET(
 
     return NextResponse.json({
       ...series,
-      contributor: series.contributor
+      guide: series.guide
         ? {
-            id: series.contributor.id,
-            name: getPublicDisplayName(series.contributor),
-            bio: series.contributor.bio,
-            profile: series.contributor.profile,
+            id: series.guide.id,
+            name: getPublicDisplayName(series.guide),
+            bio: series.guide.bio,
+            profile: series.guide.profile,
           }
         : null,
       recordings: publicRecordings,
@@ -74,9 +73,8 @@ export async function GET(
       discountedPrice,
       savings: totalValue - discountedPrice,
       totalDuration,
-      hasAccess: hasAccess || isContributor,
-      isSubscriber,
-      isContributor,
+      hasAccess: hasAccess || isGuide,
+      isGuide,
       access: undefined, // Don't expose access list
     });
   } catch (error) {
@@ -167,7 +165,7 @@ export async function PUT(
         .eq("seriesId", id);
 
       if (recordingIds.length > 0) {
-        // Verify all recordings belong to this contributor
+        // Verify all recordings belong to this guide
         const { data: recordings, error: recError } = await supabase
           .from("Recording")
           .select("id")

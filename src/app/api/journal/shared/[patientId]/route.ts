@@ -8,7 +8,7 @@ export async function GET(
   { params }: { params: Promise<{ patientId: string }> }
 ) {
   try {
-    const { patientId } = await params;
+    const { patientId: seekerId } = await params;
 
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -17,18 +17,18 @@ export async function GET(
 
     const userId = (session.user as Record<string, string>).id;
 
-    // Verify the contributor has an explicit journal share grant from this patient
+    // Verify the guide has an explicit journal share grant from this seeker
     const { data: shareGrant } = await supabase
       .from("JournalShare")
       .select("id")
-      .eq("patientId", patientId)
+      .eq("patientId", seekerId)
       .eq("contributorId", userId)
       .limit(1)
       .maybeSingle();
 
     if (!shareGrant) {
       return NextResponse.json(
-        { error: "This patient has not shared their journal with you" },
+        { error: "This seeker has not shared their journal with you" },
         { status: 403 }
       );
     }
@@ -39,7 +39,7 @@ export async function GET(
     let query = supabase
       .from("JournalEntry")
       .select("*")
-      .eq("patientId", patientId)
+      .eq("patientId", seekerId)
       .eq("isShared", true)
       .order("createdAt", { ascending: false });
 

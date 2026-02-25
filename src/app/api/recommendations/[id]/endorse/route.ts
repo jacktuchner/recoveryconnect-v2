@@ -20,7 +20,7 @@ export async function POST(
     const userRole = (session.user as any).role;
 
     if (userRole !== "GUIDE" && userRole !== "BOTH" && userRole !== "ADMIN") {
-      return NextResponse.json({ error: "Only contributors can endorse recommendations" }, { status: 403 });
+      return NextResponse.json({ error: "Only guides can endorse recommendations" }, { status: 403 });
     }
 
     // Verify recommendation exists

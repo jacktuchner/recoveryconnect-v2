@@ -7,7 +7,7 @@ import VerifiedBadge from "@/components/VerifiedBadge";
 interface RecordingCardProps {
   id: string;
   title: string;
-  contributorName: string;
+  guideName: string;
   procedureType: string;
   ageRange: string;
   activityLevel: string;
@@ -18,7 +18,7 @@ interface RecordingCardProps {
   averageRating?: number;
   matchScore?: number;
   matchBreakdown?: { attribute: string; matched: boolean; weight: number }[];
-  contributorVerified?: boolean;
+  guideVerified?: boolean;
 }
 
 const categoryLabels: Record<string, string> = {
@@ -83,9 +83,9 @@ function MatchScoreTooltip({ breakdown }: { breakdown: { attribute: string; matc
 }
 
 export default function RecordingCard({
-  id, title, contributorName, procedureType, ageRange, activityLevel,
+  id, title, guideName, procedureType, ageRange, activityLevel,
   category, durationSeconds, isVideo, viewCount, averageRating, matchScore, matchBreakdown,
-  contributorVerified,
+  guideVerified,
 }: RecordingCardProps) {
   return (
     <Link href={`/recordings/${id}`} className="block group h-full">
@@ -125,8 +125,8 @@ export default function RecordingCard({
             {title}
           </h3>
           <div className="flex items-center gap-1.5 mb-3">
-            <p className="text-sm text-gray-500">{contributorName}</p>
-            {contributorVerified && <VerifiedBadge />}
+            <p className="text-sm text-gray-500">{guideName}</p>
+            {guideVerified && <VerifiedBadge />}
           </div>
 
           <div className="flex flex-wrap gap-1.5 mb-3 min-h-[3.25rem]">

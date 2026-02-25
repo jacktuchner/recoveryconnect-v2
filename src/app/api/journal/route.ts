@@ -115,18 +115,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Non-subscribers cannot share entries
-    let shareFlag = isShared || false;
-    if (shareFlag) {
-      const { data: user } = await supabase
-        .from("User")
-        .select("subscriptionStatus")
-        .eq("id", userId)
-        .single();
-      if (user?.subscriptionStatus !== "active") {
-        shareFlag = false;
-      }
-    }
+    const shareFlag = isShared || false;
 
     // Compute recoveryWeek from surgeryDate (skip for chronic pain)
     let recoveryWeek: number | null = null;

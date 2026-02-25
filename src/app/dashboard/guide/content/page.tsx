@@ -8,7 +8,7 @@ import SeriesSection from "@/components/guide/SeriesSection";
 import GroupSessionsSection from "@/components/guide/GroupSessionsSection";
 import RecommendationsSection from "@/components/guide/RecommendationsSection";
 
-export default function ContributorContentPage() {
+export default function GuideContentPage() {
   const { data: session } = useSession();
   const [recordings, setRecordings] = useState<any[]>([]);
   const [series, setSeries] = useState<any[]>([]);
@@ -93,13 +93,13 @@ export default function ContributorContentPage() {
 
       <GroupSessionsSection
         sessions={groupSessions}
-        contributorProcedures={profile?.procedureTypes || []}
+        guideProcedures={profile?.procedureTypes || []}
         onSessionsUpdate={setGroupSessions}
       />
 
       <RecommendationsSection
         recommendations={recommendations}
-        contributorProcedures={profile?.procedureTypes || []}
+        guideProcedures={profile?.procedureTypes || []}
         onRecommendationsUpdate={setRecommendations}
       />
     </>

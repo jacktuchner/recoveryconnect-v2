@@ -9,7 +9,7 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Kizu - Recovery Guidance from People Who've Been There",
   description:
-    "Connect with past surgery patients who match your profile. Access recorded recovery stories and book live video calls for personalized guidance.",
+    "Connect with recovery guides who match your profile. Access recorded recovery stories and book live video calls for personalized guidance.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

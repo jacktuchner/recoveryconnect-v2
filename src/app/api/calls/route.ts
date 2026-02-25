@@ -17,7 +17,7 @@ export async function GET() {
 
     const { data: calls, error } = await supabase
       .from("Call")
-      .select("*, patient:User!Call_patientId_fkey(*), contributor:User!Call_contributorId_fkey(*, profile:Profile(*)), reviews:Review(*)")
+      .select("*, seeker:User!Call_patientId_fkey(*), guide:User!Call_contributorId_fkey(*, profile:Profile(*)), reviews:Review(*)")
       .or(`patientId.eq.${userId},contributorId.eq.${userId}`)
       .order("scheduledAt", { ascending: false });
 
@@ -52,20 +52,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { data: contributor, error: contribError } = await supabase
+    const { data: guide, error: contribError } = await supabase
       .from("User")
       .select("*, profile:Profile(*)")
       .eq("id", contributorId)
       .single();
 
-    if (contribError || !contributor?.profile?.isAvailableForCalls) {
+    if (contribError || !guide?.profile?.isAvailableForCalls) {
       return NextResponse.json(
         { error: "This guide is not available for calls" },
         { status: 400 }
       );
     }
 
-    const rate = contributor.profile.hourlyRate || 50;
+    const rate = guide.profile.hourlyRate || 50;
     const duration = durationMinutes || 30;
     const price = duration === 60 ? rate : rate / 2;
     const platformFee = price * (PLATFORM_FEE_PERCENT / 100);
@@ -87,17 +87,17 @@ export async function POST(req: NextRequest) {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       })
-      .select("*, patient:User!Call_patientId_fkey(*), contributor:User!Call_contributorId_fkey(*, profile:Profile(*))")
+      .select("*, seeker:User!Call_patientId_fkey(*), guide:User!Call_contributorId_fkey(*, profile:Profile(*))")
       .single();
 
     if (error) throw error;
 
-    // Send email notification to contributor
-    if (call.contributor?.email) {
+    // Send email notification to guide
+    if (call.guide?.email) {
       sendCallBookedEmail(
-        call.contributor.email,
-        call.contributor.name || "Guide",
-        call.patient?.name || "A seeker",
+        call.guide.email,
+        call.guide.name || "Guide",
+        call.seeker?.name || "A seeker",
         new Date(call.scheduledAt),
         call.durationMinutes,
         call.questionsInAdvance

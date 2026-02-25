@@ -18,7 +18,7 @@ interface Recommendation {
   hasVoted: boolean;
   endorsements: {
     id: string;
-    contributor: { id: string; name: string; image?: string };
+    guide: { id: string; name: string; image?: string };
   }[];
 }
 
@@ -29,7 +29,7 @@ interface PaginationInfo {
 }
 
 export default function RecommendationsPage() {
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [pagination, setPagination] = useState<PaginationInfo>({ page: 1, total: 0, totalPages: 0 });
   const [loading, setLoading] = useState(true);
@@ -38,11 +38,6 @@ export default function RecommendationsPage() {
   const [procedure, setProcedure] = useState("");
   const [category, setCategory] = useState("");
   const [sort, setSort] = useState("most_recommended");
-
-  const userRole = (session?.user as any)?.role;
-  const isContributor = userRole === "GUIDE" || userRole === "BOTH" || userRole === "ADMIN";
-  const isSubscriber = (session?.user as any)?.subscriptionStatus === "active";
-  const hasAccess = isContributor || isSubscriber;
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
 
@@ -113,27 +108,7 @@ export default function RecommendationsPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Subscription gate */}
-        {status !== "loading" && !hasAccess && (
-          <div className="text-center py-16">
-            <svg className="w-16 h-16 text-teal-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">Subscriber-Only Feature</h3>
-            <p className="text-gray-500 mb-6 max-w-md mx-auto">
-              Recovery recommendations from mentors are available exclusively to subscribers.
-              Get unlimited access to recommendations, recordings, and more.
-            </p>
-            <Link
-              href="/how-it-works#pricing"
-              className="bg-teal-600 text-white px-6 py-3 rounded-lg hover:bg-teal-700 font-medium inline-block"
-            >
-              View Subscription Plans
-            </Link>
-          </div>
-        )}
-
-        {hasAccess && <>
+        <>
         {/* Filters */}
         <div className="flex flex-wrap gap-4 mb-8">
           <select
@@ -297,7 +272,7 @@ export default function RecommendationsPage() {
             )}
           </>
         )}
-        </>}
+        </>
       </div>
     </div>
   );

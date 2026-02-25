@@ -15,9 +15,9 @@ function CheckIcon({ className }: { className?: string }) {
 export default function HowItWorksPage() {
   const { data: session } = useSession();
   const userRole = (session?.user as any)?.role;
-  const isContributorRole = userRole === "GUIDE" || userRole === "BOTH" || userRole === "ADMIN";
-  const defaultTab = isContributorRole ? "contributor" : "patient";
-  const [activeTab, setActiveTab] = useState<"patient" | "contributor">(defaultTab);
+  const isGuideRole = userRole === "GUIDE" || userRole === "BOTH" || userRole === "ADMIN";
+  const defaultTab = isGuideRole ? "guide" : "seeker";
+  const [activeTab, setActiveTab] = useState<"seeker" | "guide">(defaultTab);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -28,7 +28,7 @@ export default function HowItWorksPage() {
             How Kizu Works
           </h1>
           <p className="text-lg sm:text-xl text-teal-100 max-w-2xl mx-auto">
-            {activeTab === "patient"
+            {activeTab === "seeker"
               ? "Get matched with real people who\u2019ve been through the same thing. Learn from their experience through recordings or live calls."
               : "Sharing your story is powerful — for you and for others. Many guides find it deeply meaningful. Set your own prices and schedule."}
           </p>
@@ -40,9 +40,9 @@ export default function HowItWorksPage() {
         <div className="flex justify-center">
           <div className="inline-flex bg-gray-200 rounded-lg p-1">
             <button
-              onClick={() => setActiveTab("patient")}
+              onClick={() => setActiveTab("seeker")}
               className={`px-6 py-2.5 rounded-md text-sm font-medium transition-colors ${
-                activeTab === "patient"
+                activeTab === "seeker"
                   ? "bg-white text-teal-700 shadow-sm"
                   : "text-gray-600 hover:text-gray-900"
               }`}
@@ -50,9 +50,9 @@ export default function HowItWorksPage() {
               For Seekers
             </button>
             <button
-              onClick={() => setActiveTab("contributor")}
+              onClick={() => setActiveTab("guide")}
               className={`px-6 py-2.5 rounded-md text-sm font-medium transition-colors ${
-                activeTab === "contributor"
+                activeTab === "guide"
                   ? "bg-white text-teal-700 shadow-sm"
                   : "text-gray-600 hover:text-gray-900"
               }`}
@@ -63,8 +63,8 @@ export default function HowItWorksPage() {
         </div>
       </div>
 
-      {/* ==================== PATIENT TAB ==================== */}
-      {activeTab === "patient" && (
+      {/* ==================== SEEKER TAB ==================== */}
+      {activeTab === "seeker" && (
         <>
           {/* 3-Step Flow */}
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
@@ -301,7 +301,7 @@ export default function HowItWorksPage() {
             </div>
           </div>
 
-          {/* Patient FAQ */}
+          {/* Seeker FAQ */}
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
             <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
               Common Questions
@@ -346,7 +346,7 @@ export default function HowItWorksPage() {
             </div>
           </div>
 
-          {/* Patient CTA */}
+          {/* Seeker CTA */}
           <div className="bg-gradient-to-br from-teal-600 to-cyan-700 text-white py-16">
             <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
               <h2 className="text-3xl font-bold mb-4">Ready to Get Started?</h2>
@@ -393,8 +393,8 @@ export default function HowItWorksPage() {
         </>
       )}
 
-      {/* ==================== CONTRIBUTOR TAB ==================== */}
-      {activeTab === "contributor" && (
+      {/* ==================== GUIDE TAB ==================== */}
+      {activeTab === "guide" && (
         <>
           {/* 3-Step Flow */}
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
@@ -587,7 +587,7 @@ export default function HowItWorksPage() {
             </div>
           </div>
 
-          {/* Contributor FAQ */}
+          {/* Guide FAQ */}
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
             <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
               Guide FAQ
@@ -640,17 +640,17 @@ export default function HowItWorksPage() {
             </div>
           </div>
 
-          {/* Contributor CTA */}
+          {/* Guide CTA */}
           <div className="bg-gradient-to-br from-teal-600 to-cyan-700 text-white py-16">
             <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
               <h2 className="text-3xl font-bold mb-4">Ready to Share Your Story?</h2>
               <p className="text-lg text-teal-100 mb-8">
-                {isContributorRole
+                {isGuideRole
                   ? "Head to your guide dashboard to start recording, set up calls, and manage your profile."
                   : "Your experience matters — to others and to you. Many guides say sharing their story helps them process their own recovery."}
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                {isContributorRole ? (
+                {isGuideRole ? (
                   <Link
                     href="/dashboard/guide"
                     className="inline-flex items-center justify-center gap-2 bg-white text-teal-700 px-8 py-3 rounded-lg font-semibold hover:bg-teal-50 transition-colors"

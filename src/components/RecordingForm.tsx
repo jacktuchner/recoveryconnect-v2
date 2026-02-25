@@ -29,7 +29,7 @@ export default function RecordingForm({ onSuccess, onCancel }: RecordingFormProp
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // For contributors with multiple procedures
+  // For guides with multiple procedures
   const [procedureTypes, setProcedureTypes] = useState<string[]>([]);
   const [selectedProcedure, setSelectedProcedure] = useState<string>("");
   const [procedureProfiles, setProcedureProfiles] = useState<Record<string, any>>({});
@@ -54,7 +54,7 @@ export default function RecordingForm({ onSuccess, onCancel }: RecordingFormProp
     isVideo: false,
   });
 
-  // Fetch contributor's procedures on mount
+  // Fetch guide's procedures on mount
   useEffect(() => {
     async function loadProfile() {
       try {
@@ -195,7 +195,7 @@ export default function RecordingForm({ onSuccess, onCancel }: RecordingFormProp
           faqPromptId: selectedPrompt?.id || null,
           transcription: transcript || null,
           transcriptionStatus: transcript ? "COMPLETED" : "NONE",
-          procedureType: selectedProcedure || undefined, // Override if contributor selected a specific procedure
+          procedureType: selectedProcedure || undefined, // Override if guide selected a specific procedure
           timeSinceSurgery: timeSinceSurgery || undefined,
         }),
       });
@@ -245,7 +245,7 @@ export default function RecordingForm({ onSuccess, onCancel }: RecordingFormProp
       {/* Step 1: Select prompt */}
       {step === "select-prompt" && (
         <div>
-          {/* Procedure selector — shown first when contributor has multiple procedures */}
+          {/* Procedure selector — shown first when guide has multiple procedures */}
           {procedureTypes.length > 1 && (
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -341,7 +341,7 @@ export default function RecordingForm({ onSuccess, onCancel }: RecordingFormProp
             </div>
           )}
 
-          {/* Procedure selector for contributors with multiple procedures */}
+          {/* Procedure selector for guides with multiple procedures */}
           {procedureTypes.length > 1 && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">

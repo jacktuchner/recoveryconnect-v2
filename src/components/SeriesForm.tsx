@@ -35,14 +35,14 @@ export default function SeriesForm({ initialData, onSuccess, onCancel }: SeriesF
     initialData?.recordingIds || []
   );
   const [availableRecordings, setAvailableRecordings] = useState<Recording[]>([]);
-  const [contributorProcedures, setContributorProcedures] = useState<string[]>([]);
+  const [guideProcedures, setGuideProcedures] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const isEditing = !!initialData?.id;
 
-  // Fetch contributor's recordings and profile
+  // Fetch guide's recordings and profile
   useEffect(() => {
     async function loadData() {
       try {
@@ -63,7 +63,7 @@ export default function SeriesForm({ initialData, onSuccess, onCancel }: SeriesF
             : profile?.procedureType
               ? [profile.procedureType]
               : [];
-          setContributorProcedures(procedures);
+          setGuideProcedures(procedures);
         }
       } catch (err) {
         console.error("Failed to load data:", err);
@@ -182,7 +182,7 @@ export default function SeriesForm({ initialData, onSuccess, onCancel }: SeriesF
             onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             rows={3}
-            placeholder="Describe what patients will learn from this series..."
+            placeholder="Describe what seekers will learn from this series..."
           />
         </div>
 
@@ -201,8 +201,8 @@ export default function SeriesForm({ initialData, onSuccess, onCancel }: SeriesF
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
           >
             <option value="">Select...</option>
-            {(contributorProcedures.length > 0
-              ? contributorProcedures
+            {(guideProcedures.length > 0
+              ? guideProcedures
               : [...(PROCEDURE_TYPES as unknown as string[]), ...(CHRONIC_PAIN_CONDITIONS as unknown as string[])]
             ).map((p) => (
               <option key={p} value={p}>

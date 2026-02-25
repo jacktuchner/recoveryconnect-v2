@@ -31,7 +31,7 @@ export async function GET() {
       .from("User")
       .select("*", { count: "exact", head: true });
 
-    const { count: totalContributors } = await supabase
+    const { count: totalGuides } = await supabase
       .from("User")
       .select("*", { count: "exact", head: true })
       .in("role", ["GUIDE", "BOTH"]);
@@ -51,7 +51,7 @@ export async function GET() {
       pendingRecordings: pendingRecordings || 0,
       publishedRecordings: publishedRecordings || 0,
       totalUsers: totalUsers || 0,
-      totalContributors: totalContributors || 0,
+      totalGuides: totalGuides || 0,
       pendingReports: pendingReports || 0,
       totalCalls: totalCalls || 0,
     });

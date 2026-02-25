@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
     const { data: dayBeforeCalls, error: dayError } = await supabase
       .from("Call")
       .select(
-        "*, patient:User!Call_patientId_fkey(id, name, email), contributor:User!Call_contributorId_fkey(id, name, email)"
+        "*, seeker:User!Call_patientId_fkey(id, name, email), guide:User!Call_contributorId_fkey(id, name, email)"
       )
       .in("status", ["CONFIRMED"])
       .gte("scheduledAt", dayReminderStart.toISOString())
@@ -48,7 +48,7 @@ export async function GET(req: NextRequest) {
     const { data: hourBeforeCalls, error: hourError } = await supabase
       .from("Call")
       .select(
-        "*, patient:User!Call_patientId_fkey(id, name, email), contributor:User!Call_contributorId_fkey(id, name, email)"
+        "*, seeker:User!Call_patientId_fkey(id, name, email), guide:User!Call_contributorId_fkey(id, name, email)"
       )
       .in("status", ["CONFIRMED"])
       .gte("scheduledAt", hourReminderStart.toISOString())
@@ -63,28 +63,28 @@ export async function GET(req: NextRequest) {
     if (dayBeforeCalls && dayBeforeCalls.length > 0) {
       for (const call of dayBeforeCalls) {
         try {
-          // Send to patient
-          if (call.patient?.email) {
+          // Send to seeker
+          if (call.seeker?.email) {
             await sendCallReminderEmail(
-              call.patient.email,
-              call.patient.name || "Patient",
-              call.contributor?.name || "Your mentor",
+              call.seeker.email,
+              call.seeker.name || "Seeker",
+              call.guide?.name || "Your mentor",
               new Date(call.scheduledAt),
               call.durationMinutes,
-              false, // isContributor
+              false, // isGuide
               "day"
             );
           }
 
-          // Send to contributor
-          if (call.contributor?.email) {
+          // Send to guide
+          if (call.guide?.email) {
             await sendCallReminderEmail(
-              call.contributor.email,
-              call.contributor.name || "Contributor",
-              call.patient?.name || "Your patient",
+              call.guide.email,
+              call.guide.name || "Guide",
+              call.seeker?.name || "Your seeker",
               new Date(call.scheduledAt),
               call.durationMinutes,
-              true, // isContributor
+              true, // isGuide
               "day"
             );
           }
@@ -110,28 +110,28 @@ export async function GET(req: NextRequest) {
     if (hourBeforeCalls && hourBeforeCalls.length > 0) {
       for (const call of hourBeforeCalls) {
         try {
-          // Send to patient
-          if (call.patient?.email) {
+          // Send to seeker
+          if (call.seeker?.email) {
             await sendCallReminderEmail(
-              call.patient.email,
-              call.patient.name || "Patient",
-              call.contributor?.name || "Your mentor",
+              call.seeker.email,
+              call.seeker.name || "Seeker",
+              call.guide?.name || "Your mentor",
               new Date(call.scheduledAt),
               call.durationMinutes,
-              false, // isContributor
+              false, // isGuide
               "hour"
             );
           }
 
-          // Send to contributor
-          if (call.contributor?.email) {
+          // Send to guide
+          if (call.guide?.email) {
             await sendCallReminderEmail(
-              call.contributor.email,
-              call.contributor.name || "Contributor",
-              call.patient?.name || "Your patient",
+              call.guide.email,
+              call.guide.name || "Guide",
+              call.seeker?.name || "Your seeker",
               new Date(call.scheduledAt),
               call.durationMinutes,
-              true, // isContributor
+              true, // isGuide
               "hour"
             );
           }

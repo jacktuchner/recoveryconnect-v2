@@ -58,14 +58,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ status: "already_created", callId });
     }
 
-    // Get contributor info for pricing
-    const { data: contributor, error: contribError } = await supabase
+    // Get guide info for pricing
+    const { data: guide, error: contribError } = await supabase
       .from("User")
       .select("*, profile:Profile(*)")
       .eq("id", contributorId)
       .single();
 
-    if (contribError || !contributor?.profile) {
+    if (contribError || !guide?.profile) {
       return NextResponse.json({ error: "Guide not found" }, { status: 404 });
     }
 
@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
       status: "COMPLETED",
       stripePaymentId: checkoutSession.payment_intent as string,
       stripeSessionId: checkoutSession.id,
-      metadata: { contributorId, callId, description: `${duration}-min call with ${contributor.name || "Guide"}` },
+      metadata: { contributorId, callId, description: `${duration}-min call with ${guide.name || "Guide"}` },
       createdAt: new Date().toISOString(),
     });
 
@@ -144,10 +144,10 @@ export async function POST(req: NextRequest) {
       .single();
 
     // Notification email to guide
-    if (contributor.email) {
+    if (guide.email) {
       sendCallBookedEmail(
-        contributor.email,
-        contributor.name || "Guide",
+        guide.email,
+        guide.name || "Guide",
         seeker?.name || "A seeker",
         new Date(scheduledAt),
         duration,
@@ -161,7 +161,7 @@ export async function POST(req: NextRequest) {
       sendCallBookedEmail(
         seeker.email,
         seeker.name || "there",
-        contributor.name || "your guide",
+        guide.name || "your guide",
         new Date(scheduledAt),
         duration,
         undefined,

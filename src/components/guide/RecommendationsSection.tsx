@@ -10,10 +10,10 @@ import {
 
 interface Endorsement {
   id: string;
-  contributorId: string;
+  guideId: string;
   comment?: string;
   recoveryPhase?: string;
-  contributor: { id: string; name: string; image?: string };
+  guide: { id: string; name: string; image?: string };
 }
 
 interface Recommendation {
@@ -32,13 +32,13 @@ interface Recommendation {
 
 interface Props {
   recommendations: Recommendation[];
-  contributorProcedures: string[];
+  guideProcedures: string[];
   onRecommendationsUpdate: (recs: Recommendation[]) => void;
 }
 
 const RECOVERY_PHASES = ["Pre-surgery", "0-2 weeks", "2-6 weeks", "6-12 weeks", "3-6 months", "6-12 months", "1+ year"];
 
-export default function RecommendationsSection({ recommendations, contributorProcedures, onRecommendationsUpdate }: Props) {
+export default function RecommendationsSection({ recommendations, guideProcedures, onRecommendationsUpdate }: Props) {
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +47,7 @@ export default function RecommendationsSection({ recommendations, contributorPro
   const [form, setForm] = useState({
     name: "",
     category: "RECOVERY_PRODUCT",
-    procedureType: contributorProcedures[0] || "",
+    procedureType: guideProcedures[0] || "",
     description: "",
     location: "",
     url: "",
@@ -141,7 +141,7 @@ export default function RecommendationsSection({ recommendations, contributorPro
       setForm({
         name: "",
         category: "RECOVERY_PRODUCT",
-        procedureType: contributorProcedures[0] || "",
+        procedureType: guideProcedures[0] || "",
         description: "",
         location: "",
         url: "",
@@ -267,7 +267,7 @@ export default function RecommendationsSection({ recommendations, contributorPro
                 onChange={(e) => setForm((f) => ({ ...f, procedureType: e.target.value }))}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
               >
-                {(contributorProcedures.length > 0 ? contributorProcedures : PROCEDURE_TYPES as unknown as string[]).map((p) => (
+                {(guideProcedures.length > 0 ? guideProcedures : PROCEDURE_TYPES as unknown as string[]).map((p) => (
                   <option key={p} value={p}>{p}</option>
                 ))}
               </select>

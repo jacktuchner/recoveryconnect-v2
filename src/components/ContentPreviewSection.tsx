@@ -15,7 +15,7 @@ interface FeaturedRecording {
   durationSeconds?: number;
   isVideo: boolean;
   viewCount: number;
-  contributor?: {
+  guide?: {
     id: string;
     name: string;
   };
@@ -69,7 +69,7 @@ function PreviewCard({ recording }: { recording: FeaturedRecording }) {
             {recording.title}
           </h3>
           <p className="text-xs text-gray-500 mb-2">
-            {recording.contributor?.name || "Anonymous"}
+            {recording.guide?.name || "Anonymous"}
           </p>
           <div className="flex flex-wrap gap-1">
             <span className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">

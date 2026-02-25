@@ -18,18 +18,11 @@ export async function GET(req: NextRequest) {
 
     const session = await getServerSession(authOptions);
     const userId = session?.user ? (session.user as Record<string, string>).id : null;
-    const userRole = (session?.user as any)?.role;
-    const isContributor = userRole === "GUIDE" || userRole === "BOTH" || userRole === "ADMIN";
-    const isSubscriber = (session?.user as any)?.subscriptionStatus === "active";
-
-    if (!isContributor && !isSubscriber) {
-      return NextResponse.json({ error: "Subscription required" }, { status: 403 });
-    }
 
     let query = supabase
       .from("Recommendation")
       .select(
-        "*, endorsements:RecommendationEndorsement(id, contributorId, comment, recoveryPhase, contributor:User!RecommendationEndorsement_contributorId_fkey(id, name, image))",
+        "*, endorsements:RecommendationEndorsement(id, contributorId, comment, recoveryPhase, guide:User!RecommendationEndorsement_contributorId_fkey(id, name, image))",
         { count: "exact" }
       )
       .eq("status", "ACTIVE");
@@ -106,7 +99,7 @@ export async function POST(req: NextRequest) {
     const userRole = (session.user as any).role;
 
     if (userRole !== "GUIDE" && userRole !== "BOTH" && userRole !== "ADMIN") {
-      return NextResponse.json({ error: "Only contributors can add recommendations" }, { status: 403 });
+      return NextResponse.json({ error: "Only guides can add recommendations" }, { status: 403 });
     }
 
     const body = await req.json();
@@ -134,7 +127,7 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (existing) {
-      // Check if contributor already endorsed
+      // Check if guide already endorsed
       const { data: existingEndorsement } = await supabase
         .from("RecommendationEndorsement")
         .select("id")
@@ -176,7 +169,7 @@ export async function POST(req: NextRequest) {
       // Return the updated recommendation
       const { data: updated } = await supabase
         .from("Recommendation")
-        .select("*, endorsements:RecommendationEndorsement(id, contributorId, comment, recoveryPhase, contributor:User!RecommendationEndorsement_contributorId_fkey(id, name, image))")
+        .select("*, endorsements:RecommendationEndorsement(id, contributorId, comment, recoveryPhase, guide:User!RecommendationEndorsement_contributorId_fkey(id, name, image))")
         .eq("id", existing.id)
         .single();
 
@@ -225,7 +218,7 @@ export async function POST(req: NextRequest) {
 
     const { data: created } = await supabase
       .from("Recommendation")
-      .select("*, endorsements:RecommendationEndorsement(id, contributorId, comment, recoveryPhase, contributor:User!RecommendationEndorsement_contributorId_fkey(id, name, image))")
+      .select("*, endorsements:RecommendationEndorsement(id, contributorId, comment, recoveryPhase, guide:User!RecommendationEndorsement_contributorId_fkey(id, name, image))")
       .eq("id", recId)
       .single();
 
