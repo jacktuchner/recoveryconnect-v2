@@ -441,6 +441,7 @@ function WatchContent() {
                       category={rec.category}
                       durationSeconds={rec.durationSeconds}
                       isVideo={rec.isVideo}
+                      thumbnailUrl={rec.thumbnailUrl}
                       viewCount={rec.viewCount}
                       averageRating={
                         rec.reviews?.length

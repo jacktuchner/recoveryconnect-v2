@@ -2,6 +2,8 @@
 
 import { useState, useCallback, useEffect } from "react";
 import VoiceRecorder from "./VoiceRecorder";
+import VideoRecorder from "./VideoRecorder";
+import ThumbnailSelector from "./ThumbnailSelector";
 import FaqPromptSelector from "./FaqPromptSelector";
 import { getTimeSinceSurgery, getTimeSinceSurgeryLabel, getTimeSinceDiagnosisLabel } from "@/lib/surgeryDate";
 import { isChronicPainCondition, getRecordingCategoriesForCondition } from "@/lib/constants";
@@ -17,7 +19,7 @@ interface RecordingFormProps {
   onCancel: () => void;
 }
 
-type Step = "select-prompt" | "record" | "details" | "uploading";
+type Step = "select-prompt" | "record" | "choose-thumbnail" | "details" | "uploading";
 
 export default function RecordingForm({ onSuccess, onCancel }: RecordingFormProps) {
   const [step, setStep] = useState<Step>("select-prompt");
@@ -28,6 +30,8 @@ export default function RecordingForm({ onSuccess, onCancel }: RecordingFormProp
   const [transcript, setTranscript] = useState<string>("");
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mediaMode, setMediaMode] = useState<"video" | "audio">("video");
+  const [thumbnailBlob, setThumbnailBlob] = useState<Blob | null>(null);
 
   // For guides with multiple procedures
   const [procedureTypes, setProcedureTypes] = useState<string[]>([]);
@@ -51,8 +55,23 @@ export default function RecordingForm({ onSuccess, onCancel }: RecordingFormProp
   const [form, setForm] = useState({
     title: "",
     description: "",
-    isVideo: false,
   });
+
+  const isVideo = mediaMode === "video";
+  const totalSteps = isVideo ? 4 : 3;
+
+  const getStepNumber = (s: Step): number => {
+    switch (s) {
+      case "select-prompt": return 1;
+      case "record": return 2;
+      case "choose-thumbnail": return 3;
+      case "details": return isVideo ? 4 : 3;
+      case "uploading": return isVideo ? 4 : 3;
+      default: return 1;
+    }
+  };
+
+  const currentStepNumber = getStepNumber(step);
 
   // Fetch guide's procedures on mount
   useEffect(() => {
@@ -121,6 +140,15 @@ export default function RecordingForm({ onSuccess, onCancel }: RecordingFormProp
     setRecordedBlob(blob);
     setDurationSeconds(duration);
     setTranscript(transcriptText || "");
+    if (mediaMode === "video") {
+      setStep("choose-thumbnail");
+    } else {
+      setStep("details");
+    }
+  }, [mediaMode]);
+
+  const handleThumbnailSelected = useCallback((blob: Blob) => {
+    setThumbnailBlob(blob);
     setStep("details");
   }, []);
 
@@ -128,13 +156,20 @@ export default function RecordingForm({ onSuccess, onCancel }: RecordingFormProp
     setRecordedBlob(null);
     setDurationSeconds(0);
     setTranscript("");
+    setThumbnailBlob(null);
     setStep("record");
+  }, []);
+
+  const handleBackToThumbnail = useCallback(() => {
+    setThumbnailBlob(null);
+    setStep("choose-thumbnail");
   }, []);
 
   const handleBackToPrompts = useCallback(() => {
     setRecordedBlob(null);
     setDurationSeconds(0);
     setTranscript("");
+    setThumbnailBlob(null);
     setSelectedPrompt(null);
     setStep("select-prompt");
   }, []);
@@ -150,14 +185,42 @@ export default function RecordingForm({ onSuccess, onCancel }: RecordingFormProp
     setStep("uploading");
 
     try {
-      // Step 1: Get presigned URL
-      const filename = `recording-${Date.now()}.webm`;
+      // Step 1: Upload thumbnail if present
+      let thumbnailUrl: string | null = null;
+      if (thumbnailBlob) {
+        const thumbFilename = `thumbnail-${Date.now()}.jpg`;
+        const thumbPresignedRes = await fetch("/api/upload/presigned", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            filename: thumbFilename,
+            contentType: "image/jpeg",
+          }),
+        });
+
+        if (thumbPresignedRes.ok) {
+          const { uploadUrl: thumbUploadUrl, fileUrl: thumbFileUrl } = await thumbPresignedRes.json();
+          const thumbUploadRes = await fetch(thumbUploadUrl, {
+            method: "PUT",
+            body: thumbnailBlob,
+            headers: { "Content-Type": "image/jpeg" },
+          });
+          if (thumbUploadRes.ok) {
+            thumbnailUrl = thumbFileUrl;
+          }
+        }
+      }
+
+      // Step 2: Get presigned URL for recording
+      const ext = isVideo ? ".webm" : ".webm";
+      const filename = `recording-${Date.now()}${ext}`;
+      const contentType = recordedBlob.type || (isVideo ? "video/webm" : "audio/webm");
       const presignedRes = await fetch("/api/upload/presigned", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           filename,
-          contentType: recordedBlob.type || "audio/webm",
+          contentType,
         }),
       });
 
@@ -168,12 +231,12 @@ export default function RecordingForm({ onSuccess, onCancel }: RecordingFormProp
 
       const { uploadUrl, fileUrl } = await presignedRes.json();
 
-      // Step 2: Upload to S3
+      // Step 3: Upload to S3
       const uploadRes = await fetch(uploadUrl, {
         method: "PUT",
         body: recordedBlob,
         headers: {
-          "Content-Type": recordedBlob.type || "audio/webm",
+          "Content-Type": contentType,
         },
       });
 
@@ -181,7 +244,7 @@ export default function RecordingForm({ onSuccess, onCancel }: RecordingFormProp
         throw new Error("Failed to upload recording");
       }
 
-      // Step 3: Create recording in database (with browser transcript if available)
+      // Step 4: Create recording in database
       const recordingRes = await fetch("/api/recordings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -191,11 +254,12 @@ export default function RecordingForm({ onSuccess, onCancel }: RecordingFormProp
           category: selectedCategory,
           mediaUrl: fileUrl,
           durationSeconds,
-          isVideo: form.isVideo,
+          isVideo,
+          thumbnailUrl,
           faqPromptId: selectedPrompt?.id || null,
           transcription: transcript || null,
           transcriptionStatus: transcript ? "COMPLETED" : "NONE",
-          procedureType: selectedProcedure || undefined, // Override if guide selected a specific procedure
+          procedureType: selectedProcedure || undefined,
           timeSinceSurgery: timeSinceSurgery || undefined,
         }),
       });
@@ -222,17 +286,19 @@ export default function RecordingForm({ onSuccess, onCancel }: RecordingFormProp
       {/* Progress indicator */}
       <div className="flex items-center justify-center mb-6">
         <div className="flex items-center space-x-2">
-          <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-            step === "select-prompt" ? "bg-teal-600 text-white" : "bg-teal-100 text-teal-700"
-          }`}>1</span>
-          <div className="w-12 h-0.5 bg-gray-200" />
-          <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-            step === "record" ? "bg-teal-600 text-white" : step === "select-prompt" ? "bg-gray-200 text-gray-500" : "bg-teal-100 text-teal-700"
-          }`}>2</span>
-          <div className="w-12 h-0.5 bg-gray-200" />
-          <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-            step === "details" || step === "uploading" ? "bg-teal-600 text-white" : "bg-gray-200 text-gray-500"
-          }`}>3</span>
+          {Array.from({ length: totalSteps }, (_, i) => {
+            const stepNum = i + 1;
+            const isActive = stepNum === currentStepNumber;
+            const isCompleted = stepNum < currentStepNumber;
+            return (
+              <div key={stepNum} className="flex items-center space-x-2">
+                {i > 0 && <div className="w-12 h-0.5 bg-gray-200" />}
+                <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                  isActive ? "bg-teal-600 text-white" : isCompleted ? "bg-teal-100 text-teal-700" : "bg-gray-200 text-gray-500"
+                }`}>{stepNum}</span>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -245,6 +311,46 @@ export default function RecordingForm({ onSuccess, onCancel }: RecordingFormProp
       {/* Step 1: Select prompt */}
       {step === "select-prompt" && (
         <div>
+          {/* Video / Audio toggle */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Recording type
+            </label>
+            <div className="inline-flex rounded-lg border border-gray-200 p-0.5 bg-gray-100">
+              <button
+                onClick={() => setMediaMode("video")}
+                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                  mediaMode === "video"
+                    ? "bg-white text-teal-700 shadow-sm"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                <span className="flex items-center gap-1.5">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  Video
+                </span>
+              </button>
+              <button
+                onClick={() => setMediaMode("audio")}
+                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                  mediaMode === "audio"
+                    ? "bg-white text-teal-700 shadow-sm"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                <span className="flex items-center gap-1.5">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
+                    <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
+                  </svg>
+                  Audio
+                </span>
+              </button>
+            </div>
+          </div>
+
           {/* Procedure selector — shown first when guide has multiple procedures */}
           {procedureTypes.length > 1 && (
             <div className="mb-6">
@@ -297,7 +403,11 @@ export default function RecordingForm({ onSuccess, onCancel }: RecordingFormProp
             )}
           </div>
 
-          <VoiceRecorder onRecordingComplete={handleRecordingComplete} />
+          {mediaMode === "video" ? (
+            <VideoRecorder onRecordingComplete={handleRecordingComplete} />
+          ) : (
+            <VoiceRecorder onRecordingComplete={handleRecordingComplete} />
+          )}
 
           <div className="mt-6 flex justify-between">
             <button
@@ -316,7 +426,16 @@ export default function RecordingForm({ onSuccess, onCancel }: RecordingFormProp
         </div>
       )}
 
-      {/* Step 3: Details */}
+      {/* Step 3 (video only): Choose thumbnail */}
+      {step === "choose-thumbnail" && recordedBlob && (
+        <ThumbnailSelector
+          videoBlob={recordedBlob}
+          onThumbnailSelected={handleThumbnailSelected}
+          onBack={handleBackToRecord}
+        />
+      )}
+
+      {/* Step 3/4: Details */}
       {step === "details" && (
         <div className="space-y-5">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Recording Details</h3>
@@ -333,13 +452,62 @@ export default function RecordingForm({ onSuccess, onCancel }: RecordingFormProp
                   Re-record
                 </button>
               </div>
-              <audio
-                src={URL.createObjectURL(recordedBlob)}
-                controls
-                className="w-full"
+              {isVideo ? (
+                <video
+                  src={URL.createObjectURL(recordedBlob)}
+                  controls
+                  playsInline
+                  className="w-full rounded-lg"
+                />
+              ) : (
+                <audio
+                  src={URL.createObjectURL(recordedBlob)}
+                  controls
+                  className="w-full"
+                />
+              )}
+            </div>
+          )}
+
+          {/* Thumbnail preview (video only) */}
+          {isVideo && thumbnailBlob && (
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-gray-600">Thumbnail</span>
+                <button
+                  onClick={handleBackToThumbnail}
+                  className="text-sm text-teal-600 hover:text-teal-700 font-medium"
+                >
+                  Change
+                </button>
+              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={URL.createObjectURL(thumbnailBlob)}
+                alt="Selected thumbnail"
+                className="w-full max-w-xs rounded-lg"
               />
             </div>
           )}
+
+          {/* Media mode badge */}
+          <div>
+            <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${
+              isVideo ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"
+            }`}>
+              {isVideo ? (
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+              ) : (
+                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
+                  <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
+                </svg>
+              )}
+              {isVideo ? "Video recording" : "Audio recording"}
+            </span>
+          </div>
 
           {/* Procedure selector for guides with multiple procedures */}
           {procedureTypes.length > 1 && (
@@ -439,21 +607,9 @@ export default function RecordingForm({ onSuccess, onCancel }: RecordingFormProp
             )}
           </div>
 
-          <div>
-            <label className="flex items-center gap-2 text-sm text-gray-700">
-              <input
-                type="checkbox"
-                checked={form.isVideo}
-                onChange={(e) => setForm((f) => ({ ...f, isVideo: e.target.checked }))}
-                className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
-              />
-              This is a video recording
-            </label>
-          </div>
-
           <div className="flex justify-between pt-4">
             <button
-              onClick={handleBackToRecord}
+              onClick={isVideo ? handleBackToThumbnail : handleBackToRecord}
               className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800"
             >
               Back
@@ -477,7 +633,7 @@ export default function RecordingForm({ onSuccess, onCancel }: RecordingFormProp
         </div>
       )}
 
-      {/* Step 4: Uploading */}
+      {/* Uploading */}
       {step === "uploading" && (
         <div className="py-12 text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-teal-600 border-t-transparent mb-4" />

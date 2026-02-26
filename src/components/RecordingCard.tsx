@@ -14,6 +14,7 @@ interface RecordingCardProps {
   category: string;
   durationSeconds?: number | null;
   isVideo: boolean;
+  thumbnailUrl?: string | null;
   viewCount: number;
   averageRating?: number;
   matchScore?: number;
@@ -84,39 +85,81 @@ function MatchScoreTooltip({ breakdown }: { breakdown: { attribute: string; matc
 
 export default function RecordingCard({
   id, title, guideName, procedureType, ageRange, activityLevel,
-  category, durationSeconds, isVideo, viewCount, averageRating, matchScore, matchBreakdown,
+  category, durationSeconds, isVideo, thumbnailUrl, viewCount, averageRating, matchScore, matchBreakdown,
   guideVerified,
 }: RecordingCardProps) {
   return (
     <Link href={`/recordings/${id}`} className="block group h-full">
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-teal-200 transition-all h-full flex flex-col">
-        <div className="bg-gradient-to-br from-teal-50 to-cyan-50 p-4 relative">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full">
-              {isVideo ? "Video" : "Audio"}
-            </span>
-            {matchScore !== undefined && (
-              <div className="flex items-center">
-                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                  matchScore >= 80 ? "bg-green-100 text-green-700" :
-                  matchScore >= 60 ? "bg-yellow-100 text-yellow-700" :
-                  "bg-gray-100 text-gray-600"
-                }`}>
-                  {matchScore}% match
-                </span>
-                {matchBreakdown && <MatchScoreTooltip breakdown={matchBreakdown} />}
+        <div className="relative">
+          {isVideo && thumbnailUrl ? (
+            <div className="relative aspect-video bg-gray-900">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={thumbnailUrl}
+                alt=""
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-full bg-black/50 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                </div>
               </div>
-            )}
-          </div>
-          <div className="flex items-center justify-center h-16">
-            <svg className="w-12 h-12 text-teal-300 group-hover:text-teal-400 transition-colors" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M8 5v14l11-7z" />
-            </svg>
-          </div>
-          {durationSeconds && (
-            <span className="absolute bottom-2 right-2 text-xs bg-black/60 text-white px-1.5 py-0.5 rounded">
-              {formatDuration(durationSeconds)}
-            </span>
+              <div className="absolute top-2 left-2 flex items-center gap-1.5">
+                <span className="text-xs font-medium bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full">
+                  Video
+                </span>
+                {matchScore !== undefined && (
+                  <div className="flex items-center">
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                      matchScore >= 80 ? "bg-green-100 text-green-700" :
+                      matchScore >= 60 ? "bg-yellow-100 text-yellow-700" :
+                      "bg-gray-100 text-gray-600"
+                    }`}>
+                      {matchScore}% match
+                    </span>
+                    {matchBreakdown && <MatchScoreTooltip breakdown={matchBreakdown} />}
+                  </div>
+                )}
+              </div>
+              {durationSeconds && (
+                <span className="absolute bottom-2 right-2 text-xs bg-black/60 text-white px-1.5 py-0.5 rounded">
+                  {formatDuration(durationSeconds)}
+                </span>
+              )}
+            </div>
+          ) : (
+            <div className="bg-gradient-to-br from-teal-50 to-cyan-50 p-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full">
+                  {isVideo ? "Video" : "Audio"}
+                </span>
+                {matchScore !== undefined && (
+                  <div className="flex items-center">
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                      matchScore >= 80 ? "bg-green-100 text-green-700" :
+                      matchScore >= 60 ? "bg-yellow-100 text-yellow-700" :
+                      "bg-gray-100 text-gray-600"
+                    }`}>
+                      {matchScore}% match
+                    </span>
+                    {matchBreakdown && <MatchScoreTooltip breakdown={matchBreakdown} />}
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center justify-center h-16">
+                <svg className="w-12 h-12 text-teal-300 group-hover:text-teal-400 transition-colors" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              </div>
+              {durationSeconds && (
+                <span className="absolute bottom-2 right-2 text-xs bg-black/60 text-white px-1.5 py-0.5 rounded">
+                  {formatDuration(durationSeconds)}
+                </span>
+              )}
+            </div>
           )}
         </div>
 
