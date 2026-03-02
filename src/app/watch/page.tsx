@@ -269,24 +269,41 @@ function WatchContent() {
             </div>
           )}
 
-          {/* Looking for mentors CTA */}
-          <div className="mb-8 p-4 bg-cyan-50 border border-cyan-200 rounded-xl">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div>
-                <p className="font-medium text-cyan-900">Want to talk to someone live?</p>
-                <p className="text-sm text-cyan-700">Book a 1-on-1 video call with a recovery mentor.</p>
+          {/* Looking for guides CTA */}
+          {isGuideOnly ? (
+            <div className="mb-8 p-4 bg-gray-50 border border-gray-200 rounded-xl">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                  <p className="font-medium text-gray-900">Want to book a session?</p>
+                  <p className="text-sm text-gray-600">Add a health profile so we can match you with the right guide.</p>
+                </div>
+                <Link
+                  href="/dashboard/seeker"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium whitespace-nowrap"
+                >
+                  Set Up Health Profile
+                </Link>
               </div>
-              <Link
-                href="/guides"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors text-sm font-medium whitespace-nowrap"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-                Book a Mentor
-              </Link>
             </div>
-          </div>
+          ) : (
+            <div className="mb-8 p-4 bg-cyan-50 border border-cyan-200 rounded-xl">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                  <p className="font-medium text-cyan-900">Want to talk to someone live?</p>
+                  <p className="text-sm text-cyan-700">Book a 1-on-1 video call with a recovery guide.</p>
+                </div>
+                <Link
+                  href="/guides"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors text-sm font-medium whitespace-nowrap"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  Book a Guide
+                </Link>
+              </div>
+            </div>
+          )}
 
           {/* Search and Sort Bar */}
           <div className="flex flex-col sm:flex-row gap-4 mb-6">

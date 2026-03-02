@@ -49,7 +49,7 @@ export default function PrivacySettingsSection({ userName, initialSettings }: Pr
         {!privacySettings.showRealName && (
           <div className="ml-7">
             <label className="block text-sm font-medium text-gray-700 mb-1">Display Name</label>
-            <input type="text" value={privacySettings.displayName} onChange={(e) => setPrivacySettings((prev) => ({ ...prev, displayName: e.target.value }))} placeholder="e.g., RecoveryMentor22" className="w-full max-w-xs border border-gray-300 rounded-lg px-3 py-2 text-sm" maxLength={50} />
+            <input type="text" value={privacySettings.displayName} onChange={(e) => setPrivacySettings((prev) => ({ ...prev, displayName: e.target.value }))} placeholder="e.g., RecoveryGuide22" className="w-full max-w-xs border border-gray-300 rounded-lg px-3 py-2 text-sm" maxLength={50} />
             <p className="text-xs text-gray-500 mt-1">This name will be shown instead of your real name. Leave blank to show as &quot;{userName?.[0]}. (Anonymous)&quot;.</p>
           </div>
         )}

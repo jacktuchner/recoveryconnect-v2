@@ -81,7 +81,7 @@ export default function HomePage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold mb-2">Book a Live Mentor Call</h3>
+              <h3 className="text-xl font-bold mb-2">Book a Live Guide Call</h3>
               <p className="text-gray-600 mb-4">
                 Book a personal video call with someone who&apos;s been through the same thing.
                 Ask questions, get specific advice, feel supported.
@@ -101,7 +101,7 @@ export default function HomePage() {
                 href="/guides"
                 className="inline-flex items-center gap-2 text-cyan-700 font-semibold hover:text-cyan-800"
               >
-                Find a Mentor
+                Find a Guide
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>

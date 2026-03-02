@@ -66,7 +66,7 @@ export default function GroupSessionsPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-3xl md:text-4xl font-bold mb-3">Group Recovery Sessions</h1>
           <p className="text-teal-100 text-lg max-w-2xl">
-            Join live group sessions led by recovery mentors. Share experiences, ask questions, and connect
+            Join live group sessions led by recovery guides. Share experiences, ask questions, and connect
             with others going through the same procedure.
           </p>
         </div>
@@ -142,7 +142,7 @@ export default function GroupSessionsPage() {
                   <h3 className="font-semibold text-gray-900 mb-1">{s.title}</h3>
 
                   <p className="text-sm text-gray-500 mb-3">
-                    with {s.guide?.name || "Mentor"}
+                    with {s.guide?.name || "Guide"}
                   </p>
 
                   <div className="space-y-1.5 text-sm text-gray-600">

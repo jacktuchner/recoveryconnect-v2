@@ -122,7 +122,7 @@ export default function HowItWorksPage() {
                 <h3 className="text-xl font-bold text-gray-900 mb-3">Watch or Talk</h3>
                 <p className="text-gray-600">
                   Watch free recordings on your schedule, or book a live 1-on-1 video call
-                  for personalized advice and real-time Q&A with your mentor.
+                  for personalized advice and real-time Q&A with your guide.
                 </p>
               </div>
             </div>

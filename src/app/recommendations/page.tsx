@@ -102,7 +102,7 @@ export default function RecommendationsPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-3xl md:text-4xl font-bold mb-3">Recovery Recommendations</h1>
           <p className="text-teal-100 text-lg max-w-2xl">
-            Products, providers, and resources recommended by recovery mentors who&apos;ve been through the same procedure.
+            Products, providers, and resources recommended by recovery guides who&apos;ve been through the same procedure.
           </p>
         </div>
       </div>
@@ -172,7 +172,7 @@ export default function RecommendationsPage() {
             <p className="text-gray-500">
               {procedure || category || search
                 ? "Try adjusting your filters to see more results."
-                : "Check back soon for recommendations from recovery mentors."}
+                : "Check back soon for recommendations from recovery guides."}
             </p>
           </div>
         ) : (

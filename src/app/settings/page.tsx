@@ -187,7 +187,7 @@ export default function SettingsPage() {
                 <div>
                   <h2 className="text-lg font-semibold text-gray-900">Been through it?</h2>
                   <p className="text-sm text-gray-600 mt-1">
-                    Sharing your story helps others and can be deeply meaningful for you too. Many guides say it feels almost therapeutic. Become a guide to share your experience, recommend products, and mentor seekers who are just starting out.
+                    Sharing your story helps others and can be deeply meaningful for you too. Many guides say it feels almost therapeutic. Become a guide to share your experience, recommend products, and support seekers who are just starting out.
                   </p>
                 </div>
                 <div className="flex flex-col items-start sm:items-end gap-2">

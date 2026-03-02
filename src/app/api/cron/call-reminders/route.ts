@@ -68,7 +68,7 @@ export async function GET(req: NextRequest) {
             await sendCallReminderEmail(
               call.seeker.email,
               call.seeker.name || "Seeker",
-              call.guide?.name || "Your mentor",
+              call.guide?.name || "Your guide",
               new Date(call.scheduledAt),
               call.durationMinutes,
               false, // isGuide
@@ -115,7 +115,7 @@ export async function GET(req: NextRequest) {
             await sendCallReminderEmail(
               call.seeker.email,
               call.seeker.name || "Seeker",
-              call.guide?.name || "Your mentor",
+              call.guide?.name || "Your guide",
               new Date(call.scheduledAt),
               call.durationMinutes,
               false, // isGuide

@@ -211,7 +211,7 @@ export default function GroupSessionDetailPage() {
                 href={`/guides/${groupSession.guide?.id}`}
                 className="font-medium text-gray-900 hover:text-teal-600"
               >
-                {groupSession.guide?.name || "Mentor"}
+                {groupSession.guide?.name || "Guide"}
               </Link>
               {groupSession.guide?.bio && (
                 <p className="text-sm text-gray-500 line-clamp-1">{groupSession.guide.bio}</p>

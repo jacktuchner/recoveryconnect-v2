@@ -681,7 +681,7 @@ export async function sendApplicationApprovedEmail(to: string, name: string) {
       <p style="margin: 0 0 10px 0;"><strong>What you can do now:</strong></p>
       <ul style="margin: 0; padding-left: 20px;">
         <li>Record and publish recovery stories</li>
-        <li>Set up your availability for mentoring calls</li>
+        <li>Set up your availability for guide calls</li>
         <li>Connect your Stripe account for payouts</li>
         <li>Create group sessions</li>
       </ul>

@@ -14,7 +14,7 @@ interface Payment {
 
 const TYPE_LABELS: Record<string, string> = {
   RECORDING_PURCHASE: "Recording",
-  CALL_PAYMENT: "Mentor Call",
+  CALL_PAYMENT: "Guide Call",
   GUIDE_PAYOUT: "Payout",
   GROUP_SESSION_PAYMENT: "Group Session",
 };
