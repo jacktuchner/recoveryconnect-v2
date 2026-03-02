@@ -331,12 +331,20 @@ export default function GroupSessionDetailPage() {
               <p className="text-sm text-gray-600 mb-4">
                 Add a health profile so we can match you with the right guide.
               </p>
-              <Link
-                href="/dashboard/seeker"
+              <button
+                onClick={async () => {
+                  try {
+                    const res = await fetch("/api/user/upgrade-role", { method: "POST" });
+                    const data = await res.json();
+                    window.location.href = data.redirect || "/dashboard/seeker";
+                  } catch {
+                    window.location.href = "/dashboard/seeker";
+                  }
+                }}
                 className="inline-flex items-center gap-2 bg-teal-600 text-white px-6 py-3 rounded-lg hover:bg-teal-700 font-medium transition-colors"
               >
                 Set Up Health Profile
-              </Link>
+              </button>
             </div>
           ) : (
             <button

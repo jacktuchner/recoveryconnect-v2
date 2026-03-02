@@ -171,7 +171,17 @@ function GuideCard({ guide, isOwn, hideMatchScore, isGuideOnly }: { guide: Guide
           {profile.isAvailableForCalls && !isOwn && (
             isGuideOnly ? (
               <button
-                onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.location.href = "/dashboard/seeker"; }}
+                onClick={async (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  try {
+                    const res = await fetch("/api/user/upgrade-role", { method: "POST" });
+                    const data = await res.json();
+                    window.location.href = data.redirect || "/dashboard/seeker";
+                  } catch {
+                    window.location.href = "/dashboard/seeker";
+                  }
+                }}
                 className="mt-4 w-full py-2.5 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200 transition-all"
               >
                 Add health profile to book calls
