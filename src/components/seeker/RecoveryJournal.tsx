@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { JOURNAL_MILESTONE_PRESETS, JOURNAL_MILESTONE_PRESETS_CHRONIC_PAIN, JOURNAL_MOOD_EMOJIS, JOURNAL_TRIGGER_PRESETS } from "@/lib/constants";
 import { getTimeSinceSurgeryLabel, getTimeSinceDiagnosisLabel } from "@/lib/surgeryDate";
@@ -40,6 +40,55 @@ interface RecoveryJournalProps {
 function parseDate(s: string): Date {
   if (!s.endsWith("Z") && !s.includes("+")) return new Date(s + "Z");
   return new Date(s);
+}
+
+function ConditionDropdown({ value, options, onChange }: {
+  value: string;
+  options: { value: string; label: string }[];
+  onChange: (v: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const selected = options.find((o) => o.value === value);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="inline-flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-1.5 bg-white hover:bg-gray-50 text-xl font-semibold text-gray-900"
+      >
+        {selected?.label || value}
+        <svg className={`w-5 h-5 text-gray-400 transition-transform ${open ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {open && (
+        <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 min-w-[200px] py-1">
+          {options.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => { onChange(opt.value); setOpen(false); }}
+              className={`w-full text-left px-4 py-2.5 text-lg hover:bg-gray-50 transition-colors ${
+                opt.value === value ? "font-semibold text-teal-700 bg-teal-50" : "text-gray-700"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function RecoveryJournal({ procedureType, surgeryDate, currentWeek, conditionCategory, procedures }: RecoveryJournalProps) {
@@ -403,19 +452,14 @@ export default function RecoveryJournal({ procedureType, surgeryDate, currentWee
         <div className="flex items-center gap-3 flex-wrap">
           <h2 className="text-xl font-bold">{journalTitle}</h2>
           {hasMultipleConditions && (
-            <select
+            <ConditionDropdown
               value={selectedCondition}
-              onChange={(e) => setSelectedCondition(e.target.value)}
-              className="border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-              style={{ fontSize: "1.125rem" }}
-            >
-              {procedures!.map((p) => (
-                <option key={p.procedureType} value={p.procedureType} style={{ fontSize: "1.125rem" }}>
-                  {p.procedureType}
-                </option>
-              ))}
-              <option value="__ALL__" style={{ fontSize: "1.125rem" }}>View All</option>
-            </select>
+              options={[
+                ...procedures!.map((p) => ({ value: p.procedureType, label: p.procedureType })),
+                { value: "__ALL__", label: "View All" },
+              ]}
+              onChange={setSelectedCondition}
+            />
           )}
           {weekLabel && (
             <span className="text-xs bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full font-medium">

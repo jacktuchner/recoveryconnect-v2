@@ -42,7 +42,14 @@ export default function PurchaseHistory({ role }: { role: "seeker" | "guide" }) 
         (p: Payment) => p.type !== "RECORDING_PURCHASE"
       );
       setPayments(filtered);
-      setPagination(data.pagination || { page: 1, totalPages: 1, total: 0 });
+      const filteredTotal = filtered.length;
+      const pag = data.pagination || { page: 1, totalPages: 1, total: 0 };
+      // Adjust pagination if client-side filtering removed items
+      if (filteredTotal === 0 && pag.total > 0) {
+        setPagination({ page: 1, totalPages: 1, total: 0 });
+      } else {
+        setPagination(pag);
+      }
     } catch (err) {
       console.error(err);
       setError("Failed to load payment history.");
