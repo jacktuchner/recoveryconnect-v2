@@ -6,6 +6,7 @@ import HeroCTA from "@/components/HeroCTA";
 import GuideCTA from "@/components/GuideCTA";
 import FooterGuideLinks from "@/components/FooterGuideLinks";
 import FooterSeekerLinks from "@/components/FooterSeekerLinks";
+import FeatureRequestButton from "@/components/FeatureRequestButton";
 
 export default function HomePage() {
   return (
@@ -227,6 +228,14 @@ export default function HomePage() {
                 ))}
               </div>
             </div>
+
+            <div className="text-center mt-8">
+              <FeatureRequestButton
+                defaultType="condition"
+                variant="dashed"
+                label="Don't see your condition? Request it"
+              />
+            </div>
           </div>
         </div>
       </section>
@@ -315,6 +324,13 @@ export default function HomePage() {
                 <li><Link href="/privacy" className="hover:text-white">Privacy Policy</Link></li>
                 <li><Link href="/terms" className="hover:text-white">Terms of Service</Link></li>
                 <li><Link href="/contact" className="hover:text-white">Contact</Link></li>
+                <li>
+                  <FeatureRequestButton
+                    defaultType="feature"
+                    variant="link"
+                    label="Suggest a Feature"
+                  />
+                </li>
               </ul>
             </div>
           </div>

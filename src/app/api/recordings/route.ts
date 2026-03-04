@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { calculateMatchScore } from "@/lib/matching";
 import { getPublicDisplayName } from "@/lib/displayName";
 import { v4 as uuidv4 } from "uuid";
+import { checkProfileCompleteness } from "@/lib/profileCompleteness";
 
 export async function GET(req: NextRequest) {
   try {
@@ -159,7 +160,15 @@ export async function POST(req: NextRequest) {
 
     if (!user.profile) {
       return NextResponse.json(
-        { error: "Please complete your profile first" },
+        { error: "Please complete your profile first", missingFields: ["profile"] },
+        { status: 400 }
+      );
+    }
+
+    const completeness = checkProfileCompleteness(user.profile);
+    if (!completeness.isComplete) {
+      return NextResponse.json(
+        { error: `Please complete your profile first. Missing: ${completeness.missingFields.join(", ")}`, missingFields: completeness.missingFields },
         { status: 400 }
       );
     }

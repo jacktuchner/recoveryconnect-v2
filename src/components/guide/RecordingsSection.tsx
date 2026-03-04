@@ -3,49 +3,58 @@
 import { useState } from "react";
 import RecordingForm from "@/components/RecordingForm";
 import GuideGuidelines from "@/components/GuideGuidelines";
+import RecordingEditForm from "@/components/guide/RecordingEditForm";
 
 interface RecordingsSectionProps {
   recordings: any[];
   onRecordingsUpdate: (recordings: any[]) => void;
+  profileComplete?: boolean;
+  draftSeries?: any[];
+  recordingSeriesMap?: Map<string, { seriesId: string; seriesTitle: string }>;
 }
 
-export default function RecordingsSection({ recordings, onRecordingsUpdate }: RecordingsSectionProps) {
+export default function RecordingsSection({ recordings, onRecordingsUpdate, profileComplete = true, draftSeries, recordingSeriesMap }: RecordingsSectionProps) {
   const [showRecordingForm, setShowRecordingForm] = useState(false);
   const [editingRecording, setEditingRecording] = useState<any>(null);
   const [deletingRecording, setDeletingRecording] = useState<string | null>(null);
-  const [savingRecording, setSavingRecording] = useState(false);
+  const [addToSeriesPrompt, setAddToSeriesPrompt] = useState<{ recordingId: string; recordingTitle: string } | null>(null);
+  const [addingToSeries, setAddingToSeries] = useState(false);
 
   function handleRecordingSuccess(recording: Record<string, unknown>) {
     onRecordingsUpdate([recording, ...recordings]);
     setShowRecordingForm(false);
+
+    // Prompt to add to a draft series if any exist
+    if (draftSeries && draftSeries.length > 0) {
+      setAddToSeriesPrompt({ recordingId: recording.id as string, recordingTitle: recording.title as string });
+    }
   }
 
-  async function saveRecordingEdit() {
-    if (!editingRecording) return;
-    setSavingRecording(true);
+  async function addRecordingToSeries(seriesId: string) {
+    if (!addToSeriesPrompt) return;
+    setAddingToSeries(true);
     try {
-      const res = await fetch(`/api/recordings/${editingRecording.id}`, {
+      // Get current series recordings to determine next sequence number
+      const seriesRes = await fetch(`/api/series/${seriesId}`);
+      if (!seriesRes.ok) throw new Error("Failed to load series");
+      const seriesData = await seriesRes.json();
+      const currentIds = seriesData.recordings?.map((r: any) => r.id) || [];
+      const newIds = [...currentIds, addToSeriesPrompt.recordingId];
+
+      const res = await fetch(`/api/series/${seriesId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: editingRecording.title,
-          description: editingRecording.description,
-          category: editingRecording.category,
-        }),
+        body: JSON.stringify({ recordingIds: newIds }),
       });
-      if (res.ok) {
-        const updated = await res.json();
-        onRecordingsUpdate(recordings.map((r) => (r.id === updated.id ? { ...r, ...updated } : r)));
-        setEditingRecording(null);
-      } else {
+      if (!res.ok) {
         const data = await res.json();
-        alert(data.error || "Failed to save recording");
+        alert(data.error || "Failed to add recording to series");
       }
     } catch (err) {
-      console.error("Error saving recording:", err);
-      alert("Failed to save recording");
+      console.error("Error adding to series:", err);
     } finally {
-      setSavingRecording(false);
+      setAddingToSeries(false);
+      setAddToSeriesPrompt(null);
     }
   }
 
@@ -71,9 +80,51 @@ export default function RecordingsSection({ recordings, onRecordingsUpdate }: Re
   return (
     <section className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold">Your Recordings</h2>
-        <button onClick={() => setShowRecordingForm(!showRecordingForm)} className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 text-sm font-medium">+ New Recording</button>
+        <div>
+          <h2 className="text-xl font-bold">Your Recordings</h2>
+          <p className="text-sm text-gray-500 mt-1">Standalone recordings not yet part of a series</p>
+        </div>
+        <div className="relative group">
+          <button
+            onClick={() => profileComplete && setShowRecordingForm(!showRecordingForm)}
+            disabled={!profileComplete}
+            className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            + New Recording
+          </button>
+          {!profileComplete && (
+            <div className="hidden group-hover:block absolute right-0 top-full mt-1 bg-gray-800 text-white text-xs rounded-lg px-3 py-2 w-48 z-10">
+              Complete your profile before creating recordings
+            </div>
+          )}
+        </div>
       </div>
+
+      {addToSeriesPrompt && (
+        <div className="mb-4 bg-purple-50 border border-purple-200 rounded-lg p-4">
+          <p className="text-sm font-medium text-purple-800 mb-2">
+            Add &ldquo;{addToSeriesPrompt.recordingTitle}&rdquo; to a series?
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {draftSeries?.map((s: any) => (
+              <button
+                key={s.id}
+                onClick={() => addRecordingToSeries(s.id)}
+                disabled={addingToSeries}
+                className="text-sm bg-purple-600 text-white px-3 py-1.5 rounded-lg hover:bg-purple-700 disabled:opacity-50"
+              >
+                {s.title}
+              </button>
+            ))}
+            <button
+              onClick={() => setAddToSeriesPrompt(null)}
+              className="text-sm text-gray-500 hover:text-gray-700 px-3 py-1.5"
+            >
+              Skip
+            </button>
+          </div>
+        </div>
+      )}
 
       {showRecordingForm && (
         <GuideGuidelines>
@@ -83,43 +134,37 @@ export default function RecordingsSection({ recordings, onRecordingsUpdate }: Re
         </GuideGuidelines>
       )}
 
-      {recordings.length === 0 && !showRecordingForm ? (
-        <p className="text-gray-500 text-center py-8">No recordings yet. Create your first one!</p>
-      ) : (
+      {(() => {
+        const standaloneRecordings = recordingSeriesMap
+          ? recordings.filter((r: any) => !recordingSeriesMap.has(r.id))
+          : recordings;
+
+        if (standaloneRecordings.length === 0 && !showRecordingForm) {
+          return (
+            <p className="text-gray-500 text-center py-8">
+              {recordings.length === 0 ? "No recordings yet. Create your first one!" : "All your recordings are part of a series."}
+            </p>
+          );
+        }
+
+        return (
         <div className="space-y-3">
-          {recordings.map((rec: any) => {
+          {standaloneRecordings.map((rec: any) => {
             const isEditing = editingRecording?.id === rec.id;
             const isDeleting = deletingRecording === rec.id;
 
             if (isEditing) {
               return (
-                <div key={rec.id} className="p-4 bg-teal-50 rounded-lg border border-teal-200">
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Title</label>
-                      <input type="text" value={editingRecording.title} onChange={(e) => setEditingRecording({ ...editingRecording, title: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
-                      <textarea value={editingRecording.description || ""} onChange={(e) => setEditingRecording({ ...editingRecording, description: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" rows={2} />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Category</label>
-                      <select value={editingRecording.category} onChange={(e) => setEditingRecording({ ...editingRecording, category: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                        <option value="WEEKLY_TIMELINE">Timeline</option>
-                        <option value="WISH_I_KNEW">Wish I Knew</option>
-                        <option value="PRACTICAL_TIPS">Practical Tips</option>
-                        <option value="MENTAL_HEALTH">Mental Health</option>
-                        <option value="RETURN_TO_ACTIVITY">Return to Activity</option>
-                        <option value="MISTAKES_AND_LESSONS">Mistakes & Lessons</option>
-                      </select>
-                    </div>
-                    <div className="flex gap-2 pt-2">
-                      <button onClick={saveRecordingEdit} disabled={savingRecording} className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 disabled:opacity-50 text-sm font-medium">{savingRecording ? "Saving..." : "Save"}</button>
-                      <button onClick={() => setEditingRecording(null)} className="text-gray-500 hover:text-gray-700 px-3 py-2 text-sm">Cancel</button>
-                    </div>
-                  </div>
-                </div>
+                <RecordingEditForm
+                  key={rec.id}
+                  recording={editingRecording}
+                  seriesInfo={recordingSeriesMap?.get(rec.id)}
+                  onSave={(updated) => {
+                    onRecordingsUpdate(recordings.map((r) => (r.id === updated.id ? { ...r, ...updated } : r)));
+                    setEditingRecording(null);
+                  }}
+                  onCancel={() => setEditingRecording(null)}
+                />
               );
             }
 
@@ -128,12 +173,9 @@ export default function RecordingsSection({ recordings, onRecordingsUpdate }: Re
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">{rec.title}</p>
                   <p className="text-sm text-gray-500">
-                    {rec.category.replace(/_/g, " ")} &middot; {rec.viewCount} views
-                    {rec.transcriptionStatus && rec.transcriptionStatus !== "NONE" && (
-                      <span className={`ml-2 ${rec.transcriptionStatus === "COMPLETED" ? "text-green-600" : rec.transcriptionStatus === "PENDING" ? "text-yellow-600" : "text-red-600"}`}>
-                        &middot; Transcription: {rec.transcriptionStatus.toLowerCase()}
-                      </span>
-                    )}
+                    {rec.category.replace(/_/g, " ")}
+                    {rec.procedureType && <> &middot; {rec.procedureType}</>}
+                    {" "}&middot; {rec.viewCount} views
                   </p>
                 </div>
                 <div className="flex items-center gap-2 ml-4">
@@ -145,7 +187,8 @@ export default function RecordingsSection({ recordings, onRecordingsUpdate }: Re
             );
           })}
         </div>
-      )}
+        );
+      })()}
     </section>
   );
 }

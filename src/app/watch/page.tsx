@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, Suspense } from "react";
+import { useState, useEffect, useCallback, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
@@ -9,6 +9,7 @@ import SeriesCard from "@/components/SeriesCard";
 import FilterSidebar from "@/components/FilterSidebar";
 import ContentAcknowledgmentModal from "@/components/ContentAcknowledgmentModal";
 import DisclaimerBanner from "@/components/DisclaimerBanner";
+import FeatureRequestModal from "@/components/FeatureRequestModal";
 type SortOption = "match" | "newest" | "most_viewed" | "highest_rated";
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
@@ -43,6 +44,7 @@ function WatchContent() {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [userProcedures, setUserProcedures] = useState<string[]>([]);
   const [selectedProcedure, setSelectedProcedure] = useState<string>("");
+  const [showRequestModal, setShowRequestModal] = useState(false);
 
   // Fetch the seeker's conditions on mount
   useEffect(() => {
@@ -187,6 +189,19 @@ function WatchContent() {
         return 0;
     }
   });
+
+  const recordingToSeriesMap = useMemo(() => {
+    const map = new Map<string, { seriesId: string; seriesTitle: string }>();
+    series.forEach((s: any) => {
+      (s.recordings || []).forEach((rec: any) => {
+        const recId = typeof rec === "string" ? rec : rec.id;
+        if (recId && !map.has(recId)) {
+          map.set(recId, { seriesId: s.id, seriesTitle: s.title });
+        }
+      });
+    });
+    return map;
+  }, [series]);
 
   const totalActiveFilters =
     filters.procedures.length +
@@ -485,11 +500,22 @@ function WatchContent() {
                       guideVerified={rec.guide?.contributorStatus === "APPROVED"}
                       isOwn={!!currentUserId && rec.guide?.id === currentUserId}
                       hideMatchScore={isGuideOnly || (!!currentUserId && rec.guide?.id === currentUserId)}
+                      seriesInfo={recordingToSeriesMap.get(rec.id)}
                       onDelete={() => setRecordings((prev) => prev.filter((r) => r.id !== rec.id))}
                     />
                   ))}
                 </div>
               )}
+
+              {/* Condition request link */}
+              <div className="text-center mt-8">
+                <button
+                  onClick={() => setShowRequestModal(true)}
+                  className="text-sm text-gray-500 hover:text-teal-600 transition-colors"
+                >
+                  Don&apos;t see your condition? Request it
+                </button>
+              </div>
 
               {/* Pagination */}
               {pagination.totalPages > 1 && (
@@ -517,6 +543,11 @@ function WatchContent() {
           </div>
         </div>
       </div>
+      <FeatureRequestModal
+        isOpen={showRequestModal}
+        onClose={() => setShowRequestModal(false)}
+        defaultType="condition"
+      />
     </ContentAcknowledgmentModal>
   );
 }

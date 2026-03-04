@@ -140,7 +140,7 @@ export default function SeriesDetailPage() {
                 {series.guide?.name || "Anonymous"}
               </Link>
               {series.guide?.bio && (
-                <p className="text-sm text-gray-500 line-clamp-1">{series.guide.bio}</p>
+                <p className="text-sm text-gray-500">{series.guide.bio}</p>
               )}
             </div>
           </div>

@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { getPublicDisplayName } from "@/lib/displayName";
 import { calculateMatchScore } from "@/lib/matching";
 import { v4 as uuidv4 } from "uuid";
+import { checkProfileCompleteness } from "@/lib/profileCompleteness";
 
 // GET /api/series - List series with optional filtering
 export async function GET(req: NextRequest) {
@@ -189,6 +190,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: "Your guide application must be approved before creating series" },
         { status: 403 }
+      );
+    }
+
+    if (!user.profile) {
+      return NextResponse.json(
+        { error: "Please complete your profile first", missingFields: ["profile"] },
+        { status: 400 }
+      );
+    }
+
+    const completeness = checkProfileCompleteness(user.profile);
+    if (!completeness.isComplete) {
+      return NextResponse.json(
+        { error: `Please complete your profile first. Missing: ${completeness.missingFields.join(", ")}`, missingFields: completeness.missingFields },
+        { status: 400 }
       );
     }
 

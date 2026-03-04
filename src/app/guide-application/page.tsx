@@ -226,6 +226,12 @@ export default function GuideApplicationPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           applicationText: buildApplicationText(),
+          applicationData: {
+            conditionTypes,
+            selectedConditions,
+            timeSince,
+            conditionCategory: conditionTypes.includes("CHRONIC_PAIN") && !conditionTypes.includes("SURGERY") ? "CHRONIC_PAIN" : "SURGERY",
+          },
           proofUrls: proofFiles.map((f) => f.url),
           preferredContact,
           agreementAccepted,

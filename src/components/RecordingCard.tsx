@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import VerifiedBadge from "@/components/VerifiedBadge";
 
@@ -22,6 +23,7 @@ interface RecordingCardProps {
   guideVerified?: boolean;
   isOwn?: boolean;
   hideMatchScore?: boolean;
+  seriesInfo?: { seriesId: string; seriesTitle: string };
   onDelete?: () => void;
 }
 
@@ -89,8 +91,9 @@ function MatchScoreTooltip({ breakdown }: { breakdown: { attribute: string; matc
 export default function RecordingCard({
   id, title, guideName, procedureType, ageRange, activityLevel,
   category, durationSeconds, isVideo, thumbnailUrl, viewCount, averageRating, matchScore, matchBreakdown,
-  guideVerified, isOwn, hideMatchScore, onDelete,
+  guideVerified, isOwn, hideMatchScore, seriesInfo, onDelete,
 }: RecordingCardProps) {
+  const router = useRouter();
   const showMatchScore = matchScore !== undefined && !hideMatchScore;
   const [deleting, setDeleting] = useState(false);
 
@@ -199,6 +202,17 @@ export default function RecordingCard({
           </div>
 
           <div className="flex flex-wrap gap-1.5 mb-3 min-h-[3.25rem]">
+            {seriesInfo && (
+              <span
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(`/series/${seriesInfo.seriesId}`); }}
+                className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full h-fit cursor-pointer hover:bg-purple-200 transition-colors inline-flex items-center gap-1"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+                Part of series
+              </span>
+            )}
             <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full h-fit">{procedureType}</span>
             <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full h-fit">{ageRange}</span>
             <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full h-fit">{activityLabels[activityLevel] || activityLevel}</span>

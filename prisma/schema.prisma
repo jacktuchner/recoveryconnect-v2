@@ -163,6 +163,7 @@ model ContributorApplication {
   userId           String   @unique
   user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   applicationText  String   @db.Text
+  applicationData  Json?
   proofUrls        Json     @default("[]")
   preferredContact String
   zoomCompleted    Boolean  @default(false)

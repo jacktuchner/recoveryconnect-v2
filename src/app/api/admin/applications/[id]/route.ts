@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { sendApplicationApprovedEmail, sendApplicationRejectedEmail } from "@/lib/email";
+import { v4 as uuidv4 } from "uuid";
 
 // PATCH — approve/reject application, update zoomCompleted, add reviewNote
 export async function PATCH(
@@ -69,6 +70,60 @@ export async function PATCH(
     if (userError) {
       console.error("Error updating user on approve:", userError);
       return NextResponse.json({ error: "Failed to update user" }, { status: 500 });
+    }
+
+    // Auto-create profile from application data if no profile exists
+    if (application.applicationData) {
+      const { data: existingProfile } = await supabase
+        .from("Profile")
+        .select("id")
+        .eq("userId", application.userId)
+        .single();
+
+      if (!existingProfile) {
+        const appData = application.applicationData as {
+          selectedConditions?: string[];
+          timeSince?: string;
+          conditionCategory?: string;
+        };
+
+        const conditions = appData.selectedConditions || [];
+        const primaryProcedure = conditions[0] || "Unknown";
+        const conditionCategory = appData.conditionCategory || "SURGERY";
+
+        // Build procedureProfiles with timeSince for each procedure
+        const procedureProfiles: Record<string, { timeSinceSurgery?: string }> = {};
+        for (const condition of conditions) {
+          procedureProfiles[condition] = {
+            timeSinceSurgery: appData.timeSince || undefined,
+          };
+        }
+
+        const { error: profileError } = await supabase
+          .from("Profile")
+          .insert({
+            id: uuidv4(),
+            userId: application.userId,
+            procedureType: primaryProcedure,
+            procedureTypes: conditions,
+            activeProcedureType: primaryProcedure,
+            procedureProfiles,
+            conditionCategory,
+            ageRange: "Not set",
+            activityLevel: "MODERATELY_ACTIVE",
+            timeSinceSurgery: appData.timeSince || null,
+            recoveryGoals: [],
+            complicatingFactors: [],
+            lifestyleContext: [],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          });
+
+        if (profileError) {
+          console.error("Error auto-creating profile:", profileError);
+          // Non-fatal — continue with approval
+        }
+      }
     }
   } else if (action === "reject") {
     updates.status = "REJECTED";

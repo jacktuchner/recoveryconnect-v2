@@ -88,7 +88,7 @@ export async function PUT(
     }
 
     const body = await req.json();
-    const { title, description, price, category } = body;
+    const { title, description, price, category, mediaUrl, thumbnailUrl, durationSeconds, transcription, transcriptionStatus } = body;
 
     // Build update object
     const updateData: Record<string, any> = {
@@ -99,6 +99,11 @@ export async function PUT(
     if (description !== undefined) updateData.description = description || null;
     if (price !== undefined) updateData.price = Math.max(1, Math.min(50, price));
     if (category !== undefined) updateData.category = category;
+    if (mediaUrl !== undefined) updateData.mediaUrl = mediaUrl;
+    if (thumbnailUrl !== undefined) updateData.thumbnailUrl = thumbnailUrl || null;
+    if (durationSeconds !== undefined) updateData.durationSeconds = durationSeconds;
+    if (transcription !== undefined) updateData.transcription = transcription || null;
+    if (transcriptionStatus !== undefined) updateData.transcriptionStatus = transcriptionStatus;
 
     const { data: updatedRecording, error: updateError } = await supabase
       .from("Recording")

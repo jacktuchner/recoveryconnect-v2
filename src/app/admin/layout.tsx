@@ -63,6 +63,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: "/admin/users", label: "Users", icon: "👥", countKey: "users" },
     { href: "/admin/reports", label: "Reports", icon: "🚩", countKey: "reports" },
     { href: "/admin/payments", label: "Payments", icon: "💰", countKey: "" },
+    { href: "/admin/feature-requests", label: "Requests", icon: "💡", countKey: "" },
   ];
 
   return (

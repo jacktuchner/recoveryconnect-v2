@@ -8,6 +8,12 @@ interface Application {
   id: string;
   userId: string;
   applicationText: string;
+  applicationData: {
+    conditionTypes?: string[];
+    selectedConditions?: string[];
+    timeSince?: string;
+    conditionCategory?: string;
+  } | null;
   proofUrls: string[];
   preferredContact: string;
   zoomCompleted: boolean;
@@ -194,6 +200,23 @@ export default function AdminApplicationsPage() {
                   <div className="grid md:grid-cols-2 gap-6 mt-4">
                     {/* Application text */}
                     <div>
+                      {app.applicationData && (
+                        <div className="mb-3">
+                          {app.applicationData.selectedConditions && app.applicationData.selectedConditions.length > 0 && (
+                            <div className="mb-2">
+                              <h4 className="text-xs font-medium text-gray-500 mb-1">Conditions</h4>
+                              <div className="flex flex-wrap gap-1.5">
+                                {app.applicationData.selectedConditions.map((c) => (
+                                  <span key={c} className="text-xs bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full">{c}</span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {app.applicationData.timeSince && (
+                            <p className="text-xs text-gray-500">Time since: <span className="text-gray-700 font-medium">{app.applicationData.timeSince}</span></p>
+                          )}
+                        </div>
+                      )}
                       <h4 className="text-sm font-medium text-gray-500 mb-2">Application</h4>
                       <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-700 whitespace-pre-wrap">
                         {app.applicationText}

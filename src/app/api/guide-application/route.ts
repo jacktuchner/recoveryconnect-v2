@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { applicationText, proofUrls, preferredContact, agreementAccepted, agreementSignature, agreementSignatureImage, agreementVersion } = body;
+  const { applicationText, applicationData, proofUrls, preferredContact, agreementAccepted, agreementSignature, agreementSignatureImage, agreementVersion } = body;
 
   if (!applicationText || !preferredContact) {
     return NextResponse.json(
@@ -81,6 +81,7 @@ export async function POST(req: NextRequest) {
       .from("ContributorApplication")
       .update({
         applicationText,
+        applicationData: applicationData || null,
         proofUrls: proofUrls || [],
         preferredContact,
         status: "PENDING_REVIEW",
@@ -107,6 +108,7 @@ export async function POST(req: NextRequest) {
         id: uuidv4(),
         userId,
         applicationText,
+        applicationData: applicationData || null,
         proofUrls: proofUrls || [],
         preferredContact,
         status: "PENDING_REVIEW",

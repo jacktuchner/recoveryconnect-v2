@@ -7,6 +7,7 @@ import RecordingsSection from "@/components/guide/RecordingsSection";
 import SeriesSection from "@/components/guide/SeriesSection";
 import GroupSessionsSection from "@/components/guide/GroupSessionsSection";
 import RecommendationsSection from "@/components/guide/RecommendationsSection";
+import { checkProfileCompleteness } from "@/lib/profileCompleteness";
 
 export default function GuideContentPage() {
   const { data: session } = useSession();
@@ -79,16 +80,52 @@ export default function GuideContentPage() {
     );
   }
 
+  const profileCheck = checkProfileCompleteness(profile);
+  const draftSeries = series.filter((s: any) => s.status === "DRAFT");
+
+  const recordingSeriesMap = new Map<string, { seriesId: string; seriesTitle: string }>();
+  series.forEach((s: any) => {
+    (s.recordings || []).forEach((rec: any) => {
+      const recId = typeof rec === "string" ? rec : rec.id;
+      if (recId && !recordingSeriesMap.has(recId)) {
+        recordingSeriesMap.set(recId, { seriesId: s.id, seriesTitle: s.title });
+      }
+    });
+  });
+
   return (
     <>
+      {!profileCheck.isComplete && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex items-start gap-3">
+          <svg className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+          </svg>
+          <div>
+            <p className="text-sm font-medium text-amber-800">Complete your profile to start creating content</p>
+            <p className="text-sm text-amber-700 mt-0.5">
+              Missing: {profileCheck.missingFields.join(", ")}.{" "}
+              <Link href="/dashboard/guide/profile" className="text-teal-600 hover:text-teal-700 font-medium underline">
+                Go to profile
+              </Link>
+            </p>
+          </div>
+        </div>
+      )}
+
       <RecordingsSection
         recordings={recordings}
         onRecordingsUpdate={setRecordings}
+        profileComplete={profileCheck.isComplete}
+        draftSeries={draftSeries}
+        recordingSeriesMap={recordingSeriesMap}
       />
 
       <SeriesSection
         series={series}
         onSeriesUpdate={setSeries}
+        profileComplete={profileCheck.isComplete}
+        allRecordings={recordings}
+        onRecordingsUpdate={setRecordings}
       />
 
       <GroupSessionsSection
