@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
+import { sendContentRemovedEmail, sendAccountSuspendedEmail } from "@/lib/email";
 
 const REPORT_SELECT = `
   *,
@@ -84,6 +85,39 @@ export async function PATCH(
           .delete()
           .eq("id", existingReport.reviewId);
       }
+
+      // Notify content creator about removal
+      const creatorId =
+        existingReport.recording?.contributorId ||
+        existingReport.series?.contributorId ||
+        existingReport.forumThread?.authorId ||
+        existingReport.review?.authorId;
+
+      if (creatorId) {
+        const contentType = existingReport.recordingId ? "recording" :
+          existingReport.seriesId ? "series" :
+          existingReport.forumThreadId ? "forum post" : "review";
+        const contentTitle = existingReport.recording?.title ||
+          existingReport.series?.title ||
+          existingReport.forumThread?.title ||
+          "your content";
+
+        const { data: creator } = await supabase
+          .from("User")
+          .select("email, name")
+          .eq("id", creatorId)
+          .single();
+
+        if (creator?.email) {
+          sendContentRemovedEmail(
+            creator.email,
+            creator.name || "there",
+            contentType,
+            contentTitle,
+            existingReport.reason || "Policy violation"
+          ).catch((err) => console.error("Failed to send content removed email:", err));
+        }
+      }
     }
 
     if (action === "suspendGuide") {
@@ -102,6 +136,21 @@ export async function PATCH(
             updatedAt: new Date().toISOString(),
           })
           .eq("id", guideId);
+
+        // Notify the suspended guide
+        const { data: suspendedGuide } = await supabase
+          .from("User")
+          .select("email, name")
+          .eq("id", guideId)
+          .single();
+
+        if (suspendedGuide?.email) {
+          sendAccountSuspendedEmail(
+            suspendedGuide.email,
+            suspendedGuide.name || "there",
+            existingReport.reason || "Policy violation"
+          ).catch((err) => console.error("Failed to send account suspended email:", err));
+        }
       }
     }
 

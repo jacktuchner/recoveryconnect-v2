@@ -119,6 +119,8 @@ model User {
   journalEntries         JournalEntry[]
   journalSharesGiven     JournalShare[]  @relation("PatientJournalShares")
   journalSharesReceived  JournalShare[]  @relation("ContributorJournalShares")
+  lastGuideMatchEmailAt  DateTime?
+
   forumThreads           ForumThread[]
   forumReplies           ForumReply[]
 }

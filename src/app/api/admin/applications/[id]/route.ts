@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import { sendApplicationApprovedEmail, sendApplicationRejectedEmail } from "@/lib/email";
+import { sendApplicationApprovedEmail, sendApplicationRejectedEmail, sendNewGuideMatchEmail } from "@/lib/email";
 import { v4 as uuidv4 } from "uuid";
 
 // PATCH — approve/reject application, update zoomCompleted, add reviewNote
@@ -169,6 +169,60 @@ export async function PATCH(
       const name = applicant.name || "there";
       if (action === "approve") {
         sendApplicationApprovedEmail(applicant.email, name).catch(() => {});
+
+        // Notify matching seekers about the new guide
+        const { data: guideProfile } = await supabase
+          .from("Profile")
+          .select("procedureTypes, procedureType")
+          .eq("userId", application.userId)
+          .single();
+
+        const guideProcedures = guideProfile?.procedureTypes?.length
+          ? guideProfile.procedureTypes
+          : guideProfile?.procedureType
+            ? [guideProfile.procedureType]
+            : [];
+
+        if (guideProcedures.length > 0) {
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+
+          // Find seekers with matching procedures who haven't been emailed today
+          const { data: matchingSeekers } = await supabase
+            .from("Profile")
+            .select("userId, procedureType, User!inner(id, email, name, role, lastGuideMatchEmailAt)")
+            .in("procedureType", guideProcedures)
+            .neq("userId", application.userId);
+
+          if (matchingSeekers) {
+            for (const seeker of matchingSeekers) {
+              const seekerUser = (seeker as any).User;
+              if (!seekerUser?.email) continue;
+              if (!["SEEKER", "BOTH"].includes(seekerUser.role)) continue;
+
+              // Rate limit: max 1 per day
+              if (seekerUser.lastGuideMatchEmailAt) {
+                const lastSent = new Date(seekerUser.lastGuideMatchEmailAt);
+                if (lastSent >= today) continue;
+              }
+
+              sendNewGuideMatchEmail(
+                seekerUser.email,
+                seekerUser.name || "there",
+                name,
+                guideProcedures,
+                application.userId
+              ).catch(() => {});
+
+              // Update rate limit timestamp
+              supabase
+                .from("User")
+                .update({ lastGuideMatchEmailAt: new Date().toISOString() })
+                .eq("id", seekerUser.id)
+                .then(() => {});
+            }
+          }
+        }
       } else {
         sendApplicationRejectedEmail(applicant.email, name).catch(() => {});
       }

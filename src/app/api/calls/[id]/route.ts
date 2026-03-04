@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { stripe } from "@/lib/stripe";
 import { v4 as uuidv4 } from "uuid";
-import { sendCallCancelledEmail, sendPayoutEmail } from "@/lib/email";
+import { sendCallCancelledEmail, sendPayoutEmail, sendCallCompletedSeekerEmail, sendFirstCallCompletedGuideEmail } from "@/lib/email";
 
 export async function PATCH(
   req: NextRequest,
@@ -166,6 +166,34 @@ export async function PATCH(
       } catch (payoutError) {
         // Log but don't fail the call update
         console.error("Error creating payout:", payoutError);
+      }
+    }
+
+    // Send post-call emails when call is completed
+    if (status === "COMPLETED") {
+      // Email #6: Always notify the seeker
+      if (updated.seeker?.email) {
+        sendCallCompletedSeekerEmail(
+          updated.seeker.email,
+          updated.seeker.name || "there",
+          updated.guide?.name || "your guide",
+          call.contributorId
+        ).catch((err) => console.error("Failed to send call completed seeker email:", err));
+      }
+
+      // Email #4: Check if this is the guide's first completed call
+      const { count } = await supabase
+        .from("Call")
+        .select("id", { count: "exact", head: true })
+        .eq("contributorId", call.contributorId)
+        .eq("status", "COMPLETED");
+
+      if (count === 1 && updated.guide?.email) {
+        sendFirstCallCompletedGuideEmail(
+          updated.guide.email,
+          updated.guide.name || "Guide",
+          updated.seeker?.name || "a seeker"
+        ).catch((err) => console.error("Failed to send first call completed guide email:", err));
       }
     }
 

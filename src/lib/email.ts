@@ -933,3 +933,239 @@ export async function sendPayoutEmail(
     return { success: false, error };
   }
 }
+
+// Content removed notification - sent to content creator when admin removes their content
+export async function sendContentRemovedEmail(
+  to: string,
+  name: string,
+  contentType: string,
+  contentTitle: string,
+  reason: string
+) {
+  const content = `
+    <h1 style="color: #dc2626; font-size: 24px; margin-bottom: 20px;">Your ${contentType} has been removed</h1>
+    <p>Hi ${name},</p>
+    <p>After review, your ${contentType} <strong>"${contentTitle}"</strong> has been removed from Kizu for the following reason:</p>
+    <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 16px; margin: 20px 0;">
+      <p style="margin: 0; color: #991b1b;">${reason}</p>
+    </div>
+    <p>If you believe this was a mistake, please reach out to our support team.</p>
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="mailto:support@thekizu.com"
+         style="display: inline-block; background: #0d9488; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600;">
+        Contact Support
+      </a>
+    </div>
+  `;
+
+  try {
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to,
+      subject: `Your ${contentType} has been removed`,
+      html: baseTemplate(content),
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to send content removed email:", error);
+    return { success: false, error };
+  }
+}
+
+// Account suspended notification - sent to guide when admin suspends their account
+export async function sendAccountSuspendedEmail(
+  to: string,
+  name: string,
+  reason: string
+) {
+  const content = `
+    <h1 style="color: #dc2626; font-size: 24px; margin-bottom: 20px;">Your Kizu guide account has been suspended</h1>
+    <p>Hi ${name},</p>
+    <p>Your guide account on Kizu has been suspended for the following reason:</p>
+    <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 16px; margin: 20px 0;">
+      <p style="margin: 0; color: #991b1b;">${reason}</p>
+    </div>
+    <p>While suspended, your recordings, availability, and guide profile will not be visible to seekers.</p>
+    <p>If you believe this was a mistake, please contact our support team to discuss next steps.</p>
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="mailto:support@thekizu.com"
+         style="display: inline-block; background: #0d9488; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600;">
+        Contact Support
+      </a>
+    </div>
+  `;
+
+  try {
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to,
+      subject: "Your Kizu guide account has been suspended",
+      html: baseTemplate(content),
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to send account suspended email:", error);
+    return { success: false, error };
+  }
+}
+
+// First recording published - sent to guide after their first recording goes live
+export async function sendFirstRecordingPublishedEmail(
+  to: string,
+  name: string,
+  recordingTitle: string
+) {
+  const content = `
+    <h1 style="color: #0d9488; font-size: 24px; margin-bottom: 20px;">Your first recording is live!</h1>
+    <p>Hi ${name},</p>
+    <p>Congratulations! Your recording <strong>"${recordingTitle}"</strong> is now published and available for seekers to watch.</p>
+    <p>This is a huge step — your experience can make a real difference for someone going through what you've been through.</p>
+    <div style="background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 8px; padding: 16px; margin: 20px 0;">
+      <p style="margin: 0; font-weight: 600; color: #0d9488;">What's next?</p>
+      <ul style="margin: 8px 0 0; padding-left: 20px; color: #374151;">
+        <li>Record more stories to help even more seekers</li>
+        <li>Set up your availability for 1-on-1 calls</li>
+        <li>Check your dashboard for views and feedback</li>
+      </ul>
+    </div>
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/guide"
+         style="display: inline-block; background: #0d9488; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600;">
+        Go to Dashboard
+      </a>
+    </div>
+  `;
+
+  try {
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to,
+      subject: "Your first recording is live!",
+      html: baseTemplate(content),
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to send first recording published email:", error);
+    return { success: false, error };
+  }
+}
+
+// First call completed - sent to guide after their first completed call
+export async function sendFirstCallCompletedGuideEmail(
+  to: string,
+  guideName: string,
+  seekerName: string
+) {
+  const content = `
+    <h1 style="color: #0d9488; font-size: 24px; margin-bottom: 20px;">Congratulations on your first call!</h1>
+    <p>Hi ${guideName},</p>
+    <p>You just completed your first call with <strong>${seekerName}</strong> — that's a big milestone!</p>
+    <p>Sharing your experience one-on-one is one of the most impactful things you can do as a guide. Thank you for being there for someone who needed it.</p>
+    <div style="background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 8px; padding: 16px; margin: 20px 0;">
+      <p style="margin: 0; font-weight: 600; color: #0d9488;">Keep the momentum going</p>
+      <ul style="margin: 8px 0 0; padding-left: 20px; color: #374151;">
+        <li>Update your availability to accept more calls</li>
+        <li>Check your earnings on the dashboard</li>
+      </ul>
+    </div>
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/guide"
+         style="display: inline-block; background: #0d9488; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600;">
+        Go to Dashboard
+      </a>
+    </div>
+  `;
+
+  try {
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to,
+      subject: "Congratulations on your first call!",
+      html: baseTemplate(content),
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to send first call completed guide email:", error);
+    return { success: false, error };
+  }
+}
+
+// New guide match - sent to seeker when a matching guide is approved
+export async function sendNewGuideMatchEmail(
+  to: string,
+  seekerName: string,
+  guideName: string,
+  guideConditions: string[],
+  guideId: string
+) {
+  const conditionText = guideConditions.length > 1
+    ? guideConditions.slice(0, -1).join(", ") + " and " + guideConditions[guideConditions.length - 1]
+    : guideConditions[0] || "your condition";
+
+  const content = `
+    <h1 style="color: #0d9488; font-size: 24px; margin-bottom: 20px;">A new guide just joined Kizu</h1>
+    <p>Hi ${seekerName},</p>
+    <p>Great news! <strong>${guideName}</strong>, a guide with experience in <strong>${conditionText}</strong>, just joined Kizu.</p>
+    <p>They may have recordings, availability for calls, or group sessions that could help with your recovery journey.</p>
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${process.env.NEXT_PUBLIC_APP_URL}/guides/${guideId}"
+         style="display: inline-block; background: #0d9488; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600;">
+        View Guide Profile
+      </a>
+    </div>
+  `;
+
+  try {
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to,
+      subject: `A new guide for ${conditionText} just joined Kizu`,
+      html: baseTemplate(content),
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to send new guide match email:", error);
+    return { success: false, error };
+  }
+}
+
+// Call completed - sent to seeker after a call is marked complete
+export async function sendCallCompletedSeekerEmail(
+  to: string,
+  seekerName: string,
+  guideName: string,
+  guideId: string
+) {
+  const content = `
+    <h1 style="color: #0d9488; font-size: 24px; margin-bottom: 20px;">Your call with ${guideName} is complete</h1>
+    <p>Hi ${seekerName},</p>
+    <p>We hope your call with <strong>${guideName}</strong> was helpful! Hearing from someone who's been through a similar experience can make a real difference.</p>
+    <div style="background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 8px; padding: 16px; margin: 20px 0;">
+      <p style="margin: 0; font-weight: 600; color: #0d9488;">What you can do next</p>
+      <ul style="margin: 8px 0 0; padding-left: 20px; color: #374151;">
+        <li>Leave a review to help other seekers</li>
+        <li>Book another call if you have more questions</li>
+        <li>Browse recordings from other guides</li>
+      </ul>
+    </div>
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${process.env.NEXT_PUBLIC_APP_URL}/guides/${guideId}"
+         style="display: inline-block; background: #0d9488; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600;">
+        Book Again
+      </a>
+    </div>
+  `;
+
+  try {
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to,
+      subject: `Your call with ${guideName} is complete`,
+      html: baseTemplate(content),
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to send call completed seeker email:", error);
+    return { success: false, error };
+  }
+}

@@ -6,6 +6,7 @@ import { calculateMatchScore } from "@/lib/matching";
 import { getPublicDisplayName } from "@/lib/displayName";
 import { v4 as uuidv4 } from "uuid";
 import { checkProfileCompleteness } from "@/lib/profileCompleteness";
+import { sendFirstRecordingPublishedEmail } from "@/lib/email";
 
 export async function GET(req: NextRequest) {
   try {
@@ -231,6 +232,23 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) throw error;
+
+    // Send first recording published email if this is the guide's first PUBLISHED recording
+    if (recording.status === "PUBLISHED" && user.email) {
+      const { count } = await supabase
+        .from("Recording")
+        .select("id", { count: "exact", head: true })
+        .eq("contributorId", userId)
+        .eq("status", "PUBLISHED");
+
+      if (count === 1) {
+        sendFirstRecordingPublishedEmail(
+          user.email,
+          user.name || "there",
+          recording.title
+        ).catch((err) => console.error("Failed to send first recording published email:", err));
+      }
+    }
 
     return NextResponse.json(recording, { status: 201 });
   } catch (error) {
