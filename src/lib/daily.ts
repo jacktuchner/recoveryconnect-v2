@@ -51,7 +51,7 @@ export async function createRoom(options: CreateRoomOptions): Promise<string> {
       },
       body: JSON.stringify({
         name: `call-${callId}`,
-        privacy: "private",
+        privacy: "public",
         properties: {
           exp: Math.floor(Date.now() / 1000) + expiresInMinutes * 60,
           enable_chat: enableChat,
