@@ -86,8 +86,8 @@ export default function GuideDashboardLayout({
         </div>
       )}
 
-      <div className="mb-8 border-b border-gray-200 overflow-x-auto">
-        <nav className="flex gap-0 min-w-max -mb-px">
+      <div className="mb-8 border-b border-gray-200">
+        <nav className="flex gap-0 flex-wrap -mb-px">
           {tabs.map((tab) => (
             <Link
               key={tab.href}

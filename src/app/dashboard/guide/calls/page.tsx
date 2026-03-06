@@ -18,6 +18,7 @@ export default function GuideCallsPage() {
   const [hourlyRate, setHourlyRate] = useState(50);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [cancelError, setCancelError] = useState<string | null>(null);
+  const [disabling, setDisabling] = useState(false);
 
   useEffect(() => {
     if (!session?.user) return;
@@ -69,6 +70,36 @@ export default function GuideCallsPage() {
       console.error(err);
     } finally {
       setEnabling(false);
+    }
+  }
+
+  async function disableCalls() {
+    setDisabling(true);
+    try {
+      const procedures = profile?.procedureTypes?.length > 0
+        ? profile.procedureTypes
+        : (profile?.procedureType ? [profile.procedureType] : []);
+      const res = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ageRange: profile?.ageRange || "",
+          gender: profile?.gender || "",
+          activityLevel: profile?.activityLevel || "RECREATIONAL",
+          hourlyRate: profile?.hourlyRate || 50,
+          isAvailableForCalls: false,
+          procedureTypes: procedures,
+          procedureProfiles: profile?.procedureProfiles || {},
+        }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setProfile(updated);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setDisabling(false);
     }
   }
 
@@ -138,26 +169,25 @@ export default function GuideCallsPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
             </svg>
           </div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Offer 1-on-1 Calls with Seekers</h2>
-          <p className="text-gray-500 text-sm mb-6">Connect directly with seekers through paid video calls.</p>
-          <ul className="text-left text-sm text-gray-600 space-y-3 mb-8 max-w-xs mx-auto">
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Offer 1-on-1 calls with seekers</h2>
+          <ul className="text-left text-sm text-gray-600 space-y-3 my-6 max-w-xs mx-auto">
             <li className="flex items-start gap-2.5">
               <svg className="w-5 h-5 text-teal-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
-              Set your own hourly rate and availability
+              Set your own hourly rate
             </li>
             <li className="flex items-start gap-2.5">
               <svg className="w-5 h-5 text-teal-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
-              Seekers book and pay through the platform
+              Choose your availability
             </li>
             <li className="flex items-start gap-2.5">
               <svg className="w-5 h-5 text-teal-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
-              Built-in video calls with automatic payouts
+              Get paid directly via Stripe
             </li>
           </ul>
           <button
@@ -190,6 +220,24 @@ export default function GuideCallsPage() {
 
   return (
     <div className="space-y-8">
+      {/* Calls Enabled Status */}
+      <div className="bg-white rounded-xl border border-gray-200 p-5 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-2.5 h-2.5 bg-green-500 rounded-full"></div>
+          <div>
+            <p className="font-semibold text-gray-900 text-sm">Calls are enabled</p>
+            <p className="text-xs text-gray-500">Seekers can book calls with you</p>
+          </div>
+        </div>
+        <button
+          onClick={disableCalls}
+          disabled={disabling}
+          className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50 transition-colors"
+        >
+          {disabling ? "Disabling..." : "Disable Calls"}
+        </button>
+      </div>
+
       {/* Hourly Rate */}
       <div className="bg-white rounded-xl border border-gray-200 p-6">
         <h2 className="text-lg font-bold text-gray-900 mb-1">Hourly Rate</h2>
