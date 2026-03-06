@@ -212,7 +212,6 @@ export default function GuideCallsPage() {
     .filter((c) => c.status === "COMPLETED" || c.status === "CANCELLED" || (c.status === "CONFIRMED" && parseDate(c.scheduledAt) <= new Date(now.getTime() - c.durationMinutes * 60000)))
     .sort((a, b) => parseDate(b.scheduledAt).getTime() - parseDate(a.scheduledAt).getTime());
 
-  const pendingCalls = calls.filter((c) => c.status === "REQUESTED");
 
   function getHoursUntilCall(scheduledAt: string): number {
     return (parseDate(scheduledAt).getTime() - Date.now()) / (1000 * 60 * 60);
@@ -237,57 +236,6 @@ export default function GuideCallsPage() {
           {disabling ? "Disabling..." : "Disable Calls"}
         </button>
       </div>
-
-      {/* Hourly Rate */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <h2 className="text-lg font-bold text-gray-900 mb-1">Hourly Rate</h2>
-        <p className="text-sm text-gray-500 mb-4">Set your rate for 1-on-1 calls. 30-minute calls are charged at half rate.</p>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <span className="text-gray-500 text-lg">$</span>
-            <input
-              type="number"
-              min={MIN_CALL_RATE}
-              max={MAX_CALL_RATE}
-              value={hourlyRate}
-              onChange={(e) => setHourlyRate(parseInt(e.target.value) || 50)}
-              className="w-24 border border-gray-300 rounded-lg px-3 py-2.5 text-base focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
-            />
-            <span className="text-gray-500">/ hour</span>
-          </div>
-          <button
-            onClick={saveRate}
-            disabled={savingRate}
-            className="bg-teal-600 text-white px-4 py-2.5 rounded-lg hover:bg-teal-700 disabled:opacity-50 text-sm font-medium transition-colors"
-          >
-            {savingRate ? "Saving..." : "Save Rate"}
-          </button>
-          {rateSaved && <span className="text-sm text-green-600 font-medium">Saved!</span>}
-        </div>
-        <p className="text-xs text-gray-400 mt-2">Range: ${MIN_CALL_RATE} - ${MAX_CALL_RATE}</p>
-      </div>
-
-      {/* Availability Manager (weekly hours, calendar, call settings) */}
-      <AvailabilityManager />
-
-      {/* Pending Call Requests */}
-      {pendingCalls.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Pending Requests ({pendingCalls.length})</h2>
-          <div className="space-y-3">
-            {pendingCalls.map((call) => (
-              <CallCard
-                key={call.id}
-                call={call}
-                cancellingId={cancellingId}
-                setCancellingId={setCancellingId}
-                onUpdateStatus={updateCallStatus}
-                getHoursUntilCall={getHoursUntilCall}
-              />
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Upcoming Calls */}
       <div className="bg-white rounded-xl border border-gray-200 p-6">
@@ -336,6 +284,38 @@ export default function GuideCallsPage() {
           </div>
         </div>
       )}
+
+      {/* Hourly Rate */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <h2 className="text-lg font-bold text-gray-900 mb-1">Hourly Rate</h2>
+        <p className="text-sm text-gray-500 mb-4">Set your rate for 1-on-1 calls. 30-minute calls are charged at half rate.</p>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-gray-500 text-lg">$</span>
+            <input
+              type="number"
+              min={MIN_CALL_RATE}
+              max={MAX_CALL_RATE}
+              value={hourlyRate}
+              onChange={(e) => setHourlyRate(parseInt(e.target.value) || 50)}
+              className="w-24 border border-gray-300 rounded-lg px-3 py-2.5 text-base focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+            />
+            <span className="text-gray-500">/ hour</span>
+          </div>
+          <button
+            onClick={saveRate}
+            disabled={savingRate}
+            className="bg-teal-600 text-white px-4 py-2.5 rounded-lg hover:bg-teal-700 disabled:opacity-50 text-sm font-medium transition-colors"
+          >
+            {savingRate ? "Saving..." : "Save Rate"}
+          </button>
+          {rateSaved && <span className="text-sm text-green-600 font-medium">Saved!</span>}
+        </div>
+        <p className="text-xs text-gray-400 mt-2">Range: ${MIN_CALL_RATE} - ${MAX_CALL_RATE}</p>
+      </div>
+
+      {/* Availability Manager (weekly hours, calendar, call settings) */}
+      <AvailabilityManager />
     </div>
   );
 }
